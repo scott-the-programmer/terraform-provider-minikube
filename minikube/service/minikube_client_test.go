@@ -1,0 +1,423 @@
+package service
+
+import (
+	"errors"
+	"reflect"
+	"testing"
+
+	gomock "github.com/golang/mock/gomock"
+	"k8s.io/minikube/pkg/minikube/config"
+	_ "k8s.io/minikube/pkg/minikube/registry/drvs"
+)
+
+func TestMinikubeClient_Start(t *testing.T) {
+	type fields struct {
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nRunner         Node
+		dLoader         Downloader
+		nodes           int
+	}
+
+	ctrl := gomock.NewController(t)
+
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getNodeSuccess(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Success With Addons",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getNodeSuccess(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Success With Nodes",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getMultipleNodesSuccess(ctrl, 3),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           3,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Failure On Adding Nodes",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getMultipleNodesFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           3,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Download Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         nil,
+				dLoader:         getDownloadFailure(ctrl),
+				nodes:           1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Tarball Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         nil,
+				dLoader:         getTarballFailure(ctrl),
+				nodes:           1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Provision Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getProvisionerFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Start Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getStartFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &MinikubeClient{
+				clusterConfig:   tt.fields.clusterConfig,
+				clusterName:     tt.fields.clusterName,
+				addons:          tt.fields.addons,
+				isoUrls:         tt.fields.isoUrls,
+				deleteOnFailure: tt.fields.deleteOnFailure,
+				nRunner:         tt.fields.nRunner,
+				dLoader:         tt.fields.dLoader,
+				nodes:           tt.fields.nodes,
+			}
+			if _, err := e.Start(); (err != nil) != tt.wantErr {
+				t.Errorf("MinikubeClient.Start() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMinikubeClient_Delete(t *testing.T) {
+	type fields struct {
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nRunner         Node
+		dLoader         Downloader
+	}
+
+	ctrl := gomock.NewController(t)
+
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getDeleteSuccess(ctrl),
+				dLoader:         &MockDownloader{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getDeleteFailure(ctrl),
+				dLoader:         &MockDownloader{},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &MinikubeClient{
+				clusterConfig:   tt.fields.clusterConfig,
+				clusterName:     tt.fields.clusterName,
+				addons:          tt.fields.addons,
+				isoUrls:         tt.fields.isoUrls,
+				deleteOnFailure: tt.fields.deleteOnFailure,
+				nRunner:         tt.fields.nRunner,
+				dLoader:         tt.fields.dLoader,
+			}
+			if err := e.Delete(); (err != nil) != tt.wantErr {
+				t.Errorf("MinikubeClient.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestNewMinikubeClient(t *testing.T) {
+	type args struct {
+		args MinikubeClientArgs
+		dep  MinikubeClientDeps
+	}
+	tests := []struct {
+		name string
+		args args
+		want *MinikubeClient
+	}{
+		{
+			name: "Blank Ctor",
+
+			args: args{
+				args: MinikubeClientArgs{},
+				dep:  MinikubeClientDeps{},
+			},
+			want: &MinikubeClient{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewMinikubeClient(tt.args.args, tt.args.dep); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewMinikubeClient() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func getProvisionerFailure(ctrl *gomock.Controller) Node {
+	nRunnerProvisionFailure := NewMockNode(ctrl)
+
+	nRunnerProvisionFailure.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, errors.New("provision error"))
+
+	return nRunnerProvisionFailure
+}
+
+func getStartFailure(ctrl *gomock.Controller) Node {
+	nRunnerStartFailure := NewMockNode(ctrl)
+
+	nRunnerStartFailure.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
+
+	nRunnerStartFailure.EXPECT().
+		Start(gomock.Any(), true).
+		Return(nil, errors.New("start error"))
+
+	return nRunnerStartFailure
+}
+
+func getDownloadFailure(ctrl *gomock.Controller) Downloader {
+	dLoaderFailure := NewMockDownloader(ctrl)
+
+	dLoaderFailure.EXPECT().
+		ISO(gomock.Any(), gomock.Any()).
+		Return("", errors.New("download error"))
+
+	return dLoaderFailure
+}
+
+func getTarballFailure(ctrl *gomock.Controller) Downloader {
+	dLoaderSuccess := NewMockDownloader(ctrl)
+
+	dLoaderSuccess.EXPECT().
+		ISO(gomock.Any(), gomock.Any()).
+		Return("https://mock_iso_url/iso.iso", nil)
+
+	dLoaderSuccess.EXPECT().
+		PreloadTarball(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(errors.New("tar ball failure"))
+
+	return dLoaderSuccess
+}
+
+func getNodeSuccess(ctrl *gomock.Controller) Node {
+	nRunnerSuccess := NewMockNode(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Start(gomock.Any(), true).
+		Return(nil, nil)
+
+	return nRunnerSuccess
+}
+
+func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Node {
+	nRunnerSuccess := NewMockNode(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Start(gomock.Any(), true).
+		Return(nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Add(gomock.Any(), gomock.Any()).
+		Return(nil).
+		Times(n - 1)
+
+	return nRunnerSuccess
+}
+
+func getMultipleNodesFailure(ctrl *gomock.Controller) Node {
+	nRunnerSuccess := NewMockNode(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Start(gomock.Any(), true).
+		Return(nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Add(gomock.Any(), gomock.Any()).
+		Return(errors.New("error adding node"))
+
+	return nRunnerSuccess
+}
+
+func getDownloadSuccess(ctrl *gomock.Controller) Downloader {
+	dLoaderSuccess := NewMockDownloader(ctrl)
+
+	dLoaderSuccess.EXPECT().
+		ISO(gomock.Any(), gomock.Any()).
+		Return("https://mock_iso_url/iso.iso", nil)
+
+	dLoaderSuccess.EXPECT().
+		PreloadTarball(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	return dLoaderSuccess
+}
+
+func getDeleteSuccess(ctrl *gomock.Controller) Node {
+	nRunnerSuccess := NewMockNode(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Delete(gomock.Any(), gomock.Any()).
+		Return(nil, nil)
+
+	return nRunnerSuccess
+}
+
+func getDeleteFailure(ctrl *gomock.Controller) Node {
+	nRunnerSuccess := NewMockNode(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Delete(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("delete error"))
+
+	return nRunnerSuccess
+}

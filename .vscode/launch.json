@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "name": "Debug Create Cluster",
+          "type": "go",
+          "request": "launch",
+          "mode": "debug",
+          "program": "${workspaceRoot}/hack/main.go",
+          "args": [
+            "docker",
+        ]
+      },
+      {
+          "name": "Debug Terraform Provider",
+          "type": "go",
+          "request": "launch",
+          "mode": "debug",
+          "program": "${workspaceFolder}",
+          "env": {},
+          "args": [
+              "-debug",
+          ]
+      }
+  ]
+}

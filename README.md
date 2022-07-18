@@ -22,7 +22,7 @@ minikube --driver=docker --download-only
 You can find the drivers published in the [minikube releases section](https://github.com/kubernetes/minikube/releases). Simply download the 
 preferred driver and copy it to your .minikube/bin folder and ensure the current user has sufficient access
 
-### Living dangeriously
+### Living dangerously
 
 ```bash
 #x86_64

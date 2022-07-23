@@ -8,7 +8,9 @@ description: |-
 
 # minikube_cluster (Resource)
 
-Used to create a minikube cluster on the current host
+Used to create a minikube cluster on the current host. You'll need to have a docker driver installed first (see the provider docs). 
+
+You'll be able to spin up and manage clusters exclusively with terraform, mimicking the process of using a cloud managed k8s cluster such as AKS / EKS / LKS 
 
 ## Example Usage
 

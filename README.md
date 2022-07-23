@@ -1,5 +1,7 @@
 # terraform-provider-minikube
 
+<a href="https://codeclimate.com/github/scott-the-programmer/terraform-provider-minikube/maintainability"><img src="https://api.codeclimate.com/v1/badges/dd45aac40e7019502245/maintainability" /></a>
+
 *CURRENTLY IN PROGRESS*
 
 A terraform provider for [minikube!](https://minikube.sigs.k8s.io/docs/)

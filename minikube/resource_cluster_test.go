@@ -3,6 +3,7 @@ package minikube
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,9 @@ import (
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
 	"k8s.io/minikube/pkg/minikube/localpath"
 )
+
+var _ = flag.String("minikube-start-args", "true", "test") // force minikube into thinking that
+// we're running an integration test
 
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{

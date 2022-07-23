@@ -53,7 +53,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	d.SetId(d.Get("cluster_name").(string))
-	d.Set("clent_key", key)
+	d.Set("client_key", key)
 	d.Set("client_certificate", certificate)
 	d.Set("cluster_ca_certificate", ca)
 	d.Set("host", "http://localhost:8080")

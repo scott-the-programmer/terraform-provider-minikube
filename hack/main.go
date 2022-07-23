@@ -103,7 +103,6 @@ func main() {
 		Nodes: []config.Node{
 			n,
 		},
-		// DisableMetrics:          schema["hyperv_use_external_switch"].Default.(bool),
 		KubernetesConfig:   kubernetesConfig,
 		MultiNodeRequested: false,
 	}

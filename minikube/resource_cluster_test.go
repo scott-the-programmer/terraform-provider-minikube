@@ -211,6 +211,10 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		Delete().
 		Return(nil)
 
+	mockClusterClient.EXPECT().
+		GetK8sVersion().
+		Return("v1.99.9")
+
 	configureContext := func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		var diags diag.Diagnostics
 		mockClusterClientFactory := func() (service.ClusterClient, error) {

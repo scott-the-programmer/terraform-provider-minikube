@@ -227,7 +227,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		ports = []string{}
 	}
 
-	k8sVersion := d.Get("kubernetes_version").(string)
+	k8sVersion := clusterClient.GetK8sVersion()
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion: k8sVersion,
 		ClusterName:       d.Get("cluster_name").(string),

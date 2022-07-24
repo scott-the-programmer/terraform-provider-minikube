@@ -19,12 +19,19 @@ func Provider() *schema.Provider {
 
 func NewProvider(providerConfigure schema.ConfigureContextFunc) *schema.Provider {
 	return &schema.Provider{
-		Schema: map[string]*schema.Schema{},
 		ResourcesMap: map[string]*schema.Resource{
 			"minikube_cluster": ResourceCluster(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure,
+		Schema: map[string]*schema.Schema{
+			"kubernetes_version": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The Kubernetes version that the minikube VM will use (ex  v1.2.3, 'stable' for v1.22.3, 'latest' for v1.22.4-rc.0). Defaults to 'stable'.",
+				Default:     "v1.23.3",
+			},
+		},
 	}
 }
 
@@ -32,8 +39,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	var diags diag.Diagnostics
 
 	mutex := &sync.Mutex{}
+	k8sVersion := d.Get("kubernetes_version").(string)
 	minikubeClientFactory := func() (service.ClusterClient, error) {
-		return &service.MinikubeClient{TfCreationLock: mutex}, nil
+		return &service.MinikubeClient{
+			TfCreationLock: mutex,
+			K8sVersion:     k8sVersion}, nil
 	}
 	return minikubeClientFactory, diags
 }

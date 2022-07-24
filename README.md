@@ -37,12 +37,13 @@ curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-m
 ## Usage
 
 ```terraform
-provider minikube {}
+provider minikube {
+  kubernetes_version = "v1.23.3"
+}
 
 resource "minikube_cluster" "cluster" {
   vm = true
   driver = "hyperkit"
-  kubernetes_version = "v1.23.3"
   addons = [
     "dashboard",
     "default-storageclass",

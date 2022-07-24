@@ -1,4 +1,4 @@
-//go:generate mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
+//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
 package service
 
 import "k8s.io/minikube/pkg/minikube/download"

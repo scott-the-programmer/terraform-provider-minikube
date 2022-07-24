@@ -1,4 +1,4 @@
-//go:generate mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
+//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
 package service
 
 import (
@@ -27,6 +27,7 @@ type ClusterClient interface {
 	Start() (*kubeconfig.Settings, error)
 	Delete() error
 	GetClusterConfig() *config.ClusterConfig
+	GetK8sVersion() string
 }
 
 type MinikubeClient struct {
@@ -40,6 +41,7 @@ type MinikubeClient struct {
 	// TfCreationLock is a mutex used to prevent multiple minikube clients from conflicting on Start().
 	// Only set this if you're using MinikubeClient in a concurrent context
 	TfCreationLock *sync.Mutex
+	K8sVersion     string
 
 	nRunner Node
 	dLoader Downloader
@@ -181,6 +183,10 @@ func (e *MinikubeClient) Delete() error {
 func (e *MinikubeClient) GetClusterConfig() *config.ClusterConfig {
 	cluster := e.nRunner.Get(e.clusterName)
 	return cluster.Config
+}
+
+func (e *MinikubeClient) GetK8sVersion() string {
+	return e.K8sVersion
 }
 
 // downloadIsos retrieve all prerequisite images prior to provisioning

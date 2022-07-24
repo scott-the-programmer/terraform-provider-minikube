@@ -16,6 +16,7 @@ This requires _admin_ permissions
 
 ```bash
 minikube --vm=true --driver=hyperkit --download-only
+minikube --vm=true --driver=hyperv --download-only
 minikube --driver=docker --download-only
 ```
 
@@ -37,12 +38,13 @@ curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-m
 ## Usage
 
 ```terraform
-provider minikube {}
+provider minikube {
+  kubernetes_version = "v1.23.3"
+}
 
 resource "minikube_cluster" "cluster" {
   vm = true
   driver = "hyperkit"
-  kubernetes_version = "v1.23.3"
   addons = [
     "dashboard",
     "default-storageclass",
@@ -65,4 +67,4 @@ You can use `minikube` to verify the cluster is up & running
 
 ## Want to help out?
 
-See [the contributing](./docs/contributing.md) if you wish to get into the details of this terraform minikube provider!
+See [the contributing](./contributing.md) if you wish to get into the details of this terraform minikube provider!

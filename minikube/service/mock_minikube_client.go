@@ -63,6 +63,20 @@ func (mr *MockClusterClientMockRecorder) GetClusterConfig() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterConfig", reflect.TypeOf((*MockClusterClient)(nil).GetClusterConfig))
 }
 
+// GetK8sVersion mocks base method.
+func (m *MockClusterClient) GetK8sVersion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetK8sVersion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetK8sVersion indicates an expected call of GetK8sVersion.
+func (mr *MockClusterClientMockRecorder) GetK8sVersion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetK8sVersion", reflect.TypeOf((*MockClusterClient)(nil).GetK8sVersion))
+}
+
 // SetConfig mocks base method.
 func (m *MockClusterClient) SetConfig(args MinikubeClientArgs) {
 	m.ctrl.T.Helper()

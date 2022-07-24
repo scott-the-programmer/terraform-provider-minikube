@@ -8,16 +8,17 @@ description: |-
 
 # minikube_cluster (Resource)
 
-Used to create a minikube cluster on the current host. You'll need to have a docker driver installed first (see the provider docs). 
-
-You'll be able to spin up and manage clusters exclusively with terraform, mimicking the process of using a cloud managed k8s cluster such as AKS / EKS / LKS 
+Used to create a minikube cluster on the current host
 
 ## Example Usage
 
 ```terraform
+provider "minikube" { 
+  kubernetes_version = "v1.23.3"
+}
+
 resource "minikube_cluster" "docker" {
   driver = "docker"
-  kubernetes_version = "v1.23.3"
   cluster_name = "terraform-provider-minikube-acc-docker"
   addons = [
     "default-storageclass",
@@ -28,7 +29,6 @@ resource "minikube_cluster" "hyperkit" {
   vm = true
   driver = "hyperkit"
   cluster_name = "terraform-provider-minikube-acc-hyperkit"
-  kubernetes_version = "v1.23.3"
   nodes = 3
   addons = [
     "dashboard",

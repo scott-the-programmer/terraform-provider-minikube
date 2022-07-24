@@ -16,6 +16,7 @@ This requires _admin_ permissions
 
 ```bash
 minikube --vm=true --driver=hyperkit --download-only
+minikube --vm=true --driver=hyperv --download-only
 minikube --driver=docker --download-only
 ```
 
@@ -66,4 +67,4 @@ You can use `minikube` to verify the cluster is up & running
 
 ## Want to help out?
 
-See [the contributing](./docs/contributing.md) if you wish to get into the details of this terraform minikube provider!
+See [the contributing](./contributing.md) if you wish to get into the details of this terraform minikube provider!

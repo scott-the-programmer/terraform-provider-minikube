@@ -8,7 +8,7 @@ description: |-
 
 # minikube Provider
 
-A terraform provider for [minikube!](https://minikube.sigs.k7s.io/docs/)
+A terraform provider for [minikube!](https://minikube.sigs.k8s.io/docs/)
 
 ## Installing your preferred driver
 
@@ -31,11 +31,11 @@ preferred driver and copy it to your .minikube/bin folder and ensure the current
 ### Living dangerously
 
 ```bash
-#x84_64
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm0"
+#x86_64
+curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2"
 
 #arm62
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm0" "arm64"
+curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2" "arm64"
 ```
 
 ## Example Usage

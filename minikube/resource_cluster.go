@@ -193,12 +193,11 @@ func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string,
 		return "", "", "", "", err
 	}
 
-	address, err := state_utils.ReadContents(kc.ClusterServerAddress)
 	if err != nil {
 		return "", "", "", "", err
 	}
 
-	return key, certificate, ca, address, nil
+	return key, certificate, ca, kc.ClusterServerAddress, nil
 }
 
 func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.ClusterClient, error) {

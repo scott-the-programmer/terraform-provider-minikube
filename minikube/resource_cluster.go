@@ -47,7 +47,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	key, certificate, ca, err := getClusterOutputs(kc)
+	key, certificate, ca, address, err := getClusterOutputs(kc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -56,7 +56,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	d.Set("client_key", key)
 	d.Set("client_certificate", certificate)
 	d.Set("cluster_ca_certificate", ca)
-	d.Set("host", "http://localhost:8080")
+	d.Set("host", address)
 	d.Set("cluster_name", kc.ClusterName)
 
 	diags = resourceClusterRead(ctx, d, m)
@@ -177,24 +177,27 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 }
 
 //getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
-func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, error) {
+func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string, error) {
 	key, err := state_utils.ReadContents(kc.ClientKey)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	certificate, err := state_utils.ReadContents(kc.ClientCertificate)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	ca, err := state_utils.ReadContents(kc.ClientCertificate)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
-	return key, certificate, ca, nil
+	if err != nil {
+		return "", "", "", "", err
+	}
 
+	return key, certificate, ca, kc.ClusterServerAddress, nil
 }
 
 func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.ClusterClient, error) {

@@ -188,7 +188,7 @@ func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string,
 		return "", "", "", "", err
 	}
 
-	ca, err := state_utils.ReadContents(kc.ClientCertificate)
+	ca, err := state_utils.ReadContents(kc.CertificateAuthority)
 	if err != nil {
 		return "", "", "", "", err
 	}

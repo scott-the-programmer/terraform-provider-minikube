@@ -16,7 +16,10 @@ bin
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Ignore example artifacts
 terraform.tfsta*
+.terraform.lock.hcl
+
 crash.log
 .terraform
 test_output

@@ -3,7 +3,7 @@ init:
 	go mod tidy
 
 .PHONY: configure
-configure: build set-rc
+configure: build set-local
 	go generate ./...
 
 .PHONY: clean
@@ -24,7 +24,7 @@ acceptance:
 	TF_ACC=true go test ./minikube -run "TestClusterCreation" -v -p 1 --timeout 10m
 
 .PHONY: test-stack
-test-stack: set-rc
+test-stack: set-local
 	terraform -chdir=examples/resource/minikube_cluster init || true 
 	terraform -chdir=examples/resource/minikube_cluster apply --auto-approve
 	terraform -chdir=tests destroy --auto-approve
@@ -33,8 +33,8 @@ test-stack: set-rc
 build:
 	go build -o bin/terraform-provider-minikube
 
-.PHONY: set-rc
-set-rc: build
+.PHONY: set-local 
+set-local: build
 	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_amd64 
 	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_amd64 
 	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_amd64/terraform-provider-minikube

@@ -47,14 +47,14 @@ make acceptance
 ## Test stack
 
 ```console
-make set-rc
+make set-local
 make test-stack
 ```
 
 or
 
 ```console
-make set-rc
+make set-local
 make build 
 terraform -chdir=examples/resources/minikube_cluster apply 
 ```
@@ -68,7 +68,7 @@ To debug your terraform provider, run the `Debug Terraform Provider` vscode task
 
 ```console
 export TF_REATTACH_PROVIDERS='*output from vscode debug session'
-make set-rc
+make set-local
 make test-stack
 ```
 

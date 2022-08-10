@@ -35,8 +35,10 @@ build:
 
 .PHONY: set-rc
 set-rc: build
-	touch ~/.terraformrc
-	echo "provider_installation { dev_overrides { \"hashicorp/minikube\" = \"$$(pwd)/bin\" } direct {}}" > ~/.terraformrc 
+	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_amd64 
+	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_amd64 
+	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_amd64/terraform-provider-minikube
+	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_amd64/terraform-provider-minikube
 
 SED_FLAGS := -i
 UNAME_S := $(shell uname -s)

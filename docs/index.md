@@ -8,6 +8,8 @@ description: |-
 
 A terraform provider for [minikube!](https://minikube.sigs.k8s.io/docs/)
 
+The goal of this project is to allow developers to create minikube clusters and integrate it with common kubernetes terraform providers such as [hashicorp/kubernetes](https://registry.terraform.io/providers/hashicorp/kubernetes/2.12.1) and [hashicorp/helm](https://registry.terraform.io/providers/hashicorp/helm/2.6.0) all within the comfort of Minikube!
+
 ## Installing your preferred driver
 
 If you don't have minikube installed, or have never run minikube before, you'll need to install your corresponding driver first
@@ -26,7 +28,11 @@ minikube --driver=docker --download-only
 You can find the drivers published in the [minikube releases section](https://github.com/kubernetes/minikube/releases). Simply download the 
 preferred driver and copy it to your .minikube/bin folder and ensure the current user has sufficient access
 
-### Living dangerously
+### Automatic Install (discouraged)
+
+You can invoke a simple bootstrap script called [install-driver.sh](https://github.com/scott-the-programmer/terraform-provider-minikube/blob/main/bootstrap/install-driver.sh)
+
+Please review the script contents running
 
 ```bash
 #x86_64

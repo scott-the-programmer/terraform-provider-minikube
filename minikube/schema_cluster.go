@@ -67,7 +67,7 @@ var (
 			Optional:    true,
 			ForceNew:    true,
 			Description: "The base image to use for docker/podman drivers. Intended for local development.",
-			Default:     "gcr.io/k8s-minikube/kicbase:v0.0.28@sha256:4780f1897569d2bf77aafb3d133a08d42b4fe61127f06fcfc90c2c5d902d893c",
+			Default:     "gcr.io/k8s-minikube/kicbase:v0.0.33@sha256:73b259e144d926189cf169ae5b46bbec4e08e4e2f2bd87296054c3244f70feb8",
 		},
 
 		"cache_images": {

@@ -2,7 +2,7 @@
 
 set -e 
 
-VERSION="v1.26.0"
+VERSION="v1.26.1"
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
 

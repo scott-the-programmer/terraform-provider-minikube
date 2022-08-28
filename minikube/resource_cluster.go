@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"terraform-provider-minikube/m/v2/minikube/service"
 	"terraform-provider-minikube/m/v2/minikube/state_utils"
-	"terraform-provider-minikube/m/v2/minikube/version"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -17,9 +16,7 @@ import (
 )
 
 var (
-	defaultIso = fmt.Sprintf("https://github.com/kubernetes/minikube/releases/download/%s/minikube-%s.iso",
-		version.Version,
-		version.Version)
+	defaultIso = service.GetMinikubeIso()
 )
 
 func ResourceCluster() *schema.Resource {

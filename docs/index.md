@@ -54,5 +54,5 @@ provider "minikube" {
 
 ### Optional
 
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex  v1.2.3, 'stable' for v1.22.3, 'latest' for v1.22.4-rc.0). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use. Defaults to 'stable'.
 

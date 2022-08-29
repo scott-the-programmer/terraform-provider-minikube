@@ -69,4 +69,4 @@ You can use `minikube` to verify the cluster is up & running
 
 ## Want to help out?
 
-See [the contributing](./contributing.md) if you wish to get into the details of this terraform minikube provider!
+See [the contributing doc](./contributing.md) if you wish to get into the details of this terraform minikube provider!

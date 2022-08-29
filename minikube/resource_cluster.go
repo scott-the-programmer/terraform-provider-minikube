@@ -144,7 +144,6 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("insecure_registry", config.InsecureRegistry)
 	d.Set("iso_url", []string{config.MinikubeISO})
 	d.Set("keep_context", config.KeepContext)
-	d.Set("kubernetes_version", config.KubernetesConfig.KubernetesVersion)
 	d.Set("kvm_gpu", config.KVMGPU)
 	d.Set("kvm_hidden", config.KVMHidden)
 	d.Set("kvm_network", config.KVMNetwork)

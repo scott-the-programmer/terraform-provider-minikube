@@ -17,7 +17,8 @@ clean:
 .PHONY: test
 test:
 	go clean -testcache
-	go test ./... -cover -coverprofile cover.out
+	go test ./...  -coverprofile cover.out.tmp
+	cat cover.out.tmp | grep -v "mock_" > cover.out
 
 .PHONY: acceptance
 acceptance:

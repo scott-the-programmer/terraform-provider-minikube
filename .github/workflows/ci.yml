@@ -31,7 +31,7 @@ jobs:
         CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
       with:
         coverageCommand: make test
-        coverageLocations: ${{github.workspace}}/coverage.out:gocov
+        coverageLocations: ${{github.workspace}}/cover.out:gocov
 
     - name: Acceptance
       run: make acceptance

@@ -24,8 +24,14 @@ jobs:
     - name: Build
       run: make build
 
-    - name: Test
-      run: make test
+    #Code Climate 
+    - name: Run Coverage
+      uses: paambaati/codeclimate-action@v2.6.0
+      env:
+        CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+      with:
+        coverageCommand: make test
+        coverageLocations: ${{github.workspace}}/coverage.out:gocov
 
     - name: Acceptance
       run: make acceptance

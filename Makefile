@@ -17,7 +17,7 @@ clean:
 .PHONY: test
 test:
 	go clean -testcache
-	go test ./... 
+	go test ./... -cover -coverprofile cover.out
 
 .PHONY: acceptance
 acceptance:

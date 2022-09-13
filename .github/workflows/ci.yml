@@ -32,6 +32,7 @@ jobs:
       with:
         coverageCommand: make test
         coverageLocations: ${{github.workspace}}/cover.out:gocov
+        prefix: terraform-provider-minikube/m/v2
 
     - name: Acceptance
       run: make acceptance

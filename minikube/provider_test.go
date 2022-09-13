@@ -2,6 +2,7 @@ package minikube
 
 import (
 	"context"
+	"terraform-provider-minikube/m/v2/minikube/service"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,5 +34,10 @@ func TestProvider_bootstrap(t *testing.T) {
 
 	data := schema.TestResourceDataRaw(t, sch, rawC)
 
-	provider.ConfigureContextFunc(context.TODO(), data)
+	m, _ := provider.ConfigureContextFunc(context.TODO(), data)
+
+	clusterClientFactory := m.(func() (service.ClusterClient, error))
+	_, err := clusterClientFactory()
+
+	assert.NoError(t, err)
 }

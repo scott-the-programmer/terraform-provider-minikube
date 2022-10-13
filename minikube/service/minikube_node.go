@@ -63,16 +63,22 @@ func (m *MinikubeNode) Add(cc *config.ClusterConfig, starter node.Starter) error
 
 func (m *MinikubeNode) Delete(cc config.ClusterConfig, name string) (*config.Node, error) {
 	node, err := node.Delete(cc, name)
+	if err != nil {
+		return node, err
+	}
+
 	machineDir := filepath.Join(localpath.MiniPath(), "machines", name)
 	profilesDir := filepath.Join(localpath.MiniPath(), "profiles", name)
 	err = rmdir(machineDir)
 	if err != nil {
 		return node, err
 	}
+
 	err = rmdir(profilesDir)
 	if err != nil {
 		return node, err
 	}
+
 	return node, err
 }
 

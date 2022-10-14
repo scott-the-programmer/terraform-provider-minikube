@@ -13,8 +13,6 @@ You can learn more about how to use the provider at https://registry.terraform.i
 
 If you don't have minikube installed, or have never run minikube before, you'll need to install your corresponding driver first
 
-This requires _admin_ permissions
-
 ### Minikube
 
 ```bash
@@ -25,7 +23,7 @@ minikube --driver=docker --download-only
 
 ### Manual
 
-You can find the drivers published in the [minikube releases section](https://github.com/kubernetes/minikube/releases). Simply download the 
+You can find the drivers published in the [minikube releases section](https://github.com/kubernetes/minikube/releases). Simply download the
 preferred driver and copy it to your .minikube/bin folder and ensure the current user has sufficient access
 
 ### Living dangerously (discouraged)

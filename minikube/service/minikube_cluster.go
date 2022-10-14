@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/machine/libmachine"
 	"github.com/docker/machine/libmachine/host"
+	delete "k8s.io/minikube/cmd/minikube/cmd"
 	"k8s.io/minikube/pkg/minikube/command"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/exit"
@@ -25,15 +26,15 @@ type Node interface {
 	Add(cc *config.ClusterConfig, starter node.Starter) error
 }
 
-type MinikubeNode struct {
+type MinikubeCluster struct {
 	workerNodes int
 }
 
-func NewMinikubeNode() *MinikubeNode {
-	return &MinikubeNode{workerNodes: 0}
+func NewMinikubeCluster() *MinikubeCluster {
+	return &MinikubeCluster{workerNodes: 0}
 }
 
-func (m *MinikubeNode) Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
+func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
 	makeAllMinikubeDirectories()
 	_, err := node.CacheKubectlBinary(cc.KubernetesConfig.KubernetesVersion, cc.BinaryMirror)
 	if err != nil {
@@ -43,13 +44,13 @@ func (m *MinikubeNode) Provision(cc *config.ClusterConfig, n *config.Node, apiSe
 	return node.Provision(cc, n, apiServer, delOnFail)
 }
 
-func (m *MinikubeNode) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
+func (m *MinikubeCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
 
 	return node.Start(starter, apiServer)
 }
 
-//Add adds nodes to the clusters node pool
-func (m *MinikubeNode) Add(cc *config.ClusterConfig, starter node.Starter) error {
+// Add adds nodes to the clusters node pool
+func (m *MinikubeCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
 	n := config.Node{
 		Name:              node.Name(m.workerNodes),
 		Worker:            true,
@@ -61,28 +62,33 @@ func (m *MinikubeNode) Add(cc *config.ClusterConfig, starter node.Starter) error
 	return node.Add(cc, n, true)
 }
 
-func (m *MinikubeNode) Delete(cc config.ClusterConfig, name string) (*config.Node, error) {
-	node, err := node.Delete(cc, name)
-	if err != nil {
-		return node, err
+func (m *MinikubeCluster) Delete(cc config.ClusterConfig, name string) (*config.Node, error) {
+	errs := delete.DeleteProfiles([]*config.Profile{
+		{
+			Name:   name,
+			Config: &cc,
+		},
+	})
+	if len(errs) > 0 {
+		return nil, errs[0]
 	}
 
 	machineDir := filepath.Join(localpath.MiniPath(), "machines", name)
 	profilesDir := filepath.Join(localpath.MiniPath(), "profiles", name)
-	err = rmdir(machineDir)
+	err := rmdir(machineDir)
 	if err != nil {
-		return node, err
+		return nil, err
 	}
 
 	err = rmdir(profilesDir)
 	if err != nil {
-		return node, err
+		return nil, err
 	}
 
-	return node, err
+	return nil, err
 }
 
-func (m *MinikubeNode) Get(name string) mustload.ClusterController {
+func (m *MinikubeCluster) Get(name string) mustload.ClusterController {
 	return mustload.Running(name)
 }
 

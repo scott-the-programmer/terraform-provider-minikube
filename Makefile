@@ -26,8 +26,8 @@ acceptance:
 
 .PHONY: test-stack
 test-stack: set-local
-	terraform -chdir=examples/resource/minikube_cluster init || true 
-	terraform -chdir=examples/resource/minikube_cluster apply --auto-approve
+	terraform -chdir=examples/resources/minikube_cluster init || true
+	terraform -chdir=examples/resources/minikube_cluster apply --auto-approve
 	terraform -chdir=tests destroy --auto-approve
 
 .PHONY: build

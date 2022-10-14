@@ -115,7 +115,7 @@ func main() {
 			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.26.1/minikube-v1.26.1-amd64.iso"},
 			DeleteOnFailure: true},
 		service.MinikubeClientDeps{
-			Node:       service.NewMinikubeNode(),
+			Node:       service.NewMinikubeCluster(),
 			Downloader: service.NewMinikubeDownloader(),
 		})
 

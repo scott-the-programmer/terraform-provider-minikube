@@ -172,7 +172,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("vm_driver", config.VMDriver)
 }
 
-//getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
+// getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
 func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string, error) {
 	key, err := state_utils.ReadContents(kc.ClientKey)
 	if err != nil {
@@ -325,7 +325,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 	})
 
 	clusterClient.SetDependencies(service.MinikubeClientDeps{
-		Node:       service.NewMinikubeNode(),
+		Node:       service.NewMinikubeCluster(),
 		Downloader: service.NewMinikubeDownloader(),
 	})
 

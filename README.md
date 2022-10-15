@@ -29,11 +29,15 @@ preferred driver and copy it to your .minikube/bin folder and ensure the current
 ### Living dangerously (discouraged)
 
 ```bash
+curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh -o install-driver.sh 
+
+chmod +x ./install-driver.sh
+
 #x86_64
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2"
+sudo ./install-driver.sh "kvm2" 
 
 #arm64
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2" "arm64"
+sudo ./install-driver.sh "kvm2" "arm64"
 ```
 
 ## Usage

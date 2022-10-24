@@ -1,9 +1,9 @@
-provider "minikube" { 
-  kubernetes_version = "v1.24.3"
+provider "minikube" {
+  kubernetes_version = "v1.25.2"
 }
 
 resource "minikube_cluster" "docker" {
-  driver = "docker"
+  driver       = "docker"
   cluster_name = "terraform-provider-minikube-acc-docker"
   addons = [
     "default-storageclass",
@@ -11,10 +11,10 @@ resource "minikube_cluster" "docker" {
 }
 
 resource "minikube_cluster" "hyperkit" {
-  vm = true
-  driver = "hyperkit"
+  vm           = true
+  driver       = "hyperkit"
   cluster_name = "terraform-provider-minikube-acc-hyperkit"
-  nodes = 3
+  nodes        = 3
   addons = [
     "dashboard",
     "default-storageclass",
@@ -23,7 +23,7 @@ resource "minikube_cluster" "hyperkit" {
 }
 
 provider "kubernetes" {
-  host = minikube_cluster.docker.host 
+  host = minikube_cluster.docker.host
 
   client_certificate     = minikube_cluster.docker.client_certificate
   client_key             = minikube_cluster.docker.client_key

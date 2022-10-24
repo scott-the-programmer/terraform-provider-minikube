@@ -345,6 +345,59 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 	}
 }
 
+func TestMinikubeClient_SetDependencies(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	type fields struct {
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nodes           int
+		TfCreationLock  *sync.Mutex
+		K8sVersion      string
+		nRunner         Node
+		dLoader         Downloader
+	}
+	type args struct {
+		dep MinikubeClientDeps
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		{
+			name:   "Should Set Dependencies",
+			fields: fields{},
+			args: args{
+				dep: MinikubeClientDeps{
+					Node:       NewMockNode(ctrl),
+					Downloader: NewMockDownloader(ctrl),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &MinikubeClient{
+				clusterConfig:   tt.fields.clusterConfig,
+				clusterName:     tt.fields.clusterName,
+				addons:          tt.fields.addons,
+				isoUrls:         tt.fields.isoUrls,
+				deleteOnFailure: tt.fields.deleteOnFailure,
+				nodes:           tt.fields.nodes,
+				TfCreationLock:  tt.fields.TfCreationLock,
+				K8sVersion:      tt.fields.K8sVersion,
+				nRunner:         tt.fields.nRunner,
+				dLoader:         tt.fields.dLoader,
+			}
+			e.SetDependencies(tt.args.dep)
+		})
+	}
+}
+
 func getProvisionerFailure(ctrl *gomock.Controller) Node {
 	nRunnerProvisionFailure := NewMockNode(ctrl)
 

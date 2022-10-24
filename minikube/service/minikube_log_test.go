@@ -32,8 +32,8 @@ func Test_machineLogBridge_Write(t *testing.T) {
 		{
 			name:    "Environment",
 			lb:      machineLogBridge{},
-			args:    args{b: []byte("exec.Cmd")},
-			wantN:   len([]byte("exec.Cmd")),
+			args:    args{b: []byte("&exec.Cmd")},
+			wantN:   len([]byte("&exec.Cmd")),
 			wantErr: false,
 		},
 		{

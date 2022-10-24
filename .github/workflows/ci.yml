@@ -34,5 +34,7 @@ jobs:
         coverageLocations: ${{github.workspace}}/cover.out:gocov
         prefix: terraform-provider-minikube/m/v2
 
-    - name: Acceptance
-      run: make acceptance
+    # temporarily disabled due to limited gh runner resources
+    # - name: Acceptance
+    #   run: make acceptance
+

@@ -355,8 +355,8 @@ var (
 			Type:        schema.TypeString,
 			Optional:    true,
 			ForceNew:    true,
-			Description: "///system'  The KVM QEMU connection URI. (kvm2 driver only)",
-			Default:     "qemu",
+			Description: "The KVM QEMU connection URI. (kvm2 driver only)",
+			Default:     "qemu:///system",
 		},
 
 		"listen_address": {

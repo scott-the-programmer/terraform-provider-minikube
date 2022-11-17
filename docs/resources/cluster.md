@@ -140,7 +140,7 @@ resource "kubernetes_deployment" "deployment" {
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)
 - `kvm_numa_count` (Number) Simulate numa node count in minikube, supported numa node count range is 1-8 (kvm2 driver only)
-- `kvm_qemu_uri` (String) ///system' The KVM QEMU connection URI. (kvm2 driver only)
+- `kvm_qemu_uri` (String) The KVM QEMU connection URI. (kvm2 driver only)
 - `listen_address` (String) IP Address to use to expose ports (docker and podman driver only)
 - `memory` (Number) Amount of RAM to allocate to Kubernetes in mb
 - `mount` (Boolean) This will start the mount daemon and automatically mount files into minikube.

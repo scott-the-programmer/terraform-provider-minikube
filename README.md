@@ -44,7 +44,7 @@ sudo ./install-driver.sh "kvm2" "arm64"
 
 ```terraform
 provider minikube {
-  kubernetes_version = "v1.25.2"
+  kubernetes_version = "v1.25.3"
 }
 
 resource "minikube_cluster" "cluster" {

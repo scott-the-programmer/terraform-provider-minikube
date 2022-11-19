@@ -46,7 +46,7 @@ curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-m
 
 ```terraform
 provider "minikube" {
-  kubernetes_version = "v1.25.2"
+  kubernetes_version = "v1.25.3"
 }
 ```
 

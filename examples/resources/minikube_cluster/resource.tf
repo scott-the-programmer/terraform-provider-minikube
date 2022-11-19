@@ -1,5 +1,5 @@
 provider "minikube" {
-  kubernetes_version = "v1.25.2"
+  kubernetes_version = "v1.25.3"
 }
 
 resource "minikube_cluster" "docker" {

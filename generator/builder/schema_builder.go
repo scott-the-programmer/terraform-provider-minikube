@@ -81,17 +81,17 @@ func NewSchemaBuilder(targetFile string, minikube MinikubeBinary) *SchemaBuilder
 	return &SchemaBuilder{targetFile: targetFile, minikube: minikube}
 }
 
-func (s *SchemaBuilder) Build() error {
+func (s *SchemaBuilder) Build() (string, error) {
 	minikubeVersion, err := s.minikube.GetVersion(context.Background())
 	if err != nil {
-		return errors.New("could not run minikube binary. please ensure that you have minikube installed and available")
+		return "", errors.New("could not run minikube binary. please ensure that you have minikube installed and available")
 	}
 
 	log.Printf("building schema for minikube version: %s", minikubeVersion)
 
 	help, err := s.minikube.GetStartHelpText(context.Background())
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	scanner := bufio.NewScanner(strings.NewReader(help))
@@ -112,7 +112,6 @@ func (s *SchemaBuilder) Build() error {
 			seg := strings.Split(line, "=")
 			currentParameter = strings.TrimPrefix(seg[0], "--")
 			currentParameter = strings.Replace(currentParameter, "-", "_", -1)
-			fmt.Printf("processing %s \n", currentParameter)
 			currentDefault = strings.TrimSuffix(seg[1], ":")
 			currentType = getSchemaType(currentDefault)
 			if currentType == String {
@@ -129,6 +128,7 @@ func (s *SchemaBuilder) Build() error {
 				break
 			}
 
+			currentDescription = strings.ReplaceAll(currentDescription, "\\", "\\\\")
 			currentDescription = strings.ReplaceAll(currentDescription, "\"", "\\\"")
 
 			switch currentType {
@@ -152,7 +152,7 @@ func (s *SchemaBuilder) Build() error {
 					// is it a timestamp?
 					time, err := time.ParseDuration(currentDefault)
 					if err != nil {
-						return err
+						return "", err
 					}
 					val = int(time.Minutes())
 					currentDescription = fmt.Sprintf("%s (Configured in minutes)", currentDescription)
@@ -176,8 +176,19 @@ func (s *SchemaBuilder) Build() error {
 		}
 	}
 
-	header := `//go:generate go run ../generator/main.go $GOFILE
-// THIS FILE IS GENERATED - DO NOT MODIFY DIRECTLY
+	schema := constructSchema(entries)
+
+	return schema, err
+}
+
+func (s *SchemaBuilder) Write(schema string) error {
+	return os.WriteFile(s.targetFile, []byte(schema), 0644)
+}
+
+func constructSchema(entries []SchemaEntry) string {
+
+	header := `//go:generate ../schema-generator -target $GOFILE
+// THIS FILE IS GENERATED DO NOT EDIT 
 package minikube
 
 import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -225,11 +236,7 @@ func GetClusterSchema() map[string]*schema.Schema {
 }
 	`
 
-	schema := header + body + footer
-
-	err = os.WriteFile(s.targetFile, []byte(schema), 0644)
-
-	return err
+	return header + body + footer
 }
 
 func getSchemaType(s string) SchemaType {

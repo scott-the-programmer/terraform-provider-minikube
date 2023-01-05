@@ -1,4 +1,5 @@
-package builder
+//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_minikube_binary.go -package=$GOPACKAGE
+package generator
 
 import (
 	"bufio"
@@ -187,8 +188,8 @@ func (s *SchemaBuilder) Write(schema string) error {
 
 func constructSchema(entries []SchemaEntry) string {
 
-	header := `//go:generate ../schema-generator -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT 
+	header := `//go:generate go run ../generate/main.go -target $GOFILE
+// THIS FILE IS GENERATED DO NOT EDIT
 package minikube
 
 import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -202,8 +203,8 @@ var (
 		extraParams := ""
 		if !contains(computedFields, entry.Parameter) {
 			extraParams = `
-			Optional:    true,
-			ForceNew:    true,	
+			Optional:			true,
+			ForceNew:			true,
 			`
 		}
 		if entry.Type == Array {
@@ -214,14 +215,13 @@ var (
 			`, "schema.Type"+entry.ArrayType)
 		} else {
 			extraParams = extraParams + fmt.Sprintf(`
-			Default: %s,
-				`, entry.Default)
+			Default:	%s,`, entry.Default)
 		}
 
 		body = body + fmt.Sprintf(`
 		"%s": {
-			Type:       %s,
-			Description: "%s",
+			Type:					%s,
+			Description:	"%s",
 			%s
 		},
 	`, entry.Parameter, "schema.Type"+entry.Type, entry.Description, extraParams)

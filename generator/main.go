@@ -13,8 +13,14 @@ func main() {
 
 	fmt.Println(*targetFile)
 	schemaBuilder := builder.NewSchemaBuilder(*targetFile, &builder.MinikubeHostBinary{})
-	err := schemaBuilder.Build()
+	schema, err := schemaBuilder.Build()
 	if err != nil {
 		panic(err)
 	}
+
+	err = schemaBuilder.Write(schema)
+	if err != nil {
+		panic(err)
+	}
+
 }

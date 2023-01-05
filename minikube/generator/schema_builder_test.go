@@ -30,6 +30,13 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 var (
 	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
 
 		"test": {
 			Type:					schema.TypeString,
@@ -80,6 +87,13 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 var (
 	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
 
 		"test": {
 			Type:					schema.TypeInt,
@@ -120,6 +134,13 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 var (
 	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
 
 		"test": {
 			Type:					schema.TypeInt,
@@ -160,6 +181,13 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 var (
 	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
 
 		"test": {
 			Type:					schema.TypeBool,
@@ -200,6 +228,13 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 var (
 	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
 
 		"test": {
 			Type:					schema.TypeList,
@@ -243,6 +278,13 @@ import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 var (
 	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
 
 		"host": {
 			Type:					schema.TypeInt,

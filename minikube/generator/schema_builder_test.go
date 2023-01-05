@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"errors"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
@@ -220,4 +221,41 @@ func GetClusterSchema() map[string]*schema.Schema {
 	return clusterSchema
 }
 	`, schema)
+}
+
+func TestPropertyFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--test=asdfasdf:
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	_, err := builder.Build()
+	assert.Error(t, err)
+}
+
+func TestNullDefault(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--test=:
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	_, err := builder.Build()
+	assert.NoError(t, err)
+}
+
+func TestMinikubeNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("", errors.New("could not find minikube binary"))
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	_, err := builder.Build()
+	assert.Error(t, err)
 }

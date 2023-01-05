@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"generator/m/v2/builder"
+	"terraform-provider-minikube/m/v2/minikube/generator"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println(*targetFile)
-	schemaBuilder := builder.NewSchemaBuilder(*targetFile, &builder.MinikubeHostBinary{})
+	schemaBuilder := generator.NewSchemaBuilder(*targetFile, &generator.MinikubeHostBinary{})
 	schema, err := schemaBuilder.Build()
 	if err != nil {
 		panic(err)

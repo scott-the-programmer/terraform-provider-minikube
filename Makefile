@@ -8,7 +8,6 @@ configure: build set-local
 
 .PHONY: schema
 schema:
-	cd generator && go build -o ../schema-generator
 	go generate ./minikube/schema_cluster.go
 
 .PHONY: clean

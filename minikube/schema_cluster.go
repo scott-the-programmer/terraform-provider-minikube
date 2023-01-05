@@ -1,3 +1,4 @@
+//go:generate go run ../generate/main.go -target $GOFILE
 package minikube
 
 import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

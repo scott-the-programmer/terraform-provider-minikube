@@ -6,6 +6,11 @@ init:
 configure: build set-local
 	go generate ./...
 
+.PHONY: schema
+schema:
+	cd generator && go build -o ../schema-generator
+	go generate ./minikube/schema_cluster.go
+
 .PHONY: clean
 clean:
 	rm bin/* || true

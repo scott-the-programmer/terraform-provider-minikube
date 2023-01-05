@@ -206,15 +206,20 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			`
+		} else {
+			extraParams = `
+			Computed:			true,
+			`
 		}
+
 		if entry.Type == Array {
-			extraParams = extraParams + fmt.Sprintf(`
+			extraParams += fmt.Sprintf(`
 			Elem: &schema.Schema{
 				Type:	%s,
 			},
 			`, "schema.Type"+entry.ArrayType)
 		} else {
-			extraParams = extraParams + fmt.Sprintf(`
+			extraParams += fmt.Sprintf(`
 			Default:	%s,`, entry.Default)
 		}
 

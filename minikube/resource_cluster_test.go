@@ -158,7 +158,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		SSHKey:                  clusterSchema["ssh_key"].Default.(string),
 		SSHPort:                 clusterSchema["ssh_port"].Default.(int),
 		ExtraDisks:              clusterSchema["extra_disks"].Default.(int),
-		CertExpiration:          time.Duration(clusterSchema["cert_expiration"].Default.(int)) * time.Hour,
+		CertExpiration:          time.Duration(clusterSchema["cert_expiration"].Default.(int)) * time.Minute,
 		Mount:                   clusterSchema["hyperv_use_external_switch"].Default.(bool),
 		MountString:             clusterSchema["mount_string"].Default.(string),
 		Mount9PVersion:          "9p2000.L",

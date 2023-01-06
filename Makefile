@@ -6,6 +6,10 @@ init:
 configure: build set-local
 	go generate ./...
 
+.PHONY: schema
+schema:
+	go generate ./minikube/schema_cluster.go
+
 .PHONY: clean
 clean:
 	rm bin/* || true
@@ -22,6 +26,7 @@ test:
 
 .PHONY: acceptance
 acceptance:
+	go clean -testcache
 	TF_ACC=true go test ./minikube -run "TestClusterCreation" -v -p 1 --timeout 10m
 
 .PHONY: test-stack

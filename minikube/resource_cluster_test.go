@@ -124,7 +124,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		MinikubeISO:             defaultIso,
 		KicBaseImage:            clusterSchema["base_image"].Default.(string),
 		Network:                 clusterSchema["network"].Default.(string),
-		Memory:                  6000,
+		Memory:                  4000,
 		CPUs:                    2,
 		DiskSize:                20000,
 		Driver:                  "some_driver",
@@ -158,7 +158,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		SSHKey:                  clusterSchema["ssh_key"].Default.(string),
 		SSHPort:                 clusterSchema["ssh_port"].Default.(int),
 		ExtraDisks:              clusterSchema["extra_disks"].Default.(int),
-		CertExpiration:          time.Duration(clusterSchema["cert_expiration"].Default.(int)) * time.Hour,
+		CertExpiration:          time.Duration(clusterSchema["cert_expiration"].Default.(int)) * time.Minute,
 		Mount:                   clusterSchema["hyperv_use_external_switch"].Default.(bool),
 		MountString:             clusterSchema["mount_string"].Default.(string),
 		Mount9PVersion:          "9p2000.L",
@@ -242,7 +242,7 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = 6000
+		memory = "6000mb"
 	}
 	`, driver, clusterName)
 }

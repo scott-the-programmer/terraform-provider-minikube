@@ -127,11 +127,13 @@ func (s *SchemaBuilder) Build() (string, error) {
 		if strings.HasPrefix(line, "--") {
 			currentEntry = loadParameter(line)
 		} else if line != "" {
+			if currentEntry.Description != "" { // Let's readd a space between line blocks
+				currentEntry.Description += " "
+			}
 			currentEntry.Description += line
 			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\\", "\\\\")
 			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\"", "\\\"")
 		} else if currentEntry.Parameter != "" {
-
 			// Apply description override once we've built the description
 			val, ok := schemaOverrides[currentEntry.Parameter]
 			if ok {

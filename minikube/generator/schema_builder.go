@@ -46,6 +46,25 @@ var computedFields []string = []string{
 	"host",
 }
 
+type SchemaOverride struct {
+	Description string
+	Default     string
+	Type        SchemaType
+}
+
+var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
+	"memory": {
+		Default:     "4000mb",
+		Description: "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g)",
+		Type:        String,
+	},
+	"cpus": {
+		Default:     "2",
+		Description: "Amount of CPUs to allocate to Kubernetes",
+		Type:        Int,
+	},
+}
+
 func run(ctx context.Context, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, "minikube", args...)
 	out, err := cmd.Output()
@@ -115,6 +134,13 @@ func (s *SchemaBuilder) Build() (string, error) {
 			currentParameter = strings.Replace(currentParameter, "-", "_", -1)
 			currentDefault = strings.TrimSuffix(seg[1], ":")
 			currentType = getSchemaType(currentDefault)
+
+			val, ok := schemaOverrides[currentParameter]
+			if ok {
+				currentDefault = val.Default
+				currentType = val.Type
+			}
+
 			if currentType == String {
 				currentDefault = strings.Trim(currentDefault, "'")
 			}
@@ -131,6 +157,11 @@ func (s *SchemaBuilder) Build() (string, error) {
 
 			currentDescription = strings.ReplaceAll(currentDescription, "\\", "\\\\")
 			currentDescription = strings.ReplaceAll(currentDescription, "\"", "\\\"")
+
+			val, ok := schemaOverrides[currentParameter]
+			if ok {
+				currentDescription = val.Description
+			}
 
 			switch currentType {
 			case String:
@@ -202,6 +233,14 @@ var (
 			ForceNew:			true,
 			Description:	"The name of the minikube cluster",
 			Default:			"terraform-provider-minikube",
+		},
+
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
 		},
 `
 

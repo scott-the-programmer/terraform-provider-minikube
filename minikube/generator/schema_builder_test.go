@@ -38,6 +38,14 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
+		},
+
 		"test": {
 			Type:					schema.TypeString,
 			Description:	"I am a great test description",
@@ -95,6 +103,14 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
+		},
+
 		"test": {
 			Type:					schema.TypeInt,
 			Description:	"I am a great test description",
@@ -140,6 +156,14 @@ var (
 			ForceNew:			true,
 			Description:	"The name of the minikube cluster",
 			Default:			"terraform-provider-minikube",
+		},
+
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
 		},
 
 		"test": {
@@ -189,6 +213,14 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
+		},
+
 		"test": {
 			Type:					schema.TypeBool,
 			Description:	"I am a great test description",
@@ -234,6 +266,14 @@ var (
 			ForceNew:			true,
 			Description:	"The name of the minikube cluster",
 			Default:			"terraform-provider-minikube",
+		},
+
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
 		},
 
 		"test": {
@@ -286,6 +326,14 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
+		},
+
 		"host": {
 			Type:					schema.TypeInt,
 			Description:	"I am a great test description",
@@ -293,6 +341,61 @@ var (
 			Computed:			true,
 			
 			Default:	123,
+		},
+	
+	}
+)
+
+func GetClusterSchema() map[string]*schema.Schema {
+	return clusterSchema
+}
+	`, schema)
+}
+
+func TestOverride(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--memory='':
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
+// THIS FILE IS GENERATED DO NOT EDIT
+package minikube
+
+import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+var (
+	clusterSchema = map[string]*schema.Schema{
+		"cluster_name": {
+			Type:					schema.TypeString,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"The name of the minikube cluster",
+			Default:			"terraform-provider-minikube",
+		},
+
+		"nodes": {
+			Type:					schema.TypeInt,
+			Optional:			true,
+			ForceNew:			true,
+			Description:	"Amount of nodes in the cluster",
+			Default:			1,
+		},
+
+		"memory": {
+			Type:					schema.TypeString,
+			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g)",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"4000mb",
 		},
 	
 	}

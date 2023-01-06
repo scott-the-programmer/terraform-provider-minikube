@@ -11,34 +11,13 @@ You can learn more about how to use the provider at https://registry.terraform.i
 
 ## Installing your preferred driver
 
-If you don't have minikube installed, or have never run minikube before, you'll need to install your corresponding driver first
-
-### Minikube
-
 ```bash
-minikube --vm=true --driver=hyperkit --download-only
-minikube --vm=true --driver=hyperv --download-only
-minikube --driver=docker --download-only
+minikube start --vm=true --driver=hyperkit --download-only
+minikube start --vm=true --driver=hyperv --download-only
+minikube start --driver=docker --download-only
 ```
 
-### Manual
-
-You can find the drivers published in the [minikube releases section](https://github.com/kubernetes/minikube/releases). Simply download the
-preferred driver and copy it to your .minikube/bin folder and ensure the current user has sufficient access
-
-### Living dangerously (discouraged)
-
-```bash
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh -o install-driver.sh
-
-chmod +x ./install-driver.sh
-
-#x86_64
-sudo ./install-driver.sh "kvm2"
-
-#arm64
-sudo ./install-driver.sh "kvm2" "arm64"
-```
+Some drivers require a bit of prerequisite setup, so it's best to visit [https://minikube.sigs.k8s.io/docs/drivers/](https://minikube.sigs.k8s.io/docs/drivers/) first
 
 ## Usage
 

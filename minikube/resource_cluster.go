@@ -120,7 +120,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("apiserver_names", state_utils.SliceOrNil(config.KubernetesConfig.APIServerNames))
 	d.Set("apiserver_port", config.KubernetesConfig.NodePort)
 	d.Set("base_image", config.KicBaseImage)
-	d.Set("cert_expiration", config.CertExpiration.Hours())
+	d.Set("cert_expiration", config.CertExpiration.Minutes())
 	d.Set("cni", config.KubernetesConfig.CNI)
 	d.Set("container_runtime", config.KubernetesConfig.ContainerRuntime)
 	d.Set("cpus", config.CPUs)

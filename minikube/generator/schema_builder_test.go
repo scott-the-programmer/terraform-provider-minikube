@@ -108,6 +108,51 @@ func GetClusterSchema() map[string]*schema.Schema {
 	`, schema)
 }
 
+func TestMultilineDescription(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--test='test-value':
+	I am a great test description. 
+	I am another great test description
+
+--test2='test-value2':
+	I am a great test2 description
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, header+`
+		"test": {
+			Type:					schema.TypeString,
+			Description:	"I am a great test description. I am another great test description",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"test-value",
+		},
+	
+		"test2": {
+			Type:					schema.TypeString,
+			Description:	"I am a great test2 description",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"test-value2",
+		},
+	
+	}
+)
+
+func GetClusterSchema() map[string]*schema.Schema {
+	return clusterSchema
+}
+	`, schema)
+}
+
 func TestIntProperty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockMinikube := NewMockMinikubeBinary(ctrl)

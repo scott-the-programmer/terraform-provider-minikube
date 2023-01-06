@@ -128,10 +128,9 @@ func (s *SchemaBuilder) Build() (string, error) {
 			currentEntry = loadParameter(line)
 		} else if line != "" {
 			currentEntry.Description += line
-		} else if currentEntry.Parameter != "" {
-
 			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\\", "\\\\")
 			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\"", "\\\"")
+		} else if currentEntry.Parameter != "" {
 
 			// Apply description override once we've built the description
 			val, ok := schemaOverrides[currentEntry.Parameter]

@@ -125,23 +125,7 @@ func (s *SchemaBuilder) Build() (string, error) {
 		line = strings.TrimSpace(line)
 
 		if strings.HasPrefix(line, "--") {
-			currentEntry.Description = ""
-			seg := strings.Split(line, "=")
-			currentEntry.Parameter = strings.TrimPrefix(seg[0], "--")
-			currentEntry.Parameter = strings.Replace(currentEntry.Parameter, "-", "_", -1)
-			currentEntry.Default = strings.TrimSuffix(seg[1], ":")
-			currentEntry.Type = getSchemaType(currentEntry.Default)
-
-			// Apply explicit overrides
-			val, ok := schemaOverrides[currentEntry.Parameter]
-			if ok {
-				currentEntry.Default = val.Default
-				currentEntry.Type = val.Type
-			}
-
-			if currentEntry.Type == String {
-				currentEntry.Default = strings.Trim(currentEntry.Default, "'")
-			}
+			currentEntry = loadParameter(line)
 		} else if line != "" {
 			currentEntry.Description += line
 		} else if currentEntry.Parameter != "" {
@@ -149,7 +133,7 @@ func (s *SchemaBuilder) Build() (string, error) {
 			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\\", "\\\\")
 			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\"", "\\\"")
 
-			// Aply description override once we've built the description
+			// Apply description override once we've built the description
 			val, ok := schemaOverrides[currentEntry.Parameter]
 			if ok {
 				currentEntry.Description = val.Description
@@ -167,6 +151,29 @@ func (s *SchemaBuilder) Build() (string, error) {
 	schema := constructSchema(entries)
 
 	return schema, err
+}
+
+func loadParameter(line string) SchemaEntry {
+	schemaEntry := SchemaEntry{}
+	schemaEntry.Description = ""
+	seg := strings.Split(line, "=")
+	schemaEntry.Parameter = strings.TrimPrefix(seg[0], "--")
+	schemaEntry.Parameter = strings.Replace(schemaEntry.Parameter, "-", "_", -1)
+	schemaEntry.Default = strings.TrimSuffix(seg[1], ":")
+	schemaEntry.Type = getSchemaType(schemaEntry.Default)
+
+	// Apply explicit overrides
+	val, ok := schemaOverrides[schemaEntry.Parameter]
+	if ok {
+		schemaEntry.Default = val.Default
+		schemaEntry.Type = val.Type
+	}
+
+	if schemaEntry.Type == String {
+		schemaEntry.Default = strings.Trim(schemaEntry.Default, "'")
+	}
+
+	return schemaEntry
 }
 
 func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, error) {

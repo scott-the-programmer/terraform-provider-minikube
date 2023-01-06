@@ -12,27 +12,13 @@ The goal of this project is to allow developers to create minikube clusters and 
 
 ## Installing your preferred driver
 
-If you don't have minikube installed, or have never run minikube before, you'll need to install your corresponding driver first
-
-This requires _admin_ permissions
-
-### Minikube
-
 ```bash
-minikube --vm=true --driver=hyperkit --download-only
-minikube --driver=docker --download-only
+minikube start --vm=true --driver=hyperkit --download-only
+minikube start --vm=true --driver=hyperv --download-only
+minikube start --driver=docker --download-only
 ```
 
-### Manual
-
-You can find the drivers published in the [minikube releases section](https://github.com/kubernetes/minikube/releases). Simply download the 
-preferred driver and copy it to your .minikube/bin folder and ensure the current user has sufficient access
-
-### Automatic Install (discouraged)
-
-You can invoke a simple bootstrap script called [install-driver.sh](https://github.com/scott-the-programmer/terraform-provider-minikube/blob/main/bootstrap/install-driver.sh)
-
-Please review the script contents running
+Some drivers require a bit of prerequisite setup, so it's best to visit [https://minikube.sigs.k8s.io/docs/drivers/](https://minikube.sigs.k8s.io/docs/drivers/) first
 
 ```bash
 #x86_64

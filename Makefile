@@ -26,6 +26,7 @@ test:
 
 .PHONY: acceptance
 acceptance:
+	go clean -testcache
 	TF_ACC=true go test ./minikube -run "TestClusterCreation" -v -p 1 --timeout 10m
 
 .PHONY: test-stack

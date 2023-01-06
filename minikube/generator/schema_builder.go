@@ -117,100 +117,101 @@ func (s *SchemaBuilder) Build() (string, error) {
 	scanner := bufio.NewScanner(strings.NewReader(help))
 
 	entries := make([]SchemaEntry, 0)
-	var currentParameter string
-	var currentType SchemaType
-	var currentDefault string
-	var currentDescription string
+
+	currentEntry := SchemaEntry{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimSpace(line)
 
-		switch {
-		case strings.HasPrefix(line, "--"):
-			currentDescription = ""
+		if strings.HasPrefix(line, "--") {
+			currentEntry.Description = ""
 			seg := strings.Split(line, "=")
-			currentParameter = strings.TrimPrefix(seg[0], "--")
-			currentParameter = strings.Replace(currentParameter, "-", "_", -1)
-			currentDefault = strings.TrimSuffix(seg[1], ":")
-			currentType = getSchemaType(currentDefault)
+			currentEntry.Parameter = strings.TrimPrefix(seg[0], "--")
+			currentEntry.Parameter = strings.Replace(currentEntry.Parameter, "-", "_", -1)
+			currentEntry.Default = strings.TrimSuffix(seg[1], ":")
+			currentEntry.Type = getSchemaType(currentEntry.Default)
 
-			val, ok := schemaOverrides[currentParameter]
+			// Apply explicit overrides
+			val, ok := schemaOverrides[currentEntry.Parameter]
 			if ok {
-				currentDefault = val.Default
-				currentType = val.Type
+				currentEntry.Default = val.Default
+				currentEntry.Type = val.Type
 			}
 
-			if currentType == String {
-				currentDefault = strings.Trim(currentDefault, "'")
+			if currentEntry.Type == String {
+				currentEntry.Default = strings.Trim(currentEntry.Default, "'")
 			}
+		} else if line != "" {
+			currentEntry.Description += line
+		} else if currentEntry.Parameter != "" {
 
-		default:
-			if line != "" {
-				currentDescription += line
-				break
-			}
+			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\\", "\\\\")
+			currentEntry.Description = strings.ReplaceAll(currentEntry.Description, "\"", "\\\"")
 
-			if currentParameter == "" {
-				break
-			}
-
-			currentDescription = strings.ReplaceAll(currentDescription, "\\", "\\\\")
-			currentDescription = strings.ReplaceAll(currentDescription, "\"", "\\\"")
-
-			val, ok := schemaOverrides[currentParameter]
+			// Aply description override once we've built the description
+			val, ok := schemaOverrides[currentEntry.Parameter]
 			if ok {
-				currentDescription = val.Description
+				currentEntry.Description = val.Description
 			}
 
-			switch currentType {
-			case String:
-				entries = append(entries, SchemaEntry{
-					Parameter:   currentParameter,
-					Default:     fmt.Sprintf("\"%s\"", currentDefault),
-					Type:        currentType,
-					Description: currentDescription,
-				})
-			case Bool:
-				entries = append(entries, SchemaEntry{
-					Parameter:   currentParameter,
-					Default:     currentDefault,
-					Type:        currentType,
-					Description: currentDescription,
-				})
-			case Int:
-				val, err := strconv.Atoi(currentDefault)
-				if err != nil {
-					// is it a timestamp?
-					time, err := time.ParseDuration(currentDefault)
-					if err != nil {
-						return "", err
-					}
-					val = int(time.Minutes())
-					currentDescription = fmt.Sprintf("%s (Configured in minutes)", currentDescription)
-				}
-				entries = append(entries, SchemaEntry{
-					Parameter:   currentParameter,
-					Default:     strconv.Itoa(val),
-					Type:        currentType,
-					Description: currentDescription,
-				})
-			case Array:
-				entries = append(entries, SchemaEntry{
-					Parameter:   currentParameter,
-					Type:        Array,
-					ArrayType:   String,
-					Description: currentDescription,
-				})
+			entries, err = addEntry(entries, currentEntry)
+			if err != nil {
+				return "", err
 			}
 
-			currentParameter = ""
+			currentEntry.Parameter = ""
 		}
 	}
 
 	schema := constructSchema(entries)
 
 	return schema, err
+}
+
+func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, error) {
+	switch currentEntry.Type {
+	case String:
+		entries = append(entries, SchemaEntry{
+			Parameter:   currentEntry.Parameter,
+			Default:     fmt.Sprintf("\"%s\"", currentEntry.Default),
+			Type:        currentEntry.Type,
+			Description: currentEntry.Description,
+		})
+	case Bool:
+		entries = append(entries, SchemaEntry{
+			Parameter:   currentEntry.Parameter,
+			Default:     currentEntry.Default,
+			Type:        currentEntry.Type,
+			Description: currentEntry.Description,
+		})
+	case Int:
+		val, err := strconv.Atoi(currentEntry.Default)
+		if err != nil {
+			// is it a timestamp?
+			time, err := time.ParseDuration(currentEntry.Default)
+			if err != nil {
+				return nil, err
+			}
+			val = int(time.Minutes())
+			currentEntry.Description = fmt.Sprintf("%s (Configured in minutes)", currentEntry.Description)
+		}
+		entries = append(entries, SchemaEntry{
+			Parameter:   currentEntry.Parameter,
+			Default:     strconv.Itoa(val),
+			Type:        currentEntry.Type,
+			Description: currentEntry.Description,
+		})
+	case Array:
+		entries = append(entries, SchemaEntry{
+			Parameter:   currentEntry.Parameter,
+			Type:        Array,
+			ArrayType:   String,
+			Description: currentEntry.Description,
+		})
+	}
+
+	return entries, nil
 }
 
 func (s *SchemaBuilder) Write(schema string) error {

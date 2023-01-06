@@ -242,7 +242,7 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = 6000
+		memory = "6000mb"
 	}
 	`, driver, clusterName)
 }

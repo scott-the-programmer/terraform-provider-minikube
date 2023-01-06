@@ -8,21 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStringProperty(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	mockMinikube := NewMockMinikubeBinary(ctrl)
-	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
-	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
---test='test-value':
-	I am a great test description
-
---test2='test-value2':
-	I am a great test2 description
-	`, nil)
-	builder := NewSchemaBuilder("fake.go", mockMinikube)
-	schema, err := builder.Build()
-	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
+const header = `//go:generate go run ../generate/main.go -target $GOFILE
 // THIS FILE IS GENERATED DO NOT EDIT
 package minikube
 
@@ -46,6 +32,49 @@ var (
 			Default:			1,
 		},
 
+		"client_key": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "client key for cluster",
+			Sensitive:   true,
+		},
+
+		"client_certificate": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "client certificate used in cluster",
+			Sensitive:   true,
+		},
+
+		"cluster_ca_certificate": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "certificate authority for cluster",
+			Sensitive:   true,
+		},
+
+		"host": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "the host name for the cluster",
+		},
+`
+
+func TestStringProperty(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--test='test-value':
+	I am a great test description
+
+--test2='test-value2':
+	I am a great test2 description
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, header+`
 		"test": {
 			Type:					schema.TypeString,
 			Description:	"I am a great test description",
@@ -87,30 +116,7 @@ func TestIntProperty(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	schema, err := builder.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT
-package minikube
-
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-var (
-	clusterSchema = map[string]*schema.Schema{
-		"cluster_name": {
-			Type:					schema.TypeString,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"The name of the minikube cluster",
-			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
+	assert.Equal(t, header+`
 		"test": {
 			Type:					schema.TypeInt,
 			Description:	"I am a great test description",
@@ -142,30 +148,7 @@ func TestTimeProperty(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	schema, err := builder.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT
-package minikube
-
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-var (
-	clusterSchema = map[string]*schema.Schema{
-		"cluster_name": {
-			Type:					schema.TypeString,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"The name of the minikube cluster",
-			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
+	assert.Equal(t, header+`
 		"test": {
 			Type:					schema.TypeInt,
 			Description:	"I am a great test description (Configured in minutes)",
@@ -197,30 +180,7 @@ func TestBoolProperty(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	schema, err := builder.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT
-package minikube
-
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-var (
-	clusterSchema = map[string]*schema.Schema{
-		"cluster_name": {
-			Type:					schema.TypeString,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"The name of the minikube cluster",
-			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
+	assert.Equal(t, header+`
 		"test": {
 			Type:					schema.TypeBool,
 			Description:	"I am a great test description",
@@ -252,30 +212,7 @@ func TestArrayProperty(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	schema, err := builder.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT
-package minikube
-
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-var (
-	clusterSchema = map[string]*schema.Schema{
-		"cluster_name": {
-			Type:					schema.TypeString,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"The name of the minikube cluster",
-			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
+	assert.Equal(t, header+`
 		"test": {
 			Type:					schema.TypeList,
 			Description:	"I am a great test description",
@@ -310,30 +247,7 @@ func TestOutputProperty(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	schema, err := builder.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT
-package minikube
-
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-var (
-	clusterSchema = map[string]*schema.Schema{
-		"cluster_name": {
-			Type:					schema.TypeString,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"The name of the minikube cluster",
-			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
+	assert.Equal(t, header+`
 		"host": {
 			Type:					schema.TypeInt,
 			Description:	"I am a great test description",
@@ -364,30 +278,7 @@ func TestOverride(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	schema, err := builder.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, `//go:generate go run ../generate/main.go -target $GOFILE
-// THIS FILE IS GENERATED DO NOT EDIT
-package minikube
-
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-var (
-	clusterSchema = map[string]*schema.Schema{
-		"cluster_name": {
-			Type:					schema.TypeString,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"The name of the minikube cluster",
-			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
+	assert.Equal(t, header+`
 		"memory": {
 			Type:					schema.TypeString,
 			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g)",

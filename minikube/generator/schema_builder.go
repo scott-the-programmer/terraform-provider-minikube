@@ -242,6 +242,33 @@ var (
 			Description:	"Amount of nodes in the cluster",
 			Default:			1,
 		},
+
+		"client_key": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "client key for cluster",
+			Sensitive:   true,
+		},
+
+		"client_certificate": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "client certificate used in cluster",
+			Sensitive:   true,
+		},
+
+		"cluster_ca_certificate": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "certificate authority for cluster",
+			Sensitive:   true,
+		},
+
+		"host": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "the host name for the cluster",
+		},
 `
 
 	body := ""

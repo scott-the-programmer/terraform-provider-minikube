@@ -75,6 +75,26 @@ func TestClusterCreation_Hyperkit(t *testing.T) {
 	})
 }
 
+func TestClusterCreation_HyperV(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("HyperV is only supported on windows")
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfig("hyperv", "TestClusterCreationHyperV"),
+				Check: resource.ComposeTestCheckFunc(
+					testClusterExists("minikube_cluster.new", "TestClusterCreationHyperV"),
+				),
+			},
+		},
+	})
+}
+
 func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(t)
 

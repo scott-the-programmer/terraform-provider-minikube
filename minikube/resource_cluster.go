@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
+	pkgutil "k8s.io/minikube/pkg/util"
 )
 
 var (
@@ -125,7 +126,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("cpus", config.CPUs)
 	d.Set("cri_socket", config.KubernetesConfig.CRISocket)
 	d.Set("disable_driver_mounts", config.DisableDriverMounts)
-	d.Set("disk_size", config.DiskSize)
+	d.Set("disk_size", strconv.Itoa(config.DiskSize)+"mb")
 	d.Set("dns_domain", config.KubernetesConfig.DNSDomain)
 	d.Set("dns_proxy", config.DNSProxy)
 	d.Set("driver", config.Driver)
@@ -150,7 +151,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("kvm_numa_count", config.KVMNUMACount)
 	d.Set("kvm_qemu_uri", config.KVMQemuURI)
 	d.Set("listen_address", config.ListenAddress)
-	d.Set("memory", config.Memory)
+	d.Set("memory", strconv.Itoa(config.Memory)+"mb")
 	d.Set("mount", config.Mount)
 	d.Set("mount_string", config.MountString)
 	d.Set("namespace", config.KubernetesConfig.Namespace)
@@ -226,6 +227,18 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		ports = []string{}
 	}
 
+	memoryStr := d.Get("memory").(string)
+	memoryMb, err := pkgutil.CalculateSizeInMB(memoryStr)
+	if err != nil {
+		return nil, err
+	}
+
+	diskStr := d.Get("disk_size").(string)
+	diskMb, err := pkgutil.CalculateSizeInMB(diskStr)
+	if err != nil {
+		return nil, err
+	}
+
 	k8sVersion := clusterClient.GetK8sVersion()
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion: k8sVersion,
@@ -262,9 +275,9 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		MinikubeISO:             state_utils.ReadSliceState(defaultIsos)[0],
 		KicBaseImage:            d.Get("base_image").(string),
 		Network:                 d.Get("network").(string),
-		Memory:                  d.Get("memory").(int),
+		Memory:                  memoryMb,
 		CPUs:                    d.Get("cpus").(int),
-		DiskSize:                d.Get("disk_size").(int),
+		DiskSize:                diskMb,
 		Driver:                  d.Get("driver").(string),
 		ListenAddress:           d.Get("listen_address").(string),
 		HyperkitVpnKitSock:      d.Get("hyperkit_vpnkit_sock").(string),

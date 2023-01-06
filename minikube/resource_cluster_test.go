@@ -124,7 +124,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		MinikubeISO:             defaultIso,
 		KicBaseImage:            clusterSchema["base_image"].Default.(string),
 		Network:                 clusterSchema["network"].Default.(string),
-		Memory:                  6000,
+		Memory:                  4000,
 		CPUs:                    2,
 		DiskSize:                20000,
 		Driver:                  "some_driver",

@@ -120,7 +120,7 @@ resource "kubernetes_deployment" "deployment" {
 - `docker_env` (List of String) Environment variables to pass to the Docker daemon. (format: key=value)
 - `docker_opt` (List of String) Specify arbitrary flags to pass to the Docker daemon. (format: key=value)
 - `download_only` (Boolean) If true, only download and cache files for later use - don't install or start anything.
-- `driver` (String) Driver is one of: virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2 (experimental), docker, podman (experimental), ssh (defaults to auto-detect)
+- `driver` (String) Driver is one of the following - Windows: (hyperv, docker, virtualbox, vmware, qemu2, ssh) - OSX: (virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2, docker, podman, ssh) - Linux: (docker, kvm2, virtualbox, qemu2, none, podman, ssh)
 - `dry_run` (Boolean) dry-run mode. Validates configuration, but does not mutate system state
 - `embed_certs` (Boolean) if true, will embed the certs in kubeconfig.
 - `enable_default_cni` (Boolean) DEPRECATED: Replaced by --cni=bridge
@@ -141,7 +141,7 @@ resource "kubernetes_deployment" "deployment" {
 - `install_addons` (Boolean) If set, install addons. Defaults to true.
 - `interactive` (Boolean) Allow user prompts for more information
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.25.2, 'latest' for v1.25.2). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.25.3, 'latest' for v1.25.3). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)

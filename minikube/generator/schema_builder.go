@@ -50,6 +50,7 @@ type SchemaOverride struct {
 	Description string
 	Default     string
 	Type        SchemaType
+	DefaultFunc string
 }
 
 var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
@@ -62,6 +63,29 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 		Default:     "2",
 		Description: "Amount of CPUs to allocate to Kubernetes",
 		Type:        Int,
+	},
+	// Customize the description to be the fullset of drivers
+	"driver": {
+		Default:     "docker",
+		Description: "Driver is one of the following - Windows: (hyperv, docker, virtualbox, vmware, qemu2, ssh) - OSX: (virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2, docker, podman, ssh) - Linux: (docker, kvm2, virtualbox, qemu2, none, podman, ssh)",
+		Type:        String,
+	},
+	// Default schema to unix file paths first and let the provider translate them during runtime
+	"mount_string": {
+		Description: "The argument to pass the minikube mount command on start.",
+		Type:        String,
+		DefaultFunc: `func() (any, error) {
+				if runtime.GOOS == "windows" {
+					home, err := os.UserHomeDir()
+					if err != nil {
+						return nil, err
+					}
+					return home + ":" + "/minikube-host", nil
+				} else if runtime.GOOS == "darwin" {
+					return "/Users:/minikube-host", nil
+				} 
+				return "/home:/minikube-host", nil
+			}`,
 	},
 }
 
@@ -78,6 +102,7 @@ func run(ctx context.Context, args ...string) (string, error) {
 type SchemaEntry struct {
 	Parameter   string
 	Default     string
+	DefaultFunc string
 	Description string
 	Type        SchemaType
 	ArrayType   SchemaType
@@ -159,12 +184,14 @@ func loadParameter(line string) SchemaEntry {
 	schemaEntry.Parameter = strings.TrimPrefix(seg[0], "--")
 	schemaEntry.Parameter = strings.Replace(schemaEntry.Parameter, "-", "_", -1)
 	schemaEntry.Default = strings.TrimSuffix(seg[1], ":")
+	schemaEntry.Default = strings.ReplaceAll(schemaEntry.Default, "\\", "\\\\")
 	schemaEntry.Type = getSchemaType(schemaEntry.Default)
 
 	// Apply explicit overrides
 	val, ok := schemaOverrides[schemaEntry.Parameter]
 	if ok {
 		schemaEntry.Default = val.Default
+		schemaEntry.DefaultFunc = val.DefaultFunc
 		schemaEntry.Type = val.Type
 	}
 
@@ -183,6 +210,7 @@ func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, e
 			Default:     fmt.Sprintf("\"%s\"", currentEntry.Default),
 			Type:        currentEntry.Type,
 			Description: currentEntry.Description,
+			DefaultFunc: currentEntry.DefaultFunc,
 		})
 	case Bool:
 		entries = append(entries, SchemaEntry{
@@ -190,6 +218,7 @@ func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, e
 			Default:     currentEntry.Default,
 			Type:        currentEntry.Type,
 			Description: currentEntry.Description,
+			DefaultFunc: currentEntry.DefaultFunc,
 		})
 	case Int:
 		val, err := strconv.Atoi(currentEntry.Default)
@@ -207,6 +236,7 @@ func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, e
 			Default:     strconv.Itoa(val),
 			Type:        currentEntry.Type,
 			Description: currentEntry.Description,
+			DefaultFunc: currentEntry.DefaultFunc,
 		})
 	case Array:
 		entries = append(entries, SchemaEntry{
@@ -214,6 +244,7 @@ func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, e
 			Type:        Array,
 			ArrayType:   String,
 			Description: currentEntry.Description,
+			DefaultFunc: currentEntry.DefaultFunc,
 		})
 	}
 
@@ -230,7 +261,11 @@ func constructSchema(entries []SchemaEntry) string {
 // THIS FILE IS GENERATED DO NOT EDIT
 package minikube
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"runtime"
+	"os"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 var (
 	clusterSchema = map[string]*schema.Schema{
@@ -298,6 +333,9 @@ var (
 				Type:	%s,
 			},
 			`, "schema.Type"+entry.ArrayType)
+		} else if entry.DefaultFunc != "" {
+			extraParams += fmt.Sprintf(`
+			DefaultFunc:	%s,`, entry.DefaultFunc)
 		} else {
 			extraParams += fmt.Sprintf(`
 			Default:	%s,`, entry.Default)

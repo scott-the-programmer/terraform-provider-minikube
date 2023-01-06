@@ -108,6 +108,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	_ = os.WriteFile("test_output/key", d1, 0644)
 
 	clusterSchema := ResourceCluster().Schema
+	mountString, _ := clusterSchema["mount_string"].DefaultFunc()
 
 	k8sVersion := "v1.25.3"
 	kubernetesConfig := config.KubernetesConfig{
@@ -180,7 +181,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		ExtraDisks:              clusterSchema["extra_disks"].Default.(int),
 		CertExpiration:          time.Duration(clusterSchema["cert_expiration"].Default.(int)) * time.Minute,
 		Mount:                   clusterSchema["hyperv_use_external_switch"].Default.(bool),
-		MountString:             clusterSchema["mount_string"].Default.(string),
+		MountString:             mountString.(string),
 		Mount9PVersion:          "9p2000.L",
 		MountGID:                "docker",
 		MountIP:                 "",

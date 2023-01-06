@@ -2,7 +2,11 @@
 // THIS FILE IS GENERATED DO NOT EDIT
 package minikube
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"runtime"
+	"os"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 var (
 	clusterSchema = map[string]*schema.Schema{
@@ -303,12 +307,12 @@ var (
 	
 		"driver": {
 			Type:					schema.TypeString,
-			Description:	"Driver is one of: virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2 (experimental), docker, podman (experimental), ssh (defaults to auto-detect)",
+			Description:	"Driver is one of the following - Windows: (hyperv, docker, virtualbox, vmware, qemu2, ssh) - OSX: (virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2, docker, podman, ssh) - Linux: (docker, kvm2, virtualbox, qemu2, none, podman, ssh)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"",
+			Default:	"docker",
 		},
 	
 		"dry_run": {
@@ -707,7 +711,18 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"/Users:/minikube-host",
+			DefaultFunc:	func() (any, error) {
+				if runtime.GOOS == "windows" {
+					home, err := os.UserHomeDir()
+					if err != nil {
+						return nil, err
+					}
+					return home + ":" + "/minikube-host", nil
+				} else if runtime.GOOS == "darwin" {
+					return "/Users:/minikube-host", nil
+				} 
+				return "/home:/minikube-host", nil
+			},
 		},
 	
 		"mount_type": {

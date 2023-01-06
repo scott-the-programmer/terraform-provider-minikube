@@ -12,7 +12,11 @@ const header = `//go:generate go run ../generate/main.go -target $GOFILE
 // THIS FILE IS GENERATED DO NOT EDIT
 package minikube
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"runtime"
+	"os"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 var (
 	clusterSchema = map[string]*schema.Schema{
@@ -341,6 +345,21 @@ func GetClusterSchema() map[string]*schema.Schema {
 	return clusterSchema
 }
 	`, schema)
+}
+
+func TestDefaultFuncOverride(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--mount-string='':
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Contains(t, schema, "DefaultFunc:	func() (any, error) {")
 }
 
 func TestPropertyFailure(t *testing.T) {

@@ -284,12 +284,12 @@ func GetClusterSchema() map[string]*schema.Schema {
 	`, schema)
 }
 
-func TestOutputProperty(t *testing.T) {
+func TestComputedProperty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockMinikube := NewMockMinikubeBinary(ctrl)
 	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
 	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
---host=123:
+--insecure-registry=123:
 	I am a great test description
 
 	`, nil)
@@ -297,11 +297,14 @@ func TestOutputProperty(t *testing.T) {
 	schema, err := builder.Build()
 	assert.NoError(t, err)
 	assert.Equal(t, header+`
-		"host": {
+		"insecure_registry": {
 			Type:					schema.TypeInt,
 			Description:	"I am a great test description",
 			
 			Computed:			true,
+			
+			Optional:			true,
+			ForceNew:			true,
 			
 			Default:	123,
 		},

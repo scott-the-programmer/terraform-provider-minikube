@@ -264,6 +264,12 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		cluster_name = "%s"
 		cpus = 2 
 		memory = "6000mb"
+
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"ingress"
+		]
 	}
 	`, driver, clusterName)
 }

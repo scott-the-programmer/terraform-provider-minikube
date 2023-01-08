@@ -59,6 +59,9 @@ var (
 			
 			Computed:			true,
 			
+			Optional:			true,
+			ForceNew:			true,
+			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
 			},
@@ -70,6 +73,9 @@ var (
 			Description:	"A set of apiserver IP Addresses which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine",
 			
 			Computed:			true,
+			
+			Optional:			true,
+			ForceNew:			true,
 			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
@@ -92,6 +98,9 @@ var (
 			Description:	"A set of apiserver names which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine",
 			
 			Computed:			true,
+			
+			Optional:			true,
+			ForceNew:			true,
 			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
@@ -441,6 +450,9 @@ var (
 			
 			Computed:			true,
 			
+			Optional:			true,
+			ForceNew:			true,
+			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
 			},
@@ -503,6 +515,9 @@ var (
 			
 			Computed:			true,
 			
+			Optional:			true,
+			ForceNew:			true,
+			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
 			},
@@ -534,6 +549,9 @@ var (
 			Description:	"Locations to fetch the minikube ISO from.",
 			
 			Computed:			true,
+			
+			Optional:			true,
+			ForceNew:			true,
 			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
@@ -801,6 +819,9 @@ var (
 			
 			Computed:			true,
 			
+			Optional:			true,
+			ForceNew:			true,
+			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
 			},
@@ -843,6 +864,9 @@ var (
 			
 			Computed:			true,
 			
+			Optional:			true,
+			ForceNew:			true,
+			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
 			},
@@ -874,6 +898,9 @@ var (
 			Description:	"Registry mirrors to pass to the Docker daemon",
 			
 			Computed:			true,
+			
+			Optional:			true,
+			ForceNew:			true,
 			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,

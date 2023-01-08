@@ -40,10 +40,6 @@ var computedFields []string = []string{
 	"nfs_share",
 	"ports",
 	"registry_mirror",
-	"client_key",
-	"client_certificate",
-	"cluster_ca_certificate",
-	"host",
 }
 
 type SchemaOverride struct {
@@ -318,16 +314,16 @@ var (
 	body := ""
 	for _, entry := range entries {
 		extraParams := ""
-		if !contains(computedFields, entry.Parameter) {
-			extraParams = `
-			Optional:			true,
-			ForceNew:			true,
-			`
-		} else {
+		if contains(computedFields, entry.Parameter) {
 			extraParams = `
 			Computed:			true,
 			`
 		}
+
+		extraParams += `
+			Optional:			true,
+			ForceNew:			true,
+			`
 
 		if entry.Type == Array {
 			extraParams += fmt.Sprintf(`

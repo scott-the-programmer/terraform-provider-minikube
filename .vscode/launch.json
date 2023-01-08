@@ -21,6 +21,17 @@
           "args": [
               "-debug",
           ]
+      },
+      {
+          "name": "Debug Generator",
+          "type": "go",
+          "request": "launch",
+          "mode": "debug",
+          "program": "${workspaceFolder}/generate/main.go",
+          "args": [
+              "-target",
+              "./minikube/schema_cluster.go",
+          ]
       }
   ]
 }

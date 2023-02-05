@@ -14,7 +14,7 @@ Used to create a minikube cluster on the current host
 
 ```terraform
 provider "minikube" {
-  kubernetes_version = "v1.25.3"
+  kubernetes_version = "v1.26.1"
 }
 
 resource "minikube_cluster" "docker" {
@@ -147,7 +147,7 @@ resource "kubernetes_deployment" "deployment" {
 - `interactive` (Boolean) Allow user prompts for more information
 - `iso_url` (List of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.25.3, 'latest' for v1.25.3). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.26.1, 'latest' for v1.26.1). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)
@@ -180,12 +180,13 @@ resource "kubernetes_deployment" "deployment" {
 - `qemu_firmware_path` (String) Path to the qemu firmware file. Defaults: For Linux, the default firmware location. For macOS, the brew installation location. For Windows, C:\Program Files\qemu\share
 - `registry_mirror` (List of String) Registry mirrors to pass to the Docker daemon
 - `service_cluster_ip_range` (String) The CIDR to be used for service cluster IPs.
-- `socket_vmnet_client_path` (String) Path to the socket vmnet client binary
-- `socket_vmnet_path` (String) Path to socket vmnet binary
+- `socket_vmnet_client_path` (String) Path to the socket vmnet client binary (QEMU driver only)
+- `socket_vmnet_path` (String) Path to socket vmnet binary (QEMU driver only)
 - `ssh_ip_address` (String) IP address (ssh driver only)
 - `ssh_key` (String) SSH key (ssh driver only)
 - `ssh_port` (Number) SSH port (ssh driver only)
 - `ssh_user` (String) SSH user (ssh driver only)
+- `static_ip` (String) Set a static IP for the minikube cluster, the IP must be: private, IPv4, and the last octet must be between 2 and 254, for example 192.168.200.200 (Docker and Podman drivers only)
 - `subnet` (String) Subnet to be used on kic cluster. If left empty, minikube will choose subnet address, beginning from 192.168.49.0. (docker and podman driver only)
 - `trace` (String) Send trace events. Options include: [gcp]
 - `uuid` (String) Provide VM UUID to restore MAC address (hyperkit driver only)

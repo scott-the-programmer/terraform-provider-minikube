@@ -110,7 +110,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	clusterSchema := ResourceCluster().Schema
 	mountString, _ := clusterSchema["mount_string"].DefaultFunc()
 
-	k8sVersion := "v1.25.3"
+	k8sVersion := "v1.26.1"
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion:      k8sVersion,
 		ClusterName:            clusterName,

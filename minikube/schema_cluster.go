@@ -135,7 +135,7 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.36@sha256:8debc1b6a335075c5f99bfbf131b4f5566f68c6500dc5991817832e55fcc9456",
+			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.37@sha256:8bf7a0e8a062bc5e2b71d28b35bfa9cc862d9220e234e86176b3785f685d8b15",
 		},
 	
 		"binary_mirror": {
@@ -571,7 +571,7 @@ var (
 	
 		"kubernetes_version": {
 			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.25.3, 'latest' for v1.25.3). Defaults to 'stable'.",
+			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.26.1, 'latest' for v1.26.1). Defaults to 'stable'.",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -920,22 +920,22 @@ var (
 	
 		"socket_vmnet_client_path": {
 			Type:					schema.TypeString,
-			Description:	"Path to the socket vmnet client binary",
+			Description:	"Path to the socket vmnet client binary (QEMU driver only)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"/opt/socket_vmnet/bin/socket_vmnet_client",
+			Default:	"",
 		},
 	
 		"socket_vmnet_path": {
 			Type:					schema.TypeString,
-			Description:	"Path to socket vmnet binary",
+			Description:	"Path to socket vmnet binary (QEMU driver only)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"/var/run/socket_vmnet",
+			Default:	"",
 		},
 	
 		"ssh_ip_address": {
@@ -976,6 +976,16 @@ var (
 			ForceNew:			true,
 			
 			Default:	"root",
+		},
+	
+		"static_ip": {
+			Type:					schema.TypeString,
+			Description:	"Set a static IP for the minikube cluster, the IP must be: private, IPv4, and the last octet must be between 2 and 254, for example 192.168.200.200 (Docker and Podman drivers only)",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"",
 		},
 	
 		"subnet": {

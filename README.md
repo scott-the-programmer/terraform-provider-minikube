@@ -23,7 +23,7 @@ Some drivers require a bit of prerequisite setup, so it's best to visit [https:/
 
 ```terraform
 provider minikube {
-  kubernetes_version = "v1.25.3"
+  kubernetes_version = "v1.26.1"
 }
 
 resource "minikube_cluster" "cluster" {

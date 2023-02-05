@@ -17,7 +17,7 @@ func main() {
 
 	schema := minikube.ResourceCluster().Schema
 
-	k8sVersion := "v1.25.3"
+	k8sVersion := "v1.26.1"
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion: k8sVersion,
 		ClusterName:       "terraform-provider-minikube-acc",

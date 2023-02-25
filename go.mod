@@ -1,6 +1,6 @@
 module terraform-provider-minikube/m/v2
 
-go 1.18
+go 1.20
 
 require (
 	github.com/docker/machine v0.16.2

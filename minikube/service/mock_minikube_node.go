@@ -101,6 +101,20 @@ func (mr *MockNodeMockRecorder) Provision(cc, n, apiServer, delOnFail interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provision", reflect.TypeOf((*MockNode)(nil).Provision), cc, n, apiServer, delOnFail)
 }
 
+// SetAddon mocks base method.
+func (m *MockNode) SetAddon(name, addon, value string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAddon", name, addon, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAddon indicates an expected call of SetAddon.
+func (mr *MockNodeMockRecorder) SetAddon(name, addon, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAddon", reflect.TypeOf((*MockNode)(nil).SetAddon), name, addon, value)
+}
+
 // Start mocks base method.
 func (m *MockNode) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
 	m.ctrl.T.Helper()

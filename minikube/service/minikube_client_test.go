@@ -263,7 +263,7 @@ func TestMinikubeClient_Delete(t *testing.T) {
 
 func TestNewMinikubeClient(t *testing.T) {
 	type args struct {
-		args MinikubeClientArgs
+		args MinikubeClientConfig
 		dep  MinikubeClientDeps
 	}
 	tests := []struct {
@@ -275,7 +275,7 @@ func TestNewMinikubeClient(t *testing.T) {
 			name: "Blank Ctor",
 
 			args: args{
-				args: MinikubeClientArgs{},
+				args: MinikubeClientConfig{},
 				dep:  MinikubeClientDeps{},
 			},
 			want: &MinikubeClient{},
@@ -304,7 +304,7 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 		dLoader         Downloader
 	}
 	type args struct {
-		args MinikubeClientArgs
+		args MinikubeClientConfig
 	}
 	tests := []struct {
 		name   string
@@ -315,7 +315,7 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 			name:   "Sets Cluster Properties",
 			fields: fields{},
 			args: args{
-				args: MinikubeClientArgs{
+				args: MinikubeClientConfig{
 					ClusterName: "mock",
 					Nodes:       100,
 				},
@@ -394,6 +394,104 @@ func TestMinikubeClient_SetDependencies(t *testing.T) {
 				dLoader:         tt.fields.dLoader,
 			}
 			e.SetDependencies(tt.args.dep)
+		})
+	}
+}
+
+func TestMinikubeClient_DisableAddons(t *testing.T) {
+	type fields struct {
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nodes           int
+		TfCreationLock  *sync.Mutex
+		K8sVersion      string
+		dLoader         Downloader
+	}
+	type args struct {
+		addons []string
+	}
+	tests := []struct {
+		name         string
+		fields       fields
+		args         args
+		wantErr      bool
+		addAddons    []string
+		deleteAddons []string
+	}{
+		{
+			name: "Should remove existing addons",
+			fields: fields{
+				clusterName: "cluster",
+				addons:      []string{"feature1", "feature2"},
+			},
+			args: args{
+				addons: []string{"feature1"},
+			},
+			wantErr:      false,
+			deleteAddons: []string{"feature2"},
+		},
+		{
+			name: "Should add new addons",
+			fields: fields{
+				clusterName: "cluster",
+				addons:      []string{"feature1", "feature2"},
+			},
+			args: args{
+				addons: []string{"feature1", "feature2", "feature3"},
+			},
+			wantErr:   false,
+			addAddons: []string{"feature3"},
+		},
+		{
+			name: "Should remove and add addons",
+			fields: fields{
+				clusterName: "cluster",
+				addons:      []string{"feature1", "feature2"},
+			},
+			args: args{
+				addons: []string{"feature3"},
+			},
+			wantErr:      false,
+			deleteAddons: []string{"feature1", "feature2"},
+			addAddons:    []string{"feature3"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockNode := NewMockNode(ctrl)
+			delSeq := make([]*gomock.Call, 0)
+			addSeq := make([]*gomock.Call, 0)
+			for _, deleteAddon := range tt.deleteAddons {
+				delSeq = append(delSeq, mockNode.EXPECT().
+					SetAddon("cluster", deleteAddon, "false").
+					Return(nil))
+			}
+			for _, addAddon := range tt.addAddons {
+				addSeq = append(addSeq, mockNode.EXPECT().
+					SetAddon("cluster", addAddon, "true").
+					Return(nil))
+			}
+			gomock.InAnyOrder(append(delSeq, addSeq...))
+
+			e := &MinikubeClient{
+				clusterConfig:   tt.fields.clusterConfig,
+				clusterName:     tt.fields.clusterName,
+				addons:          tt.fields.addons,
+				isoUrls:         tt.fields.isoUrls,
+				deleteOnFailure: tt.fields.deleteOnFailure,
+				nodes:           tt.fields.nodes,
+				TfCreationLock:  tt.fields.TfCreationLock,
+				K8sVersion:      tt.fields.K8sVersion,
+				nRunner:         mockNode,
+				dLoader:         tt.fields.dLoader,
+			}
+			if err := e.ApplyAddons(tt.args.addons); (err != nil) != tt.wantErr {
+				t.Errorf("MinikubeClient.EnableAddons() error = %v, wantErr %v", err, tt.wantErr)
+			}
 		})
 	}
 }

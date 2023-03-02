@@ -350,6 +350,40 @@ func GetClusterSchema() map[string]*schema.Schema {
 	`, schema)
 }
 
+func TestUpdateField(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--addons=[]:
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, header+`
+		"addons": {
+			Type:					schema.TypeList,
+			Description:	"I am a great test description",
+			
+			Optional:			true,
+			
+			Elem: &schema.Schema{
+				Type:	schema.TypeString,
+			},
+			
+		},
+	
+	}
+)
+
+func GetClusterSchema() map[string]*schema.Schema {
+	return clusterSchema
+}
+	`, schema)
+}
+
 func TestDefaultFuncOverride(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockMinikube := NewMockMinikubeBinary(ctrl)

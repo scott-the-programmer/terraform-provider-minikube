@@ -8,6 +8,7 @@ import (
 	"github.com/docker/machine/libmachine"
 	"github.com/docker/machine/libmachine/host"
 	delete "k8s.io/minikube/cmd/minikube/cmd"
+	minikubeAddons "k8s.io/minikube/pkg/addons"
 	"k8s.io/minikube/pkg/minikube/command"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/exit"
@@ -24,6 +25,7 @@ type Node interface {
 	Delete(cc config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) mustload.ClusterController
 	Add(cc *config.ClusterConfig, starter node.Starter) error
+	SetAddon(name string, addon string, value string) error
 }
 
 type MinikubeCluster struct {
@@ -86,6 +88,10 @@ func (m *MinikubeCluster) Delete(cc config.ClusterConfig, name string) (*config.
 	}
 
 	return nil, err
+}
+
+func (m *MinikubeCluster) SetAddon(name string, addon string, value string) error {
+	return minikubeAddons.SetAndSave(name, addon, value)
 }
 
 func (m *MinikubeCluster) Get(name string) mustload.ClusterController {

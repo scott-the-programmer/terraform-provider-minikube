@@ -33,7 +33,7 @@ func TestClusterCreation(t *testing.T) {
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
 				Check: resource.ComposeTestCheckFunc(
-					testClusterExists("minikube_cluster.new", "TestClusterCreation"),
+					testPropertyExists("minikube_cluster.new", "TestClusterCreation"),
 				),
 			},
 		},
@@ -48,7 +48,28 @@ func TestClusterCreation_Docker(t *testing.T) {
 			{
 				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDocker"),
 				Check: resource.ComposeTestCheckFunc(
-					testClusterExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+				),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_Docker_Update(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDocker"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+				),
+			},
+			{
+				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDocker"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
 				),
 			},
 		},
@@ -68,7 +89,7 @@ func TestClusterCreation_Hyperkit(t *testing.T) {
 			{
 				Config: testAcceptanceClusterConfig("hyperkit", "TestClusterCreationHyperkit"),
 				Check: resource.ComposeTestCheckFunc(
-					testClusterExists("minikube_cluster.new", "TestClusterCreationHyperkit"),
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationHyperkit"),
 				),
 			},
 		},
@@ -88,7 +109,7 @@ func TestClusterCreation_HyperV(t *testing.T) {
 			{
 				Config: testAcceptanceClusterConfig("hyperv", "TestClusterCreationHyperV"),
 				Check: resource.ComposeTestCheckFunc(
-					testClusterExists("minikube_cluster.new", "TestClusterCreationHyperV"),
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationHyperV"),
 				),
 			},
 		},
@@ -268,6 +289,22 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		addons = [
 			"dashboard",
 			"default-storageclass",
+		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfig_Update(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 2 
+		memory = "6000mb"
+
+		addons = [
+			"dashboard",
+			"default-storageclass",
 			"ingress"
 		]
 	}
@@ -298,7 +335,7 @@ func verifyDelete(s *terraform.State) error {
 	return nil
 }
 
-func testClusterExists(n string, id string) resource.TestCheckFunc {
+func testPropertyExists(n string, id string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 

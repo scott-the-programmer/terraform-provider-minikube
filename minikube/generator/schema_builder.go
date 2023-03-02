@@ -31,7 +31,6 @@ func (m *MinikubeHostBinary) GetStartHelpText(ctx context.Context) (string, erro
 }
 
 var computedFields []string = []string{
-	"addons",
 	"apiserver_ips",
 	"apiserver_names",
 	"hyperkit_vsock_ports",
@@ -49,6 +48,9 @@ type SchemaOverride struct {
 	DefaultFunc string
 }
 
+var updateFields = []string{
+	"addons",
+}
 var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 	"memory": {
 		Default:     "4000mb",
@@ -320,10 +322,16 @@ var (
 			`
 		}
 
-		extraParams += `
+		if !contains(updateFields, entry.Parameter) {
+			extraParams += `
 			Optional:			true,
 			ForceNew:			true,
 			`
+		} else {
+			extraParams += `
+			Optional:			true,
+			`
+		}
 
 		if entry.Type == Array {
 			extraParams += fmt.Sprintf(`

@@ -108,7 +108,7 @@ func main() {
 	}
 
 	minikubeClient := service.NewMinikubeClient(
-		service.MinikubeClientArgs{
+		service.MinikubeClientConfig{
 			ClusterConfig:   cc,
 			ClusterName:     "terraform-provider-minikube-acc",
 			Addons:          []string{},

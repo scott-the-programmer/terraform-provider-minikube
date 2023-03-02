@@ -57,10 +57,7 @@ var (
 			Type:					schema.TypeList,
 			Description:	"Enable addons. see `minikube addons list` for a list of valid addon names.",
 			
-			Computed:			true,
-			
 			Optional:			true,
-			ForceNew:			true,
 			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,

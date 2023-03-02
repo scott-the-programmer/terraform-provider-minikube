@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"sync"
 
 	"github.com/docker/machine/libmachine/ssh"
@@ -22,12 +23,14 @@ import (
 )
 
 type ClusterClient interface {
-	SetConfig(args MinikubeClientArgs)
+	SetConfig(args MinikubeClientConfig)
+	GetConfig() MinikubeClientConfig
 	SetDependencies(dep MinikubeClientDeps)
 	Start() (*kubeconfig.Settings, error)
 	Delete() error
 	GetClusterConfig() *config.ClusterConfig
 	GetK8sVersion() string
+	ApplyAddons(addons []string) error
 }
 
 type MinikubeClient struct {
@@ -47,7 +50,7 @@ type MinikubeClient struct {
 	dLoader Downloader
 }
 
-type MinikubeClientArgs struct {
+type MinikubeClientConfig struct {
 	ClusterConfig   config.ClusterConfig
 	ClusterName     string
 	Addons          []string
@@ -62,7 +65,7 @@ type MinikubeClientDeps struct {
 }
 
 // NewMinikubeClient creates a new MinikubeClient struct
-func NewMinikubeClient(args MinikubeClientArgs, dep MinikubeClientDeps) *MinikubeClient {
+func NewMinikubeClient(args MinikubeClientConfig, dep MinikubeClientDeps) *MinikubeClient {
 	return &MinikubeClient{
 		clusterConfig:   args.ClusterConfig,
 		isoUrls:         args.IsoUrls,
@@ -96,13 +99,24 @@ func init() {
 }
 
 // SetConfig provides an injection point for setting the cluster config
-func (e *MinikubeClient) SetConfig(args MinikubeClientArgs) {
+func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.clusterConfig = args.ClusterConfig
 	e.isoUrls = args.IsoUrls
 	e.clusterName = args.ClusterName
 	e.addons = args.Addons
 	e.deleteOnFailure = args.DeleteOnFailure
 	e.nodes = args.Nodes
+}
+
+func (e *MinikubeClient) GetConfig() MinikubeClientConfig {
+	return MinikubeClientConfig{
+		ClusterConfig:   e.clusterConfig,
+		IsoUrls:         e.isoUrls,
+		ClusterName:     e.clusterName,
+		Addons:          e.addons,
+		DeleteOnFailure: e.deleteOnFailure,
+		Nodes:           e.nodes,
+	}
 }
 
 // SetDependencies injects dependencies into the MinikubeClient
@@ -168,6 +182,50 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	klog.Flush()
 
 	return kc, nil
+}
+
+func (e *MinikubeClient) ApplyAddons(addons []string) error {
+
+	addonsToDelete := diff(e.addons, addons)
+	err := e.setAddons(addonsToDelete, false)
+	if err != nil {
+		return err
+	}
+
+	addonsToAdd := diff(addons, e.addons)
+	err = e.setAddons(addonsToAdd, true)
+	if err != nil {
+		return err
+	}
+
+	e.addons = addons
+
+	return nil
+}
+
+func diff(addonsA, addonsB []string) []string {
+	lookupB := make(map[string]struct{}, len(addonsB))
+	for _, addon := range addonsB {
+		lookupB[addon] = struct{}{}
+	}
+	var diff []string
+	for _, addon := range addonsA {
+		if _, found := lookupB[addon]; !found {
+			diff = append(diff, addon)
+		}
+	}
+	return diff
+}
+
+func (e *MinikubeClient) setAddons(addons []string, val bool) error {
+	for _, addon := range addons {
+		err := e.nRunner.SetAddon(e.clusterName, addon, strconv.FormatBool(val))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Delete deletes the given cluster associated with the cluster config

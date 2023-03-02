@@ -26,6 +26,7 @@ func ResourceCluster() *schema.Resource {
 		CreateContext: resourceClusterCreate,
 		ReadContext:   resourceClusterRead,
 		DeleteContext: resourceClusterDelete,
+		UpdateContext: resourceClusterUpdate,
 		Schema:        GetClusterSchema(),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -58,6 +59,38 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	d.Set("cluster_name", kc.ClusterName)
 
 	diags = resourceClusterRead(ctx, d, m)
+
+	return diags
+}
+
+func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+	client, err := initialiseMinikubeClient(d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if d.HasChange("addons") {
+		config := client.GetConfig()
+		oldAddons, newAddons := d.GetChange("addons")
+		oldAddonStrings := getAddons(oldAddons)
+		newAddonStrings := getAddons(newAddons)
+
+		client.SetConfig(service.MinikubeClientConfig{
+			ClusterConfig:   config.ClusterConfig,
+			IsoUrls:         config.IsoUrls,
+			ClusterName:     config.ClusterName,
+			Addons:          oldAddonStrings,
+			DeleteOnFailure: config.DeleteOnFailure,
+			Nodes:           config.Nodes,
+		})
+
+		client.ApplyAddons(newAddonStrings)
+
+		sort.Strings(newAddonStrings) //to ensure consistency with TF state
+
+		d.Set("addons", newAddonStrings)
+	}
 
 	return diags
 }
@@ -205,7 +238,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		return nil, err
 	}
 
-	addonStrings := getAddons(d)
+	addons, ok := d.GetOk("addons")
+	if !ok {
+		addons = []interface{}{}
+	}
+
+	addonStrings := getAddons(addons)
 
 	defaultIsos, ok := d.GetOk("iso_url")
 	if !ok {
@@ -330,7 +368,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		StaticIP:           d.Get("static_ip").(string),
 	}
 
-	clusterClient.SetConfig(service.MinikubeClientArgs{
+	clusterClient.SetConfig(service.MinikubeClientConfig{
 		ClusterConfig: cc, ClusterName: d.Get("cluster_name").(string),
 		Addons:          addonStrings,
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
@@ -346,12 +384,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 	return clusterClient, nil
 }
 
-func getAddons(d *schema.ResourceData) []string {
-	addons, ok := d.GetOk("addons")
-	if !ok {
-		addons = []interface{}{}
-	}
-
+func getAddons(addons interface{}) []string {
 	addonStrings := make([]string, len(addons.([]interface{})))
 	userDefinedStorageClass := false
 	for i, v := range addons.([]interface{}) {

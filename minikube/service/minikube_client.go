@@ -98,7 +98,7 @@ func init() {
 
 }
 
-// SetConfig provides an injection point for setting the cluster config
+// SetConfig sets the clients configuration
 func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.clusterConfig = args.ClusterConfig
 	e.isoUrls = args.IsoUrls
@@ -108,6 +108,7 @@ func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.nodes = args.Nodes
 }
 
+// GetConfig retrieves the current clients configuration
 func (e *MinikubeClient) GetConfig() MinikubeClientConfig {
 	return MinikubeClientConfig{
 		ClusterConfig:   e.clusterConfig,

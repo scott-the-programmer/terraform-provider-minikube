@@ -398,6 +398,65 @@ func TestMinikubeClient_SetDependencies(t *testing.T) {
 	}
 }
 
+func TestMinikubeClient_GetConfig(t *testing.T) {
+	type fields struct {
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nodes           int
+		TfCreationLock  *sync.Mutex
+		K8sVersion      string
+		nRunner         Node
+		dLoader         Downloader
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   MinikubeClientConfig
+	}{
+		{
+			name: "Retrieves client config",
+			fields: fields{
+				clusterConfig:   config.ClusterConfig{},
+				isoUrls:         []string{"url1", "url2"},
+				clusterName:     "abc",
+				addons:          []string{"addon1", "addon2"},
+				deleteOnFailure: false,
+				nodes:           1,
+			},
+			want: MinikubeClientConfig{
+				ClusterConfig:   config.ClusterConfig{},
+				IsoUrls:         []string{"url1", "url2"},
+				ClusterName:     "abc",
+				Addons:          []string{"addon1", "addon2"},
+				DeleteOnFailure: false,
+				Nodes:           1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &MinikubeClient{
+				clusterConfig:   tt.fields.clusterConfig,
+				clusterName:     tt.fields.clusterName,
+				addons:          tt.fields.addons,
+				isoUrls:         tt.fields.isoUrls,
+				deleteOnFailure: tt.fields.deleteOnFailure,
+				nodes:           tt.fields.nodes,
+				TfCreationLock:  tt.fields.TfCreationLock,
+				K8sVersion:      tt.fields.K8sVersion,
+				nRunner:         tt.fields.nRunner,
+				dLoader:         tt.fields.dLoader,
+			}
+			if got := e.GetConfig(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MinikubeClient.GetConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMinikubeClient_DisableAddons(t *testing.T) {
 	type fields struct {
 		clusterConfig   config.ClusterConfig

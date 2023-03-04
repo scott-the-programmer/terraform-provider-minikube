@@ -187,6 +187,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 
 func (e *MinikubeClient) ApplyAddons(addons []string) error {
 
+	viper.Set(config.ProfileName, e.clusterName)
 	addonsToDelete := diff(e.addons, addons)
 	err := e.setAddons(addonsToDelete, false)
 	if err != nil {

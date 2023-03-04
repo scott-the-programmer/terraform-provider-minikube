@@ -85,7 +85,10 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			Nodes:           config.Nodes,
 		})
 
-		client.ApplyAddons(newAddonStrings)
+		err = client.ApplyAddons(newAddonStrings)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		sort.Strings(newAddonStrings) //to ensure consistency with TF state
 

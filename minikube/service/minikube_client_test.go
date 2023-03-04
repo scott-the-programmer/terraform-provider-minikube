@@ -457,7 +457,7 @@ func TestMinikubeClient_GetConfig(t *testing.T) {
 	}
 }
 
-func TestMinikubeClient_DisableAddons(t *testing.T) {
+func TestMinikubeClient_ApplyAddons(t *testing.T) {
 	type fields struct {
 		clusterConfig   config.ClusterConfig
 		clusterName     string

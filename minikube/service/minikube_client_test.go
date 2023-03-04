@@ -483,8 +483,9 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 		{
 			name: "Should remove existing addons",
 			fields: fields{
-				clusterName: "cluster",
-				addons:      []string{"feature1", "feature2"},
+				clusterName:    "cluster",
+				addons:         []string{"feature1", "feature2"},
+				TfCreationLock: &sync.Mutex{},
 			},
 			args: args{
 				addons: []string{"feature1"},
@@ -495,8 +496,9 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 		{
 			name: "Should add new addons",
 			fields: fields{
-				clusterName: "cluster",
-				addons:      []string{"feature1", "feature2"},
+				clusterName:    "cluster",
+				addons:         []string{"feature1", "feature2"},
+				TfCreationLock: &sync.Mutex{},
 			},
 			args: args{
 				addons: []string{"feature1", "feature2", "feature3"},
@@ -507,8 +509,9 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 		{
 			name: "Should remove and add addons",
 			fields: fields{
-				clusterName: "cluster",
-				addons:      []string{"feature1", "feature2"},
+				clusterName:    "cluster",
+				addons:         []string{"feature1", "feature2"},
+				TfCreationLock: &sync.Mutex{},
 			},
 			args: args{
 				addons: []string{"feature3"},

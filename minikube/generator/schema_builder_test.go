@@ -435,3 +435,13 @@ func TestMinikubeNotFound(t *testing.T) {
 	_, err := builder.Build()
 	assert.Error(t, err)
 }
+
+func TestMinikubeHelpTextFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(nil, errors.New("oh nooo"))
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	_, err := builder.Build()
+	assert.Error(t, err)
+}

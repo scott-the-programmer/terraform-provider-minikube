@@ -187,7 +187,15 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 
 func (e *MinikubeClient) ApplyAddons(addons []string) error {
 
+	// By nature, viper references (here and within the internals of minikube) are not thread safe.
+	// To keep our sanity, let's mutex this call and defer subsequent cluster starts
+	if e.TfCreationLock != nil {
+		e.TfCreationLock.Lock()
+		defer e.TfCreationLock.Unlock()
+	}
+
 	viper.Set(config.ProfileName, e.clusterName)
+
 	addonsToDelete := diff(e.addons, addons)
 	err := e.setAddons(addonsToDelete, false)
 	if err != nil {

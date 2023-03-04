@@ -21,6 +21,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 		nRunner         Node
 		dLoader         Downloader
 		nodes           int
+		tfCreationLock  sync.Mutex
 	}
 
 	ctrl := gomock.NewController(t)
@@ -44,6 +45,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         getNodeSuccess(ctrl),
 				dLoader:         getDownloadSuccess(ctrl),
 				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -63,6 +65,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         getNodeSuccess(ctrl),
 				dLoader:         getDownloadSuccess(ctrl),
 				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -82,6 +85,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         getMultipleNodesSuccess(ctrl, 3),
 				dLoader:         getDownloadSuccess(ctrl),
 				nodes:           3,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -101,6 +105,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         getMultipleNodesFailure(ctrl),
 				dLoader:         getDownloadSuccess(ctrl),
 				nodes:           3,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -118,6 +123,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         nil,
 				dLoader:         getDownloadFailure(ctrl),
 				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -135,6 +141,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         nil,
 				dLoader:         getTarballFailure(ctrl),
 				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -152,6 +159,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         getProvisionerFailure(ctrl),
 				dLoader:         getDownloadSuccess(ctrl),
 				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -169,6 +177,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         getStartFailure(ctrl),
 				dLoader:         getDownloadSuccess(ctrl),
 				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},

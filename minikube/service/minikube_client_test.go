@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"reflect"
+	"sort"
 	"sync"
 	"testing"
 
@@ -562,6 +563,61 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 			}
 			if err := e.ApplyAddons(tt.args.addons); (err != nil) != tt.wantErr {
 				t.Errorf("MinikubeClient.EnableAddons() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMinikubeClient_GetAddons(t *testing.T) {
+	type fields struct {
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nodes           int
+		TfCreationLock  *sync.Mutex
+		K8sVersion      string
+		nRunner         Node
+		dLoader         Downloader
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []string
+	}{
+		{
+			name: "Should convert enabled addons into slice",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Addons: map[string]bool{
+						"addon1": true,
+						"addon2": false,
+						"addon3": true,
+					},
+				},
+			},
+			want: []string{"addon1", "addon3"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &MinikubeClient{
+				clusterConfig:   tt.fields.clusterConfig,
+				clusterName:     tt.fields.clusterName,
+				addons:          tt.fields.addons,
+				isoUrls:         tt.fields.isoUrls,
+				deleteOnFailure: tt.fields.deleteOnFailure,
+				nodes:           tt.fields.nodes,
+				TfCreationLock:  tt.fields.TfCreationLock,
+				K8sVersion:      tt.fields.K8sVersion,
+				nRunner:         tt.fields.nRunner,
+				dLoader:         tt.fields.dLoader,
+			}
+			got := e.GetAddons()
+			sort.Strings(got)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MinikubeClient.GetAddons() = %v, want %v", got, tt.want)
 			}
 		})
 	}

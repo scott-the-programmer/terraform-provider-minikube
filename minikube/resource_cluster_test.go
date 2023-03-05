@@ -40,6 +40,24 @@ func TestClusterCreation(t *testing.T) {
 	})
 }
 
+func TestClusterUpdate(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(t, "TestClusterCreation"))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
+			},
+			{
+				Config: testUnitClusterConfig_Update("some_driver", "TestClusterCreation"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
+				),
+			},
+		},
+	})
+}
+
 func TestClusterCreation_Docker(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Providers:    map[string]*schema.Provider{"minikube": Provider()},
@@ -68,9 +86,6 @@ func TestClusterCreation_Docker_Update(t *testing.T) {
 			},
 			{
 				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDocker"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
-				),
 			},
 		},
 	})
@@ -116,9 +131,64 @@ func TestClusterCreation_HyperV(t *testing.T) {
 	})
 }
 
+func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
+	ctrl := gomock.NewController(t)
+
+	mockClusterClient := getBaseMockClient(ctrl, clusterName)
+
+	gomock.InOrder(
+		mockClusterClient.EXPECT().
+			GetAddons().
+			Return([]string{}),
+		mockClusterClient.EXPECT().
+			GetAddons().
+			Return([]string{}),
+		mockClusterClient.EXPECT().
+			GetAddons().
+			Return([]string{}),
+		mockClusterClient.
+			EXPECT().
+			GetAddons().
+			Return([]string{
+				"dashboard",
+				"default-storageclass",
+				"ingress",
+			}),
+	)
+
+	configureContext := func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var diags diag.Diagnostics
+		mockClusterClientFactory := func() (service.ClusterClient, error) {
+			return mockClusterClient, nil
+		}
+		return mockClusterClientFactory, diags
+	}
+
+	return configureContext
+}
+
 func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(t)
 
+	mockClusterClient := getBaseMockClient(ctrl, clusterName)
+
+	mockClusterClient.EXPECT().
+		GetAddons().
+		Return(nil).
+		AnyTimes()
+
+	configureContext := func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var diags diag.Diagnostics
+		mockClusterClientFactory := func() (service.ClusterClient, error) {
+			return mockClusterClient, nil
+		}
+		return mockClusterClientFactory, diags
+	}
+
+	return configureContext
+}
+
+func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *service.MockClusterClient {
 	mockClusterClient := service.NewMockClusterClient(ctrl)
 
 	os.Mkdir("test_output", 0755)
@@ -258,15 +328,17 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 		Return("v1.99.9").
 		AnyTimes()
 
-	configureContext := func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		var diags diag.Diagnostics
-		mockClusterClientFactory := func() (service.ClusterClient, error) {
-			return mockClusterClient, nil
-		}
-		return mockClusterClientFactory, diags
-	}
+	mockClusterClient.EXPECT().
+		ApplyAddons(gomock.Any()).
+		Return(nil).
+		AnyTimes()
 
-	return configureContext
+	mockClusterClient.EXPECT().
+		GetConfig().
+		Return(service.MinikubeClientConfig{}).
+		AnyTimes()
+
+	return mockClusterClient
 }
 
 func testUnitClusterConfig(driver string, clusterName string) string {
@@ -274,6 +346,21 @@ func testUnitClusterConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterConfig_Update(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"ingress"
+		]
 	}
 	`, driver, clusterName)
 }

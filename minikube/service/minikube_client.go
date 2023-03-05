@@ -31,6 +31,7 @@ type ClusterClient interface {
 	GetClusterConfig() *config.ClusterConfig
 	GetK8sVersion() string
 	ApplyAddons(addons []string) error
+	GetAddons() []string
 }
 
 type MinikubeClient struct {
@@ -211,6 +212,17 @@ func (e *MinikubeClient) ApplyAddons(addons []string) error {
 	e.addons = addons
 
 	return nil
+}
+
+func (e *MinikubeClient) GetAddons() []string {
+	addons := make([]string, 0)
+	for addon, enabled := range e.clusterConfig.Addons {
+		if enabled {
+			addons = append(addons, addon)
+		}
+	}
+
+	return addons
 }
 
 func diff(addonsA, addonsB []string) []string {

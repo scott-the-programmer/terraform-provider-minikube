@@ -63,6 +63,20 @@ func (mr *MockClusterClientMockRecorder) Delete() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockClusterClient)(nil).Delete))
 }
 
+// GetAddons mocks base method.
+func (m *MockClusterClient) GetAddons() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAddons")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// GetAddons indicates an expected call of GetAddons.
+func (mr *MockClusterClientMockRecorder) GetAddons() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAddons", reflect.TypeOf((*MockClusterClient)(nil).GetAddons))
+}
+
 // GetClusterConfig mocks base method.
 func (m *MockClusterClient) GetClusterConfig() *config.ClusterConfig {
 	m.ctrl.T.Helper()

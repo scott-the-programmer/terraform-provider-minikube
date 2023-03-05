@@ -123,18 +123,8 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	config := client.GetClusterConfig()
-
-	addons := make([]string, 0, len(config.Addons))
-	for k, v := range config.Addons {
-		if v {
-			addons = append(addons, k)
-		}
-	}
+	addons := client.GetAddons()
 	sort.Strings(addons) //to ensure consistency with TF state
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	stringPorts := config.ExposedPorts
 	ports := make([]int, len(stringPorts))

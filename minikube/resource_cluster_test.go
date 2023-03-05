@@ -79,13 +79,16 @@ func TestClusterCreation_Docker_Update(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDockerUpdate"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDockerUpdate"),
 				),
 			},
 			{
-				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDockerUpdate"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
+				),
 			},
 		},
 	})

@@ -216,7 +216,7 @@ func (e *MinikubeClient) ApplyAddons(addons []string) error {
 
 func (e *MinikubeClient) GetAddons() []string {
 	addons := make([]string, 0)
-	for addon, enabled := range e.clusterConfig.Addons {
+	for addon, enabled := range e.GetClusterConfig().Addons {
 		if enabled {
 			addons = append(addons, addon)
 		}

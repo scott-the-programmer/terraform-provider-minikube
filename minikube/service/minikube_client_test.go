@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"k8s.io/minikube/pkg/minikube/config"
+	"k8s.io/minikube/pkg/minikube/mustload"
 	_ "k8s.io/minikube/pkg/minikube/registry/drvs"
 )
 
@@ -569,6 +570,19 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 }
 
 func TestMinikubeClient_GetAddons(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockCluster := NewMockCluster(ctrl)
+	mockCluster.EXPECT().
+		Get(gomock.Any()).
+		Return(mustload.ClusterController{
+			Config: &config.ClusterConfig{Addons: map[string]bool{
+				"addon1": true,
+				"addon2": false,
+				"addon3": true,
+			},
+			},
+		})
+
 	type fields struct {
 		clusterConfig   config.ClusterConfig
 		clusterName     string
@@ -589,13 +603,7 @@ func TestMinikubeClient_GetAddons(t *testing.T) {
 		{
 			name: "Should convert enabled addons into slice",
 			fields: fields{
-				clusterConfig: config.ClusterConfig{
-					Addons: map[string]bool{
-						"addon1": true,
-						"addon2": false,
-						"addon3": true,
-					},
-				},
+				nRunner: mockCluster,
 			},
 			want: []string{"addon1", "addon3"},
 		},

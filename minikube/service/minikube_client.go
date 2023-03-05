@@ -47,7 +47,7 @@ type MinikubeClient struct {
 	TfCreationLock *sync.Mutex
 	K8sVersion     string
 
-	nRunner Node
+	nRunner Cluster
 	dLoader Downloader
 }
 
@@ -61,7 +61,7 @@ type MinikubeClientConfig struct {
 }
 
 type MinikubeClientDeps struct {
-	Node       Node
+	Node       Cluster
 	Downloader Downloader
 }
 

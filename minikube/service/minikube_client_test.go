@@ -19,7 +19,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 		addons          []string
 		isoUrls         []string
 		deleteOnFailure bool
-		nRunner         Node
+		nRunner         Cluster
 		dLoader         Downloader
 		nodes           int
 		tfCreationLock  sync.Mutex
@@ -209,7 +209,7 @@ func TestMinikubeClient_Delete(t *testing.T) {
 		addons          []string
 		isoUrls         []string
 		deleteOnFailure bool
-		nRunner         Node
+		nRunner         Cluster
 		dLoader         Downloader
 	}
 
@@ -310,7 +310,7 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 		nodes           int
 		TfCreationLock  *sync.Mutex
 		K8sVersion      string
-		nRunner         Node
+		nRunner         Cluster
 		dLoader         Downloader
 	}
 	type args struct {
@@ -367,7 +367,7 @@ func TestMinikubeClient_SetDependencies(t *testing.T) {
 		nodes           int
 		TfCreationLock  *sync.Mutex
 		K8sVersion      string
-		nRunner         Node
+		nRunner         Cluster
 		dLoader         Downloader
 	}
 	type args struct {
@@ -383,7 +383,7 @@ func TestMinikubeClient_SetDependencies(t *testing.T) {
 			fields: fields{},
 			args: args{
 				dep: MinikubeClientDeps{
-					Node:       NewMockNode(ctrl),
+					Node:       NewMockCluster(ctrl),
 					Downloader: NewMockDownloader(ctrl),
 				},
 			},
@@ -418,7 +418,7 @@ func TestMinikubeClient_GetConfig(t *testing.T) {
 		nodes           int
 		TfCreationLock  *sync.Mutex
 		K8sVersion      string
-		nRunner         Node
+		nRunner         Cluster
 		dLoader         Downloader
 	}
 	tests := []struct {
@@ -534,7 +534,7 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			mockNode := NewMockNode(ctrl)
+			mockNode := NewMockCluster(ctrl)
 			delSeq := make([]*gomock.Call, 0)
 			addSeq := make([]*gomock.Call, 0)
 			for _, deleteAddon := range tt.deleteAddons {
@@ -578,7 +578,7 @@ func TestMinikubeClient_GetAddons(t *testing.T) {
 		nodes           int
 		TfCreationLock  *sync.Mutex
 		K8sVersion      string
-		nRunner         Node
+		nRunner         Cluster
 		dLoader         Downloader
 	}
 	tests := []struct {
@@ -623,8 +623,8 @@ func TestMinikubeClient_GetAddons(t *testing.T) {
 	}
 }
 
-func getProvisionerFailure(ctrl *gomock.Controller) Node {
-	nRunnerProvisionFailure := NewMockNode(ctrl)
+func getProvisionerFailure(ctrl *gomock.Controller) Cluster {
+	nRunnerProvisionFailure := NewMockCluster(ctrl)
 
 	nRunnerProvisionFailure.EXPECT().
 		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -633,8 +633,8 @@ func getProvisionerFailure(ctrl *gomock.Controller) Node {
 	return nRunnerProvisionFailure
 }
 
-func getStartFailure(ctrl *gomock.Controller) Node {
-	nRunnerStartFailure := NewMockNode(ctrl)
+func getStartFailure(ctrl *gomock.Controller) Cluster {
+	nRunnerStartFailure := NewMockCluster(ctrl)
 
 	nRunnerStartFailure.EXPECT().
 		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -671,8 +671,8 @@ func getTarballFailure(ctrl *gomock.Controller) Downloader {
 	return dLoaderSuccess
 }
 
-func getNodeSuccess(ctrl *gomock.Controller) Node {
-	nRunnerSuccess := NewMockNode(ctrl)
+func getNodeSuccess(ctrl *gomock.Controller) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
 		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -685,8 +685,8 @@ func getNodeSuccess(ctrl *gomock.Controller) Node {
 	return nRunnerSuccess
 }
 
-func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Node {
-	nRunnerSuccess := NewMockNode(ctrl)
+func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
 		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -704,8 +704,8 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Node {
 	return nRunnerSuccess
 }
 
-func getMultipleNodesFailure(ctrl *gomock.Controller) Node {
-	nRunnerSuccess := NewMockNode(ctrl)
+func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
 		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -736,8 +736,8 @@ func getDownloadSuccess(ctrl *gomock.Controller) Downloader {
 	return dLoaderSuccess
 }
 
-func getDeleteSuccess(ctrl *gomock.Controller) Node {
-	nRunnerSuccess := NewMockNode(ctrl)
+func getDeleteSuccess(ctrl *gomock.Controller) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
 		Delete(gomock.Any(), gomock.Any()).
@@ -746,8 +746,8 @@ func getDeleteSuccess(ctrl *gomock.Controller) Node {
 	return nRunnerSuccess
 }
 
-func getDeleteFailure(ctrl *gomock.Controller) Node {
-	nRunnerSuccess := NewMockNode(ctrl)
+func getDeleteFailure(ctrl *gomock.Controller) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
 		Delete(gomock.Any(), gomock.Any()).

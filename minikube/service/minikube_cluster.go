@@ -1,4 +1,4 @@
-//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_minikube_node.go -package=$GOPACKAGE
+//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_minikube_cluster.go -package=$GOPACKAGE
 package service
 
 import (
@@ -19,7 +19,7 @@ import (
 	"k8s.io/minikube/pkg/minikube/reason"
 )
 
-type Node interface {
+type Cluster interface {
 	Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error)
 	Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error)
 	Delete(cc config.ClusterConfig, name string) (*config.Node, error)

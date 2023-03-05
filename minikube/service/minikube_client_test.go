@@ -570,30 +570,9 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 }
 
 func TestMinikubeClient_GetAddons(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	mockCluster := NewMockCluster(ctrl)
-	mockCluster.EXPECT().
-		Get(gomock.Any()).
-		Return(mustload.ClusterController{
-			Config: &config.ClusterConfig{Addons: map[string]bool{
-				"addon1": true,
-				"addon2": false,
-				"addon3": true,
-			},
-			},
-		})
 
 	type fields struct {
-		clusterConfig   config.ClusterConfig
-		clusterName     string
-		addons          []string
-		isoUrls         []string
-		deleteOnFailure bool
-		nodes           int
-		TfCreationLock  *sync.Mutex
-		K8sVersion      string
-		nRunner         Cluster
-		dLoader         Downloader
+		addons map[string]bool
 	}
 	tests := []struct {
 		name   string
@@ -603,24 +582,40 @@ func TestMinikubeClient_GetAddons(t *testing.T) {
 		{
 			name: "Should convert enabled addons into slice",
 			fields: fields{
-				nRunner: mockCluster,
+				addons: map[string]bool{
+					"addon1": true,
+					"addon2": false,
+					"addon3": true,
+				},
 			},
 			want: []string{"addon1", "addon3"},
 		},
+		{
+			name: "Returns empty slice",
+			fields: fields{
+				addons: map[string]bool{
+					"addon1": false,
+					"addon2": false,
+					"addon3": false,
+				},
+			},
+			want: []string{},
+		},
 	}
 	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		mockCluster := NewMockCluster(ctrl)
+		mockCluster.EXPECT().
+			Get(gomock.Any()).
+			Return(mustload.ClusterController{
+				Config: &config.ClusterConfig{
+					Addons: tt.fields.addons,
+				},
+			})
+
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
-				clusterName:     tt.fields.clusterName,
-				addons:          tt.fields.addons,
-				isoUrls:         tt.fields.isoUrls,
-				deleteOnFailure: tt.fields.deleteOnFailure,
-				nodes:           tt.fields.nodes,
-				TfCreationLock:  tt.fields.TfCreationLock,
-				K8sVersion:      tt.fields.K8sVersion,
-				nRunner:         tt.fields.nRunner,
-				dLoader:         tt.fields.dLoader,
+				nRunner: mockCluster,
 			}
 			got := e.GetAddons()
 			sort.Strings(got)

@@ -33,7 +33,7 @@ jobs:
       with:
         coverageCommand: make test
         coverageLocations: ${{github.workspace}}/cover.out:gocov
-        prefix: terraform-provider-minikube/m/v2
+        prefix: github.com/scott-the-programmer/terraform-provider-minikube
 
     # temporarily disabled due to limited gh runner resources
     # - name: Acceptance

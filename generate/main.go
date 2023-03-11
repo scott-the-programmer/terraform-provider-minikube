@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"terraform-provider-minikube/m/v2/minikube/generator"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/generator"
 )
 
 func main() {

@@ -3,7 +3,8 @@ package service
 import (
 	"fmt"
 	"runtime"
-	"terraform-provider-minikube/m/v2/minikube/version"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/version"
 )
 
 var (

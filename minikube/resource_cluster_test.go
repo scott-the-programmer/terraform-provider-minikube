@@ -8,9 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"terraform-provider-minikube/m/v2/minikube/service"
 	"testing"
 	"time"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

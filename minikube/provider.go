@@ -3,7 +3,8 @@ package minikube
 import (
 	"context"
 	"sync"
-	"terraform-provider-minikube/m/v2/minikube/service"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

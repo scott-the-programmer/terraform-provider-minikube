@@ -2,9 +2,10 @@ package main
 
 import (
 	"os"
-	"terraform-provider-minikube/m/v2/minikube"
-	"terraform-provider-minikube/m/v2/minikube/service"
 	"time"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
 
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"

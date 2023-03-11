@@ -4,7 +4,8 @@ package main
 
 import (
 	"flag"
-	"terraform-provider-minikube/m/v2/minikube"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )

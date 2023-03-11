@@ -1,4 +1,4 @@
-module terraform-provider-minikube/m/v2
+module github.com/scott-the-programmer/terraform-provider-minikube
 
 go 1.20
 

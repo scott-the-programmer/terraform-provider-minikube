@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"terraform-provider-minikube/m/v2/minikube/service"
-	"terraform-provider-minikube/m/v2/minikube/state_utils"
 	"time"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

@@ -2,8 +2,9 @@ package minikube
 
 import (
 	"context"
-	"terraform-provider-minikube/m/v2/minikube/service"
 	"testing"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"

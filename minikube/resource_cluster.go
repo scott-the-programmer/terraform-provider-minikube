@@ -370,13 +370,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		Nodes:           d.Get("nodes").(int),
 	})
 
-	cluster, err := service.NewMinikubeCluster()
 	clusterClient.SetDependencies(service.MinikubeClientDeps{
-		Node:       cluster,
+		Node:       service.NewMinikubeCluster(),
 		Downloader: service.NewMinikubeDownloader(),
 	})
 
-	return clusterClient, err
+	return clusterClient, nil
 }
 
 func getAddons(addons interface{}) []string {

@@ -201,6 +201,24 @@ func TestMinikubeClient_Start(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Status Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getStatusFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -682,6 +700,16 @@ func getStoppedCluster(ctrl *gomock.Controller) Cluster {
 	nRunnerStatusStopped.EXPECT().
 		Status(gomock.Any()).
 		Return("Stopped", nil)
+
+	return nRunnerStatusStopped
+}
+
+func getStatusFailure(ctrl *gomock.Controller) Cluster {
+	nRunnerStatusStopped := NewMockCluster(ctrl)
+
+	nRunnerStatusStopped.EXPECT().
+		Status(gomock.Any()).
+		Return("", errors.New("oh nooo"))
 
 	return nRunnerStatusStopped
 }

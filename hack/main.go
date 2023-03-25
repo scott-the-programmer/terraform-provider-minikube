@@ -48,6 +48,7 @@ func main() {
 	}
 
 	mountString, _ := schema["mount_string"].DefaultFunc()
+
 	cc := config.ClusterConfig{
 		Name:                    "terraform-provider-minikube-acc",
 		KeepContext:             schema["keep_context"].Default.(bool),
@@ -109,6 +110,11 @@ func main() {
 		MultiNodeRequested: false,
 	}
 
+	cluster, err := service.NewMinikubeCluster()
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
 	minikubeClient := service.NewMinikubeClient(
 		service.MinikubeClientConfig{
 			ClusterConfig:   cc,
@@ -117,7 +123,7 @@ func main() {
 			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.26.1/minikube-v1.26.1-amd64.iso"},
 			DeleteOnFailure: true},
 		service.MinikubeClientDeps{
-			Node:       service.NewMinikubeCluster(),
+			Node:       cluster,
 			Downloader: service.NewMinikubeDownloader(),
 		})
 

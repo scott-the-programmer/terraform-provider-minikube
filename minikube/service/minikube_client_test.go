@@ -183,6 +183,24 @@ func TestMinikubeClient_Start(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Stopped Cluster Failure",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getStoppedCluster(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -633,6 +651,10 @@ func getProvisionerFailure(ctrl *gomock.Controller) Cluster {
 		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, errors.New("provision error"))
 
+	nRunnerProvisionFailure.EXPECT().
+		Status(gomock.Any()).
+		Return("", nil)
+
 	return nRunnerProvisionFailure
 }
 
@@ -647,7 +669,21 @@ func getStartFailure(ctrl *gomock.Controller) Cluster {
 		Start(gomock.Any(), true).
 		Return(nil, errors.New("start error"))
 
+	nRunnerStartFailure.EXPECT().
+		Status(gomock.Any()).
+		Return("", nil)
+
 	return nRunnerStartFailure
+}
+
+func getStoppedCluster(ctrl *gomock.Controller) Cluster {
+	nRunnerStatusStopped := NewMockCluster(ctrl)
+
+	nRunnerStatusStopped.EXPECT().
+		Status(gomock.Any()).
+		Return("Stopped", nil)
+
+	return nRunnerStatusStopped
 }
 
 func getDownloadFailure(ctrl *gomock.Controller) Downloader {
@@ -685,6 +721,10 @@ func getNodeSuccess(ctrl *gomock.Controller) Cluster {
 		Start(gomock.Any(), true).
 		Return(nil, nil)
 
+	nRunnerSuccess.EXPECT().
+		Status(gomock.Any()).
+		Return("", nil)
+
 	return nRunnerSuccess
 }
 
@@ -704,6 +744,10 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
 		Return(nil).
 		Times(n - 1)
 
+	nRunnerSuccess.EXPECT().
+		Status(gomock.Any()).
+		Return("", nil)
+
 	return nRunnerSuccess
 }
 
@@ -721,6 +765,10 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerSuccess.EXPECT().
 		Add(gomock.Any(), gomock.Any()).
 		Return(errors.New("error adding node"))
+
+	nRunnerSuccess.EXPECT().
+		Status(gomock.Any()).
+		Return("", nil)
 
 	return nRunnerSuccess
 }

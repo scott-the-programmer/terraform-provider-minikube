@@ -261,8 +261,7 @@ func (e *MinikubeClient) Delete() error {
 
 // GetClusterConfig retrieves the latest cluster config from minikube
 func (e *MinikubeClient) GetClusterConfig() *config.ClusterConfig {
-	cluster := e.nRunner.Get(e.clusterName)
-	return cluster.Config
+	return e.nRunner.Get(e.clusterName)
 }
 
 func (e *MinikubeClient) GetK8sVersion() string {

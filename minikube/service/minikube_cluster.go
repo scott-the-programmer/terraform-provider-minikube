@@ -23,7 +23,7 @@ type Cluster interface {
 	Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error)
 	Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error)
 	Delete(cc config.ClusterConfig, name string) (*config.Node, error)
-	Get(name string) mustload.ClusterController
+	Get(name string) *config.ClusterConfig
 	Add(cc *config.ClusterConfig, starter node.Starter) error
 	SetAddon(name string, addon string, value string) error
 }
@@ -94,8 +94,9 @@ func (m *MinikubeCluster) SetAddon(name string, addon string, value string) erro
 	return minikubeAddons.SetAndSave(name, addon, value)
 }
 
-func (m *MinikubeCluster) Get(name string) mustload.ClusterController {
-	return mustload.Running(name)
+func (m *MinikubeCluster) Get(name string) *config.ClusterConfig {
+	_, config := mustload.Partial(name)
+	return config
 }
 
 func makeAllMinikubeDirectories() {

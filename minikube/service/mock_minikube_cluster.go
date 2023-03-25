@@ -13,7 +13,6 @@ import (
 	command "k8s.io/minikube/pkg/minikube/command"
 	config "k8s.io/minikube/pkg/minikube/config"
 	kubeconfig "k8s.io/minikube/pkg/minikube/kubeconfig"
-	mustload "k8s.io/minikube/pkg/minikube/mustload"
 	node "k8s.io/minikube/pkg/minikube/node"
 )
 
@@ -70,10 +69,10 @@ func (mr *MockClusterMockRecorder) Delete(cc, name interface{}) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockCluster) Get(name string) mustload.ClusterController {
+func (m *MockCluster) Get(name string) *config.ClusterConfig {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", name)
-	ret0, _ := ret[0].(mustload.ClusterController)
+	ret0, _ := ret[0].(*config.ClusterConfig)
 	return ret0
 }
 

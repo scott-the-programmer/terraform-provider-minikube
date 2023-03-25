@@ -9,7 +9,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"k8s.io/minikube/pkg/minikube/config"
-	"k8s.io/minikube/pkg/minikube/mustload"
 	_ "k8s.io/minikube/pkg/minikube/registry/drvs"
 )
 
@@ -607,11 +606,11 @@ func TestMinikubeClient_GetAddons(t *testing.T) {
 		mockCluster := NewMockCluster(ctrl)
 		mockCluster.EXPECT().
 			Get(gomock.Any()).
-			Return(mustload.ClusterController{
-				Config: &config.ClusterConfig{
+			Return(
+				&config.ClusterConfig{
 					Addons: tt.fields.addons,
 				},
-			})
+			)
 
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{

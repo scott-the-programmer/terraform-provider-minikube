@@ -148,15 +148,6 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 
 	e.clusterConfig.MinikubeISO = url
 
-	status, err := e.nRunner.Status(e.clusterName)
-	if err != nil {
-		return nil, err
-	}
-
-	if status == "Stopped" {
-		return nil, fmt.Errorf("%s is currently stopped. Either start the cluster via minikube or try recreating it", e.clusterName)
-	}
-
 	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(&e.clusterConfig, &e.clusterConfig.Nodes[0], true, true)
 	if err != nil {
 		return nil, err

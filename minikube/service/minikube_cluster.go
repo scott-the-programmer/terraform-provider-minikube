@@ -14,7 +14,6 @@ import (
 	"k8s.io/minikube/pkg/minikube/exit"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
 	"k8s.io/minikube/pkg/minikube/localpath"
-	"k8s.io/minikube/pkg/minikube/machine"
 	"k8s.io/minikube/pkg/minikube/mustload"
 	"k8s.io/minikube/pkg/minikube/node"
 	"k8s.io/minikube/pkg/minikube/reason"
@@ -27,17 +26,14 @@ type Cluster interface {
 	Get(name string) mustload.ClusterController
 	Add(cc *config.ClusterConfig, starter node.Starter) error
 	SetAddon(name string, addon string, value string) error
-	Status(name string) (string, error)
 }
 
 type MinikubeCluster struct {
 	workerNodes int
-	machineAPI  libmachine.API
 }
 
-func NewMinikubeCluster() (*MinikubeCluster, error) {
-	machineAPI, err := machine.NewAPIClient()
-	return &MinikubeCluster{workerNodes: 0, machineAPI: machineAPI}, err
+func NewMinikubeCluster() *MinikubeCluster {
+	return &MinikubeCluster{workerNodes: 0}
 }
 
 func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
@@ -53,11 +49,6 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, ap
 func (m *MinikubeCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
 
 	return node.Start(starter, apiServer)
-}
-
-func (m *MinikubeCluster) Status(name string) (string, error) {
-
-	return machine.Status(m.machineAPI, name)
 }
 
 // Add adds nodes to the clusters node pool

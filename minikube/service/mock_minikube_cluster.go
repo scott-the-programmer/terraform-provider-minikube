@@ -129,18 +129,3 @@ func (mr *MockClusterMockRecorder) Start(starter, apiServer interface{}) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockCluster)(nil).Start), starter, apiServer)
 }
-
-// Status mocks base method.
-func (m *MockCluster) Status(name string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Status", name)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Status indicates an expected call of Status.
-func (mr *MockClusterMockRecorder) Status(name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockCluster)(nil).Status), name)
-}

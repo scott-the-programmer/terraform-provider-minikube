@@ -1,5 +1,6 @@
 # terraform-provider-minikube
 
+ [![Go Report Card](https://goreportcard.com/badge/github.com/scott-the-programmer/terraform-provider-minikube)](https://goreportcard.com/report/github.com/scott-the-programmer/terraform-provider-minikube)
 <a href="https://codeclimate.com/github/scott-the-programmer/terraform-provider-minikube/maintainability"><img src="https://api.codeclimate.com/v1/badges/dd45aac40e7019502245/maintainability" /></a>
 <a href="https://codeclimate.com/github/scott-the-programmer/terraform-provider-minikube/test_coverage"><img src="https://api.codeclimate.com/v1/badges/dd45aac40e7019502245/test_coverage" /></a>
 

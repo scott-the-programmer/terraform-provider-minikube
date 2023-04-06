@@ -205,7 +205,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *service.Moc
 	clusterSchema := ResourceCluster().Schema
 	mountString, _ := clusterSchema["mount_string"].DefaultFunc()
 
-	k8sVersion := "v1.26.1"
+	k8sVersion := "v1.26.3"
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion:      k8sVersion,
 		ClusterName:            clusterName,

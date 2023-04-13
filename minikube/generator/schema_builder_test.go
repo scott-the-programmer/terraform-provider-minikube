@@ -384,6 +384,28 @@ func GetClusterSchema() map[string]*schema.Schema {
 	`, schema)
 }
 
+func TestIgnoreField(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--kubernetes_version="v1.18.0":
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, header+`
+	}
+)
+
+func GetClusterSchema() map[string]*schema.Schema {
+	return clusterSchema
+}
+	`, schema)
+}
+
 func TestDefaultFuncOverride(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockMinikube := NewMockMinikubeBinary(ctrl)

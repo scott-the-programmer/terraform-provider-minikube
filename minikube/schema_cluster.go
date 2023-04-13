@@ -566,16 +566,6 @@ var (
 			Default:	false,
 		},
 	
-		"kubernetes_version": {
-			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.26.3, 'latest' for v1.27.0-rc.0). Defaults to 'stable'.",
-			
-			Optional:			true,
-			ForceNew:			true,
-			
-			Default:	"",
-		},
-	
 		"kvm_gpu": {
 			Type:					schema.TypeBool,
 			Description:	"Enable experimental NVIDIA GPU support in minikube",

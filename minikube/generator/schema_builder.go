@@ -51,6 +51,11 @@ type SchemaOverride struct {
 var updateFields = []string{
 	"addons",
 }
+
+var ignoreFields = map[string]bool{
+	"kubernetes_version": true,
+}
+
 var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 	"memory": {
 		Default:     "4000mb",
@@ -161,6 +166,11 @@ func (s *SchemaBuilder) Build() (string, error) {
 			val, ok := schemaOverrides[currentEntry.Parameter]
 			if ok {
 				currentEntry.Description = val.Description
+			}
+
+			shouldIgnore, ok := ignoreFields[currentEntry.Parameter]
+			if ok && shouldIgnore {
+				continue
 			}
 
 			entries, err = addEntry(entries, currentEntry)

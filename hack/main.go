@@ -52,7 +52,7 @@ func main() {
 		Name:                    "terraform-provider-minikube-acc",
 		KeepContext:             schema["keep_context"].Default.(bool),
 		EmbedCerts:              schema["embed_certs"].Default.(bool),
-		MinikubeISO:             "https://github.com/kubernetes/minikube/releases/download/v1.26.3/minikube-v1.26.3-amd64.iso",
+		MinikubeISO:             "https://github.com/kubernetes/minikube/releases/download/v1.30.1/minikube-v1.30.1-amd64.iso",
 		KicBaseImage:            schema["base_image"].Default.(string),
 		Network:                 schema["network"].Default.(string),
 		Memory:                  6000,
@@ -114,7 +114,7 @@ func main() {
 			ClusterConfig:   cc,
 			ClusterName:     "terraform-provider-minikube-acc",
 			Addons:          []string{},
-			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.26.3/minikube-v1.26.3-amd64.iso"},
+			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.30.1/minikube-v1.30.1-amd64.iso"},
 			DeleteOnFailure: true},
 		service.MinikubeClientDeps{
 			Node:       service.NewMinikubeCluster(),

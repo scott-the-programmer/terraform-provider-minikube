@@ -24,7 +24,7 @@ Some drivers require a bit of prerequisite setup, so it's best to visit [https:/
 
 ```terraform
 provider minikube {
-  kubernetes_version = "v1.26.1"
+  kubernetes_version = "v1.26.3"
 }
 
 resource "minikube_cluster" "cluster" {
@@ -46,7 +46,7 @@ You can use `minikube` to verify the cluster is up & running
 |----------------------------------------|-----------|---------|---------------|------|---------|---------|-------|
 |                Profile                 | VM Driver | Runtime |      IP       | Port | Version | Status  | Nodes |
 |----------------------------------------|-----------|---------|---------------|------|---------|---------|-------|
-| terraform-provider-minikube            | hyperkit  | docker  | 192.168.64.42 | 8443 | v1.23.3 | Running |     1 |
+| terraform-provider-minikube            | hyperkit  | docker  | 192.168.64.42 | 8443 | v1.26.3 | Running |     1 |
 |----------------------------------------|-----------|---------|---------------|------|---------|---------|-------|
 ```
 

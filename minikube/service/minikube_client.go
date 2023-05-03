@@ -4,7 +4,6 @@ package service
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"strconv"
 	"sync"
 
@@ -41,6 +40,7 @@ type MinikubeClient struct {
 	isoUrls         []string
 	deleteOnFailure bool
 	nodes           int
+	nativeSsh       bool
 
 	// TfCreationLock is a mutex used to prevent multiple minikube clients from conflicting on Start().
 	// Only set this if you're using MinikubeClient in a concurrent context
@@ -58,6 +58,7 @@ type MinikubeClientConfig struct {
 	IsoUrls         []string
 	DeleteOnFailure bool
 	Nodes           int
+	NativeSsh       bool
 }
 
 type MinikubeClientDeps struct {
@@ -75,6 +76,7 @@ func NewMinikubeClient(args MinikubeClientConfig, dep MinikubeClientDeps) *Minik
 		deleteOnFailure: args.DeleteOnFailure,
 		TfCreationLock:  nil,
 		nodes:           args.Nodes,
+		nativeSsh:       args.NativeSsh,
 
 		nRunner: dep.Node,
 		dLoader: dep.Downloader,
@@ -91,12 +93,6 @@ func init() {
 
 	register.Reg.SetStep(register.InitialSetup)
 
-	if runtime.GOOS == "windows" {
-		ssh.SetDefaultClient(ssh.Native)
-	} else {
-		ssh.SetDefaultClient(ssh.External)
-	}
-
 }
 
 // SetConfig sets the clients configuration
@@ -107,6 +103,7 @@ func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.addons = args.Addons
 	e.deleteOnFailure = args.DeleteOnFailure
 	e.nodes = args.Nodes
+	e.nativeSsh = args.NativeSsh
 }
 
 // GetConfig retrieves the current clients configuration
@@ -147,6 +144,12 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	}
 
 	e.clusterConfig.MinikubeISO = url
+
+	if e.nativeSsh {
+		ssh.SetDefaultClient(ssh.Native)
+	} else {
+		ssh.SetDefaultClient(ssh.External)
+	}
 
 	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(&e.clusterConfig, &e.clusterConfig.Nodes[0], true, true)
 	if err != nil {

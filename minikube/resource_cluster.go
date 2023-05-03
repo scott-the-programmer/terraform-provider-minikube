@@ -368,6 +368,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
 		DeleteOnFailure: d.Get("delete_on_failure").(bool),
 		Nodes:           d.Get("nodes").(int),
+		NativeSsh:       d.Get("native_ssh").(bool),
 	})
 
 	clusterClient.SetDependencies(service.MinikubeClientDeps{

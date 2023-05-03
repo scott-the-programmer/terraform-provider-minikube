@@ -115,7 +115,9 @@ func main() {
 			ClusterName:     "terraform-provider-minikube-acc",
 			Addons:          []string{},
 			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.30.1/minikube-v1.30.1-amd64.iso"},
-			DeleteOnFailure: true},
+			NativeSsh:       true,
+			DeleteOnFailure: true,
+		},
 		service.MinikubeClientDeps{
 			Node:       service.NewMinikubeCluster(),
 			Downloader: service.NewMinikubeDownloader(),

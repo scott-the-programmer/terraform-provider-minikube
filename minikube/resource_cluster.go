@@ -300,7 +300,13 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		Worker:            true,
 	}
 
+	addonConfig := make(map[string]bool)
+	for _, addon := range addonStrings {
+		addonConfig[addon] = true
+	}
+
 	cc := config.ClusterConfig{
+		Addons:                  addonConfig,
 		Name:                    d.Get("cluster_name").(string),
 		KeepContext:             d.Get("keep_context").(bool),
 		EmbedCerts:              d.Get("embed_certs").(bool),

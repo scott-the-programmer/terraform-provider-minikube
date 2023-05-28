@@ -155,12 +155,6 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	existingAddons := make(map[string]bool)
-	for _, addon := range e.addons {
-		existingAddons[addon] = true
-	}
-
 	starter := node.Starter{
 		Runner:         mRunner,
 		PreExists:      preExists,
@@ -169,7 +163,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		Host:           host,
 		Cfg:            &e.clusterConfig,
 		Node:           &e.clusterConfig.Nodes[0],
-		ExistingAddons: existingAddons,
+		ExistingAddons: e.clusterConfig.Addons,
 	}
 
 	kc, err := e.nRunner.Start(starter, true)

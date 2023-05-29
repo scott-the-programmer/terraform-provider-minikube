@@ -6,8 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -89,6 +91,44 @@ func TestClusterCreation_Docker_Update(t *testing.T) {
 				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDockerUpdate"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
+				),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_Docker_Addons(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfig_StorageProvisioner("docker", "TestClusterCreationDockerAddons"),
+				Check: resource.ComposeTestCheckFunc(
+					func(s *terraform.State) error {
+						err := assertAddonEnabled("TestClusterCreationDockerAddons", "storage-provisioner")
+						if err != nil {
+							return err
+						}
+						err = assertAddonEnabled("TestClusterCreationDockerAddons", "istio")
+						if err != nil {
+							return err
+						}
+						err = assertAddonEnabled("TestClusterCreationDockerAddons", "dashboard")
+						if err != nil {
+							return err
+						}
+						err = assertAddonEnabled("TestClusterCreationDockerAddons", "ingress")
+						if err != nil {
+							return err
+						}
+						err = assertAddonEnabled("TestClusterCreationDockerAddons", "default-storageclass")
+						if err != nil {
+							return err
+						}
+
+						return nil
+					},
 				),
 			},
 		},
@@ -402,6 +442,24 @@ func testAcceptanceClusterConfig_Update(driver string, clusterName string) strin
 	`, driver, clusterName)
 }
 
+func testAcceptanceClusterConfig_StorageProvisioner(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 2 
+		memory = "6000mb"
+
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"ingress",
+			"storage-provisioner",
+		]
+	}
+	`, driver, clusterName)
+}
+
 func verifyDelete(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "minikube_cluster" {
@@ -421,6 +479,22 @@ func verifyDelete(s *terraform.State) error {
 		if err == nil {
 			return errors.New("profiles dir should not exist")
 		}
+	}
+
+	return nil
+}
+
+func assertAddonEnabled(cluster string, addon string) error {
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("minikube addons list --profile , addon string %s | grep %s", cluster, addon))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(string(output), "enabled") {
+		return nil
+	} else {
+		return fmt.Errorf("addon %s not enabled", addon)
 	}
 
 	return nil

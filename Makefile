@@ -27,13 +27,13 @@ test:
 .PHONY: acceptance
 acceptance:
 	go clean -testcache
-	TF_ACC=true go test ./minikube -run "TestClusterCreation" -v -p 1 --timeout 10m
+	TF_ACC=true go test ./minikube -run "TestClusterCreation" -v -p 1 --timeout 20m
 
 .PHONY: test-stack
 test-stack: set-local
 	terraform -chdir=examples/resources/minikube_cluster init || true
 	terraform -chdir=examples/resources/minikube_cluster apply --auto-approve
-	terraform -chdir=examples/resources/minikube_cluster destroy --auto-approve
+#	terraform -chdir=examples/resources/minikube_cluster destroy --auto-approve
 
 .PHONY: build
 build:

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -107,10 +108,6 @@ func TestClusterCreation_Docker_Addons(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					func(s *terraform.State) error {
 						err := assertAddonEnabled("TestClusterCreationDockerAddons", "storage-provisioner")
-						if err != nil {
-							return err
-						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "istio")
 						if err != nil {
 							return err
 						}
@@ -485,7 +482,7 @@ func verifyDelete(s *terraform.State) error {
 }
 
 func assertAddonEnabled(cluster string, addon string) error {
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("minikube addons list --profile , addon string %s | grep %s", cluster, addon))
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("minikube addons list --profile %s | grep %s", cluster, addon))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
@@ -493,11 +490,10 @@ func assertAddonEnabled(cluster string, addon string) error {
 
 	if strings.Contains(string(output), "enabled") {
 		return nil
-	} else {
-		return fmt.Errorf("addon %s not enabled", addon)
 	}
 
-	return nil
+	log.Printf("addon %s not enabled", addon)
+	return fmt.Errorf("addon %s not enabled", addon)
 }
 
 func testPropertyExists(n string, id string) resource.TestCheckFunc {

@@ -33,7 +33,8 @@ resource "minikube_cluster" "cluster" {
   addons = [
     "dashboard",
     "default-storageclass",
-    "ingress"
+    "ingress",
+    "storage-provisioner"
   ]
 }
 ```

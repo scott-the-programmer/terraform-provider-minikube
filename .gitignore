@@ -25,3 +25,4 @@ crash.log
 .terraform
 test_output
 schema-generator
+testBinary

@@ -27,7 +27,8 @@ test:
 .PHONY: acceptance
 acceptance:
 	go clean -testcache
-	TF_ACC=true go test ./minikube -run "TestClusterCreation" -v -p 1 --timeout 20m
+	go test -c -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5" -o testBinary ./minikube 
+	TF_ACC=true ./testBinary -test.run "TestClusterCreation" -test.v -test.parallel 1 -test.timeout 20m
 
 .PHONY: test-stack
 test-stack: set-local

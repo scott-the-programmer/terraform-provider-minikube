@@ -387,16 +387,8 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 
 func getAddons(addons interface{}) []string {
 	addonStrings := make([]string, len(addons.([]interface{})))
-	userDefinedStorageClass := false
 	for i, v := range addons.([]interface{}) {
-		if v == "default-storageclass" {
-			userDefinedStorageClass = true
-		}
 		addonStrings[i] = v.(string)
-	}
-
-	if !userDefinedStorageClass {
-		addonStrings = append(addonStrings, "default-storageclass")
 	}
 
 	sort.Strings(addonStrings) //to ensure consistency with TF state

@@ -35,9 +35,10 @@ test-stack: set-local
 	terraform -chdir=examples/resources/minikube_cluster apply --auto-approve
 	terraform -chdir=examples/resources/minikube_cluster destroy --auto-approve
 
+STORAGE_PROVISIONER_TAG ?= v5
 .PHONY: build
 build:
-	go build -o bin/terraform-provider-minikube
+	go build -o bin/terraform-provider-minikube -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=$(STORAGE_PROVISIONER_TAG)"
 
 .PHONY: set-local 
 set-local: build	

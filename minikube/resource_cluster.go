@@ -74,8 +74,8 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if d.HasChange("addons") {
 		config := client.GetConfig()
 		oldAddons, newAddons := d.GetChange("addons")
-		oldAddonStrings := getAddons(oldAddons)
-		newAddonStrings := getAddons(newAddons)
+		oldAddonStrings := getAddons(oldAddons.(*schema.Set))
+		newAddonStrings := getAddons(newAddons.(*schema.Set))
 
 		client.SetConfig(service.MinikubeClientConfig{
 			ClusterConfig:   config.ClusterConfig,
@@ -234,10 +234,10 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 
 	addons, ok := d.GetOk("addons")
 	if !ok {
-		addons = []interface{}{}
+		addons = &schema.Set{}
 	}
 
-	addonStrings := getAddons(addons)
+	addonStrings := getAddons(addons.(*schema.Set))
 
 	defaultIsos, ok := d.GetOk("iso_url")
 	if !ok {
@@ -385,9 +385,10 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 	return clusterClient, nil
 }
 
-func getAddons(addons interface{}) []string {
-	addonStrings := make([]string, len(addons.([]interface{})))
-	for i, v := range addons.([]interface{}) {
+func getAddons(addons *schema.Set) []string {
+	addonStrings := make([]string, addons.Len())
+	addonObjects := addons.List()
+	for i, v := range addonObjects {
 		addonStrings[i] = v.(string)
 	}
 

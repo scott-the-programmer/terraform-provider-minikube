@@ -263,7 +263,7 @@ func TestArrayProperty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, header+`
 		"test": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"I am a great test description",
 			
 			Optional:			true,
@@ -364,7 +364,7 @@ func TestUpdateField(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, header+`
 		"addons": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"I am a great test description",
 			
 			Optional:			true,

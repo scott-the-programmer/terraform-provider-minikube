@@ -100,10 +100,10 @@ resource "kubernetes_deployment" "deployment" {
 
 ### Optional
 
-- `addons` (List of String) Enable addons. see `minikube addons list` for a list of valid addon names.
-- `apiserver_ips` (List of String) A set of apiserver IP Addresses which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine
+- `addons` (Set of String) Enable addons. see `minikube addons list` for a list of valid addon names.
+- `apiserver_ips` (Set of String) A set of apiserver IP Addresses which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine
 - `apiserver_name` (String) The authoritative apiserver hostname for apiserver certificates and connectivity. This can be used if you want to make the apiserver available from outside the machine
-- `apiserver_names` (List of String) A set of apiserver names which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine
+- `apiserver_names` (Set of String) A set of apiserver names which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine
 - `apiserver_port` (Number) The apiserver listening port
 - `auto_update_drivers` (Boolean) If set, automatically updates drivers to the latest version. Defaults to true.
 - `base_image` (String) The base image to use for docker/podman drivers. Intended for local development.
@@ -122,8 +122,8 @@ resource "kubernetes_deployment" "deployment" {
 - `disk_size` (String) Disk size allocated to the minikube VM (format: <number>[<unit>], where unit = b, k, m or g).
 - `dns_domain` (String) The cluster dns domain name used in the Kubernetes cluster
 - `dns_proxy` (Boolean) Enable proxy for NAT DNS requests (virtualbox driver only)
-- `docker_env` (List of String) Environment variables to pass to the Docker daemon. (format: key=value)
-- `docker_opt` (List of String) Specify arbitrary flags to pass to the Docker daemon. (format: key=value)
+- `docker_env` (Set of String) Environment variables to pass to the Docker daemon. (format: key=value)
+- `docker_opt` (Set of String) Specify arbitrary flags to pass to the Docker daemon. (format: key=value)
 - `download_only` (Boolean) If true, only download and cache files for later use - don't install or start anything.
 - `driver` (String) Driver is one of the following - Windows: (hyperv, docker, virtualbox, vmware, qemu2, ssh) - OSX: (virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2, docker, podman, ssh) - Linux: (docker, kvm2, virtualbox, qemu2, none, podman, ssh)
 - `dry_run` (Boolean) dry-run mode. Validates configuration, but does not mutate system state
@@ -138,16 +138,16 @@ resource "kubernetes_deployment" "deployment" {
 - `host_only_cidr` (String) The CIDR to be used for the minikube VM (virtualbox driver only)
 - `host_only_nic_type` (String) NIC Type used for host only network. One of Am79C970A, Am79C973, 82540EM, 82543GC, 82545EM, or virtio (virtualbox driver only)
 - `hyperkit_vpnkit_sock` (String) Location of the VPNKit socket used for networking. If empty, disables Hyperkit VPNKitSock, if 'auto' uses Docker for Mac VPNKit connection, otherwise uses the specified VSock (hyperkit driver only)
-- `hyperkit_vsock_ports` (List of String) List of guest VSock ports that should be exposed as sockets on the host (hyperkit driver only)
+- `hyperkit_vsock_ports` (Set of String) List of guest VSock ports that should be exposed as sockets on the host (hyperkit driver only)
 - `hyperv_external_adapter` (String) External Adapter on which external switch will be created if no external switch is found. (hyperv driver only)
 - `hyperv_use_external_switch` (Boolean) Whether to use external switch over Default Switch if virtual switch not explicitly specified. (hyperv driver only)
 - `hyperv_virtual_switch` (String) The hyperv virtual switch name. Defaults to first found. (hyperv driver only)
 - `image_mirror_country` (String) Country code of the image mirror to be used. Leave empty to use the global one. For Chinese mainland users, set it to cn.
 - `image_repository` (String) Alternative image repository to pull docker images from. This can be used when you have limited access to gcr.io. Set it to "auto" to let minikube decide one for you. For Chinese mainland users, you may use local gcr.io mirrors such as registry.cn-hangzhou.aliyuncs.com/google_containers
-- `insecure_registry` (List of String) Insecure Docker registries to pass to the Docker daemon.  The default service CIDR range will automatically be added.
+- `insecure_registry` (Set of String) Insecure Docker registries to pass to the Docker daemon.  The default service CIDR range will automatically be added.
 - `install_addons` (Boolean) If set, install addons. Defaults to true.
 - `interactive` (Boolean) Allow user prompts for more information
-- `iso_url` (List of String) Locations to fetch the minikube ISO from.
+- `iso_url` (Set of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
 - `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.26.3, 'latest' for v1.27.0-rc.0). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
@@ -162,7 +162,7 @@ resource "kubernetes_deployment" "deployment" {
 - `mount_gid` (String) Default group id used for the mount
 - `mount_ip` (String) Specify the ip that the mount should be setup on
 - `mount_msize` (Number) The number of bytes to use for 9p packet payload
-- `mount_options` (List of String) Additional mount options, such as cache=fscache
+- `mount_options` (Set of String) Additional mount options, such as cache=fscache
 - `mount_port` (Number) Specify the port that the mount should be setup on, where 0 means any free port.
 - `mount_string` (String) The argument to pass the minikube mount command on start.
 - `mount_type` (String) Specify the mount filesystem type (supported types: 9p)
@@ -172,15 +172,15 @@ resource "kubernetes_deployment" "deployment" {
 - `native_ssh` (Boolean) Use native Golang SSH client (default true). Set to 'false' to use the command line 'ssh' command when accessing the docker machine. Useful for the machine drivers when they will not start with 'Waiting for SSH'.
 - `network` (String) network to run minikube with. Now it is used by docker/podman and KVM drivers. If left empty, minikube will create a new network.
 - `network_plugin` (String) DEPRECATED: Replaced by --cni
-- `nfs_share` (List of String) Local folders to share with Guest via NFS mounts (hyperkit driver only)
+- `nfs_share` (Set of String) Local folders to share with Guest via NFS mounts (hyperkit driver only)
 - `nfs_shares_root` (String) Where to root the NFS Shares, defaults to /nfsshares (hyperkit driver only)
 - `no_kubernetes` (Boolean) If set, minikube VM/container will start without starting or configuring Kubernetes. (only works on new clusters)
 - `no_vtx_check` (Boolean) Disable checking for the availability of hardware virtualization before the vm is started (virtualbox driver only)
 - `nodes` (Number) Amount of nodes in the cluster
-- `ports` (List of String) List of ports that should be exposed (docker and podman driver only)
+- `ports` (Set of String) List of ports that should be exposed (docker and podman driver only)
 - `preload` (Boolean) If set, download tarball of preloaded images if available to improve start time. Defaults to true.
 - `qemu_firmware_path` (String) Path to the qemu firmware file. Defaults: For Linux, the default firmware location. For macOS, the brew installation location. For Windows, C:\Program Files\qemu\share
-- `registry_mirror` (List of String) Registry mirrors to pass to the Docker daemon
+- `registry_mirror` (Set of String) Registry mirrors to pass to the Docker daemon
 - `service_cluster_ip_range` (String) The CIDR to be used for service cluster IPs.
 - `socket_vmnet_client_path` (String) Path to the socket vmnet client binary (QEMU driver only)
 - `socket_vmnet_path` (String) Path to socket vmnet binary (QEMU driver only)
@@ -194,7 +194,7 @@ resource "kubernetes_deployment" "deployment" {
 - `uuid` (String) Provide VM UUID to restore MAC address (hyperkit driver only)
 - `vm` (Boolean) Filter to use only VM Drivers
 - `vm_driver` (String) DEPRECATED, use `driver` instead.
-- `wait` (List of String) comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to "apiserver,system_pods", available options: "apiserver,system_pods,default_sa,apps_running,node_ready,kubelet" . other acceptable values are 'all' or 'none', 'true' and 'false'
+- `wait` (Set of String) comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to "apiserver,system_pods", available options: "apiserver,system_pods,default_sa,apps_running,node_ready,kubelet" . other acceptable values are 'all' or 'none', 'true' and 'false'
 - `wait_timeout` (Number) max time to wait per Kubernetes or host to be healthy. (Configured in minutes)
 
 ### Read-Only

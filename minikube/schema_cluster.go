@@ -54,7 +54,7 @@ var (
 		},
 
 		"addons": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Enable addons. see `minikube addons list` for a list of valid addon names.",
 			
 			Optional:			true,
@@ -66,7 +66,7 @@ var (
 		},
 	
 		"apiserver_ips": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"A set of apiserver IP Addresses which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine",
 			
 			Computed:			true,
@@ -91,7 +91,7 @@ var (
 		},
 	
 		"apiserver_names": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"A set of apiserver names which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine",
 			
 			Computed:			true,
@@ -276,7 +276,7 @@ var (
 		},
 	
 		"docker_env": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Environment variables to pass to the Docker daemon. (format: key=value)",
 			
 			Optional:			true,
@@ -289,7 +289,7 @@ var (
 		},
 	
 		"docker_opt": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Specify arbitrary flags to pass to the Docker daemon. (format: key=value)",
 			
 			Optional:			true,
@@ -442,7 +442,7 @@ var (
 		},
 	
 		"hyperkit_vsock_ports": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"List of guest VSock ports that should be exposed as sockets on the host (hyperkit driver only)",
 			
 			Computed:			true,
@@ -507,7 +507,7 @@ var (
 		},
 	
 		"insecure_registry": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Insecure Docker registries to pass to the Docker daemon.  The default service CIDR range will automatically be added.",
 			
 			Computed:			true,
@@ -542,7 +542,7 @@ var (
 		},
 	
 		"iso_url": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Locations to fetch the minikube ISO from.",
 			
 			Computed:			true,
@@ -697,7 +697,7 @@ var (
 		},
 	
 		"mount_options": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Additional mount options, such as cache=fscache",
 			
 			Optional:			true,
@@ -811,7 +811,7 @@ var (
 		},
 	
 		"nfs_share": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Local folders to share with Guest via NFS mounts (hyperkit driver only)",
 			
 			Computed:			true,
@@ -856,7 +856,7 @@ var (
 		},
 	
 		"ports": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"List of ports that should be exposed (docker and podman driver only)",
 			
 			Computed:			true,
@@ -891,7 +891,7 @@ var (
 		},
 	
 		"registry_mirror": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"Registry mirrors to pass to the Docker daemon",
 			
 			Computed:			true,
@@ -1036,7 +1036,7 @@ var (
 		},
 	
 		"wait": {
-			Type:					schema.TypeList,
+			Type:					schema.TypeSet,
 			Description:	"comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to \"apiserver,system_pods\", available options: \"apiserver,system_pods,default_sa,apps_running,node_ready,kubelet\" . other acceptable values are 'all' or 'none', 'true' and 'false'",
 			
 			Optional:			true,

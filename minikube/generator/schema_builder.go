@@ -51,6 +51,7 @@ type SchemaOverride struct {
 var updateFields = []string{
 	"addons",
 }
+
 var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 	"memory": {
 		Default:     "4000mb",
@@ -117,7 +118,7 @@ const (
 	String SchemaType = "String"
 	Int    SchemaType = "Int"
 	Bool   SchemaType = "Bool"
-	Array  SchemaType = "List"
+	Array  SchemaType = "Set"
 )
 
 func NewSchemaBuilder(targetFile string, minikube MinikubeBinary) *SchemaBuilder {

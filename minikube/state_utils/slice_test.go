@@ -3,6 +3,8 @@ package state_utils
 import (
 	"reflect"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func TestSliceOrNil(t *testing.T) {
@@ -67,6 +69,13 @@ func TestReadSliceState(t *testing.T) {
 				slice: []int{},
 			},
 			want: []string{},
+		},
+		{
+			name: "Should return array given schema.Set",
+			args: args{
+				slice: schema.NewSet(schema.HashString, []interface{}{"addon1", "addon2"}),
+			},
+			want: []string{"addon1", "addon2"},
 		},
 	}
 	for _, tt := range tests {

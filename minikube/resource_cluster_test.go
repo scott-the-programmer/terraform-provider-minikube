@@ -400,7 +400,8 @@ func testUnitClusterConfig_Update(driver string, clusterName string) string {
 		addons = [
 			"dashboard",
 			"default-storageclass",
-			"ingress"
+			"ingress",
+			"storage-provisioner",
 		]
 	}
 	`, driver, clusterName)
@@ -417,6 +418,7 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		addons = [
 			"dashboard",
 			"default-storageclass",
+			"storage-provisioner",
 		]
 	}
 	`, driver, clusterName)
@@ -433,7 +435,8 @@ func testAcceptanceClusterConfig_Update(driver string, clusterName string) strin
 		addons = [
 			"dashboard",
 			"default-storageclass",
-			"ingress"
+			"ingress",
+			"storage-provisioner",
 		]
 	}
 	`, driver, clusterName)

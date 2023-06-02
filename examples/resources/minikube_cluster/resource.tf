@@ -7,6 +7,7 @@ resource "minikube_cluster" "docker" {
   cluster_name = "terraform-provider-minikube-acc-docker"
   addons = [
     "default-storageclass",
+    "storage-provisioner"
   ]
 }
 
@@ -18,7 +19,8 @@ resource "minikube_cluster" "hyperkit" {
   addons = [
     "dashboard",
     "default-storageclass",
-    "ingress"
+    "ingress",
+    "storage-provisioner"
   ]
 }
 

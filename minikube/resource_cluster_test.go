@@ -194,6 +194,7 @@ func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 				"dashboard",
 				"default-storageclass",
 				"ingress",
+				"storage-provisioner",
 			}),
 	)
 

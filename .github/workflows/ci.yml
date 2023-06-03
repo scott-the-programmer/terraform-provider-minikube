@@ -36,6 +36,6 @@ jobs:
         prefix: github.com/scott-the-programmer/terraform-provider-minikube
 
     # temporarily disabled due to limited gh runner resources
-    # - name: Acceptance
-    #   run: make acceptance
+    - name: Acceptance
+      run: make acceptance
 

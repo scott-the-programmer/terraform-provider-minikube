@@ -130,7 +130,7 @@ resource "kubernetes_deployment" "deployment" {
 - `embed_certs` (Boolean) if true, will embed the certs in kubeconfig.
 - `enable_default_cni` (Boolean) DEPRECATED: Replaced by --cni=bridge
 - `extra_config` (String) A set of key=value pairs that describe configuration that may be passed to different components. 		The key should be '.' separated, and the first part before the dot is the component to apply the configuration to. 		Valid components are: kubelet, kubeadm, apiserver, controller-manager, etcd, proxy, scheduler 		Valid kubeadm parameters: ignore-preflight-errors, dry-run, kubeconfig, kubeconfig-dir, node-name, cri-socket, experimental-upload-certs, certificate-key, rootfs, skip-phases, pod-network-cidr
-- `extra_disks` (Number) Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit and kvm2 drivers)
+- `extra_disks` (Number) Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, and qemu2 drivers)
 - `feature_gates` (String) A set of key=value pairs that describe feature gates for alpha/experimental features.
 - `force` (Boolean) Force minikube to perform possibly dangerous operations
 - `force_systemd` (Boolean) If set, force the container runtime to use systemd as cgroup manager. Defaults to false.
@@ -149,7 +149,7 @@ resource "kubernetes_deployment" "deployment" {
 - `interactive` (Boolean) Allow user prompts for more information
 - `iso_url` (Set of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.26.3, 'latest' for v1.27.0-rc.0). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.27.3, 'latest' for v1.27.3). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)
@@ -204,5 +204,3 @@ resource "kubernetes_deployment" "deployment" {
 - `cluster_ca_certificate` (String, Sensitive) certificate authority for cluster
 - `host` (String) the host name for the cluster
 - `id` (String) The ID of this resource.
-
-

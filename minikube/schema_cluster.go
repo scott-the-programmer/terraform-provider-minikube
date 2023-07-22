@@ -132,7 +132,7 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.39@sha256:bf2d9f1e9d837d8deea073611d2605405b6be904647d97ebd9b12045ddfe1106",
+			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.40@sha256:8cadf23777709e43eca447c47a45f5a4635615129267ce025193040ec92a1631",
 		},
 	
 		"binary_mirror": {
@@ -363,7 +363,7 @@ var (
 	
 		"extra_disks": {
 			Type:					schema.TypeInt,
-			Description:	"Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit and kvm2 drivers)",
+			Description:	"Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, and qemu2 drivers)",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -568,7 +568,7 @@ var (
 	
 		"kubernetes_version": {
 			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.26.3, 'latest' for v1.27.0-rc.0). Defaults to 'stable'.",
+			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.27.3, 'latest' for v1.27.3). Defaults to 'stable'.",
 			
 			Optional:			true,
 			ForceNew:			true,

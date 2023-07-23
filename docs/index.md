@@ -24,7 +24,7 @@ Some drivers require a bit of prerequisite setup, so it's best to visit [https:/
 #x86_64
 curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2"
 
-#arm62
+#arm64
 curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2" "arm64"
 ```
 

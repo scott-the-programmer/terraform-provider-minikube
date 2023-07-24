@@ -17,7 +17,6 @@ builds:
     - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
     - '-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5'
   goos:
-    - freebsd
     - windows
     - linux
     - darwin

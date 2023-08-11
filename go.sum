@@ -202,11 +202,11 @@ github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbi
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Delta456/box-cli-maker/v2 v2.3.0 h1:rGdoK/Qt3shdT1uqRMGgPqrhtisGD7PamTW8vY5MyCA=
 github.com/Delta456/box-cli-maker/v2 v2.3.0/go.mod h1:Uv/kSX95LuNQn3C8wWazEIETE6MunPuYN+/knckbPQc=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.17.0 h1:DwGeS/9k9xdpnvVQuJF+L9bYNFvBCmCWlDA8d8opoZY=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.17.0/go.mod h1:SUVNJAkkyRKeM3L46/NhFGIz+Kx1zetN09qUs1XbMx8=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.41.0 h1:ZJwvlTjB8GycSRpysdcRv3FztommLDUfgii0VUUp5ys=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.41.0 h1:MWQ81b2TkSLbDpLINiKdZdoht1VMEHCKr4BSZpb/KQ8=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.41.0/go.mod h1:lz6DEePTxmjvYMtusOoS3qDAErC0STi/wmvqJucKY28=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.16.1 h1:dkIyFw11w878MSG5kegjr9Oept42iCjNvhO2BVRrr60=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.16.1/go.mod h1:iyJ7cfLP5PVMo/55aIBBndyeFcMDXKUfbfZxaMM5GeU=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.40.1 h1:Mkm1EDj1blE1U31XI4GOwhMrTK0czB2HouHKxzr2ORo=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.40.1 h1:FFGWjWC0sCZgJziVe/yP39XjlQlf+MIEYXoRPJq8YX0=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.40.1/go.mod h1:lz6DEePTxmjvYMtusOoS3qDAErC0STi/wmvqJucKY28=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
@@ -1595,8 +1595,8 @@ k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f h1:2kWPakN3i/k81b0gvD5C5F
 k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f/go.mod h1:byini6yhqGC14c3ebc/QwanvYwhuMWF6yz2F8uwW8eg=
 k8s.io/kubectl v0.27.3 h1:HyC4o+8rCYheGDWrkcOQHGwDmyLKR5bxXFgpvF82BOw=
 k8s.io/kubectl v0.27.3/go.mod h1:g9OQNCC2zxT+LT3FS09ZYqnDhlvsKAfFq76oyarBcq4=
-k8s.io/minikube v1.31.1 h1:pbdrLhAyaX14iFzf89L9pjSC8MmMa8KBpPDzsL/kme8=
-k8s.io/minikube v1.31.1/go.mod h1:bB128tC0SHFko9gkNVKxpToTnbUyuPbMyV9TqcwKSNU=
+k8s.io/minikube v1.31.0 h1:h5shK7BPDbwf1cb817b0s7KwSGNT89Mq5zNHN6SRlGc=
+k8s.io/minikube v1.31.0/go.mod h1:sIJQ3pBO5Djlzkad4gTc40Wp5LlwMCRxVd8AJ2lagHs=
 k8s.io/utils v0.0.0-20230209194617-a36077c30491 h1:r0BAOLElQnnFhE/ApUsg3iHdVYYPBjNSSOMowRZxxsY=
 k8s.io/utils v0.0.0-20230209194617-a36077c30491/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=

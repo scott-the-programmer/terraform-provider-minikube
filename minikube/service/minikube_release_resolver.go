@@ -13,5 +13,5 @@ var (
 )
 
 func GetMinikubeIso() string {
-	return fmt.Sprintf("%s/minikube-%s-0-%s.iso", releaseBase, version.Version, runtime.GOARCH)
+	return fmt.Sprintf("%s/minikube-%s-%s.iso", releaseBase, version.Version, runtime.GOARCH)
 }

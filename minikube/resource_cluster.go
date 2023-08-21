@@ -348,7 +348,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		SSHPort:                 d.Get("ssh_port").(int),
 		ExtraDisks:              d.Get("extra_disks").(int),
 		CertExpiration:          time.Duration(d.Get("cert_expiration").(int)) * time.Minute,
-		Mount:                   d.Get("hyperv_use_external_switch").(bool),
+		Mount:                   d.Get("mount").(bool),
 		MountString:             d.Get("mount_string").(string),
 		Mount9PVersion:          "9p2000.L",
 		MountGID:                "docker",

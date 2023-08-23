@@ -625,6 +625,66 @@ func TestMinikubeClient_GetAddons(t *testing.T) {
 	}
 }
 
+func TestMinikubeClient_ContainerMounts(t *testing.T) {
+
+	type fields struct {
+		mount       bool
+		mountString string
+		driver      string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []string
+	}{
+		{
+			name: "Should set container mounts when provided mount string",
+			fields: fields{
+				mount:       true,
+				mountString: "/test:/data",
+				driver:      "docker",
+			},
+			want: []string{"/test:/data"},
+		},
+		{
+			name: "Should not set container mounts for non container drivers",
+			fields: fields{
+				mount:       true,
+				mountString: "/test:/data",
+				driver:      "other",
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+
+		t.Run(tt.name, func(t *testing.T) {
+			e := &MinikubeClient{
+				clusterConfig: config.ClusterConfig{
+					Driver:      tt.fields.driver,
+					Mount:       tt.fields.mount,
+					MountString: tt.fields.mountString,
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				clusterName:     "sut",
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: false,
+				nRunner:         getNodeSuccess(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+			}
+			e.Start()
+			got := e.clusterConfig.ContainerVolumeMounts
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("clusterConfig.ContainerVolumeMounts = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func getProvisionerFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerProvisionFailure := NewMockCluster(ctrl)
 

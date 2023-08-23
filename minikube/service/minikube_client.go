@@ -21,6 +21,11 @@ import (
 	_ "k8s.io/minikube/pkg/minikube/registry/drvs"
 )
 
+const (
+	Podman = "podman"
+	Docker = "docker"
+)
+
 type ClusterClient interface {
 	SetConfig(args MinikubeClientConfig)
 	GetConfig() MinikubeClientConfig
@@ -144,6 +149,9 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	}
 
 	e.clusterConfig.MinikubeISO = url
+	if e.clusterConfig.Driver == Podman || e.clusterConfig.Driver == Docker { // use volume mounts for container runtimes
+		e.clusterConfig.ContainerVolumeMounts = []string{e.clusterConfig.MountString}
+	}
 
 	if e.nativeSsh {
 		ssh.SetDefaultClient(ssh.Native)

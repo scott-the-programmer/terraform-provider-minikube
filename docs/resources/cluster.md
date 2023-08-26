@@ -31,6 +31,7 @@ resource "minikube_cluster" "hyperkit" {
   driver       = "hyperkit"
   cluster_name = "terraform-provider-minikube-acc-hyperkit"
   nodes        = 3
+  cni          = "bridge" # Allows pods to communicate with each other via DNS
   addons = [
     "dashboard",
     "default-storageclass",

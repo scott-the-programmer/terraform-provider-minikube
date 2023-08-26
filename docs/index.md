@@ -20,14 +20,6 @@ minikube start --driver=docker --download-only
 
 Some drivers require a bit of prerequisite setup, so it's best to visit [https://minikube.sigs.k8s.io/docs/drivers/](https://minikube.sigs.k8s.io/docs/drivers/) first
 
-```bash
-#x86_64
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2"
-
-#arm64
-curl https://raw.githubusercontent.com/scott-the-programmer/terraform-provider-minikube/main/bootstrap/install-driver.sh | sudo bash -s "kvm2" "arm64"
-```
-
 ## Example Usage
 
 ```terraform

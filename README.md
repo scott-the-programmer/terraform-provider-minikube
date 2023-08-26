@@ -28,9 +28,10 @@ provider minikube {
 }
 
 resource "minikube_cluster" "cluster" {
-  vm = true
-  driver = "hyperkit"
-  addons = [
+  vm      = true
+  driver  = "hyperkit"
+  cni     = "bridge"
+  addons  = [
     "dashboard",
     "default-storageclass",
     "ingress",

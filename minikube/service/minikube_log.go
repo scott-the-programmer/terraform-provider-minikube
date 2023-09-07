@@ -10,7 +10,7 @@ import (
 
 	mlog "github.com/docker/machine/libmachine/log"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 var (

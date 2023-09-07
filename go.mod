@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.28.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
-	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.100.1
 	k8s.io/minikube v1.31.0
 )
 
@@ -238,7 +238,6 @@ require (
 	k8s.io/client-go v0.27.3 // indirect
 	k8s.io/cluster-bootstrap v0.0.0 // indirect
 	k8s.io/component-base v0.27.3 // indirect
-	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/kubectl v0.27.3 // indirect
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect

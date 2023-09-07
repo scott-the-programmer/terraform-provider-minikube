@@ -9,7 +9,7 @@ import (
 
 	"github.com/docker/machine/libmachine/ssh"
 	"github.com/spf13/viper"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	cmdcfg "k8s.io/minikube/cmd/minikube/cmd/config"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"

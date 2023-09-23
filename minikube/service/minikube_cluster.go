@@ -29,7 +29,8 @@ type Cluster interface {
 }
 
 type MinikubeCluster struct {
-	workerNodes int
+	workerNodes       int
+	controlPlaneNodes int
 }
 
 func NewMinikubeCluster() *MinikubeCluster {
@@ -47,14 +48,18 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, ap
 }
 
 func (m *MinikubeCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
-
-	return node.Start(starter, apiServer)
+	s, err := node.Start(starter, apiServer)
+	if err != nil {
+		return nil, err
+	}
+	m.controlPlaneNodes++
+	return s, nil
 }
 
 // Add adds nodes to the clusters node pool
 func (m *MinikubeCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
 	n := config.Node{
-		Name:              node.Name(m.workerNodes),
+		Name:              node.Name(m.workerNodes + m.controlPlaneNodes + 1), // index starts from 1
 		Worker:            true,
 		ControlPlane:      false,
 		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,

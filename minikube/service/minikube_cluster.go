@@ -59,7 +59,8 @@ func (m *MinikubeCluster) Start(starter node.Starter, apiServer bool) (*kubeconf
 // Add adds nodes to the clusters node pool
 func (m *MinikubeCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
 	n := config.Node{
-		Name:              node.Name(m.workerNodes + m.controlPlaneNodes + 1), // index starts from 1
+		// index starts from 1 https://github.com/kubernetes/minikube/blob/075c1b01f2f8778ac746e05098044234a3f0b06f/pkg/minikube/driver/driver.go#L387C4-L387C27
+		Name:              node.Name(m.workerNodes + m.controlPlaneNodes + 1),
 		Worker:            true,
 		ControlPlane:      false,
 		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,

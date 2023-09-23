@@ -5,7 +5,7 @@ provider "minikube" {
 resource "minikube_cluster" "docker" {
   driver       = "docker"
   cluster_name = "terraform-provider-minikube-acc-docker"
-  addons = [
+    addons = [
     "default-storageclass",
     "storage-provisioner"
   ]
@@ -57,7 +57,7 @@ resource "kubernetes_deployment" "deployment" {
       }
       spec {
         container {
-          image = "nginx:1.7.8"
+          image = "nginx:latest"
           name  = "example"
 
           port {

@@ -7,7 +7,6 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -25,15 +24,14 @@ jobs:
     - name: Build
       run: make build
 
+    - name: test
+      run: make test
+
     #Code Climate 
-    - name: Run Coverage
-      uses: paambaati/codeclimate-action@v2.6.0
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
       env:
-        CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
-      with:
-        coverageCommand: make test
-        coverageLocations: ${{github.workspace}}/cover.out:gocov
-        prefix: github.com/scott-the-programmer/terraform-provider-minikube
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     # temporarily disabled due to limited gh runner resources
     # - name: Acceptance

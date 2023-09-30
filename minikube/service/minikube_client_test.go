@@ -530,6 +530,18 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 			deleteAddons: []string{"feature1", "feature2"},
 			addAddons:    []string{"feature3"},
 		},
+		{
+			name: "Should return err if addon cannot be set",
+			fields: fields{
+				clusterName:    "cluster",
+				addons:         []string{"feature1", "feature2"},
+				TfCreationLock: &sync.Mutex{},
+			},
+			args: args{
+				addons: []string{"feature3"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -537,15 +549,21 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 			mockNode := NewMockCluster(ctrl)
 			delSeq := make([]*gomock.Call, 0)
 			addSeq := make([]*gomock.Call, 0)
-			for _, deleteAddon := range tt.deleteAddons {
+			if tt.wantErr {
 				delSeq = append(delSeq, mockNode.EXPECT().
-					SetAddon("cluster", deleteAddon, "false").
-					Return(nil))
-			}
-			for _, addAddon := range tt.addAddons {
-				addSeq = append(addSeq, mockNode.EXPECT().
-					SetAddon("cluster", addAddon, "true").
-					Return(nil))
+					SetAddon(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(errors.New("error")))
+			} else {
+				for _, deleteAddon := range tt.deleteAddons {
+					delSeq = append(delSeq, mockNode.EXPECT().
+						SetAddon("cluster", deleteAddon, "false").
+						Return(nil))
+				}
+				for _, addAddon := range tt.addAddons {
+					addSeq = append(addSeq, mockNode.EXPECT().
+						SetAddon("cluster", addAddon, "true").
+						Return(nil))
+				}
 			}
 			gomock.InAnyOrder(append(delSeq, addSeq...))
 

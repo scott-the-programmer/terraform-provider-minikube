@@ -1,8 +1,7 @@
 # terraform-provider-minikube
 
  [![Go Report Card](https://goreportcard.com/badge/github.com/scott-the-programmer/terraform-provider-minikube)](https://goreportcard.com/report/github.com/scott-the-programmer/terraform-provider-minikube)
-<a href="https://codeclimate.com/github/scott-the-programmer/terraform-provider-minikube/maintainability"><img src="https://api.codeclimate.com/v1/badges/dd45aac40e7019502245/maintainability" /></a>
-<a href="https://codeclimate.com/github/scott-the-programmer/terraform-provider-minikube/test_coverage"><img src="https://api.codeclimate.com/v1/badges/dd45aac40e7019502245/test_coverage" /></a>
+[![codecov](https://codecov.io/gh/scott-the-programmer/terraform-provider-minikube/graph/badge.svg?token=MH35FEWVAH)](https://codecov.io/gh/scott-the-programmer/terraform-provider-minikube)
 
 A terraform provider for [minikube!](https://minikube.sigs.k8s.io/docs/)
 

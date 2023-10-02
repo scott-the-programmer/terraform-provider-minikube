@@ -258,13 +258,15 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *service.Moc
 	clusterSchema := ResourceCluster().Schema
 	mountString, _ := clusterSchema["mount_string"].DefaultFunc()
 
+
+
 	k8sVersion := "v1.26.3"
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion:      k8sVersion,
 		ClusterName:            clusterName,
 		Namespace:              clusterSchema["namespace"].Default.(string),
 		APIServerName:          clusterSchema["apiserver_name"].Default.(string),
-		APIServerNames:         []string{clusterSchema["apiserver_name"].Default.(string)},
+		APIServerNames:         []string{"minikubeCA"},
 		DNSDomain:              clusterSchema["dns_domain"].Default.(string),
 		FeatureGates:           clusterSchema["feature_gates"].Default.(string),
 		ContainerRuntime:       clusterSchema["container_runtime"].Default.(string),

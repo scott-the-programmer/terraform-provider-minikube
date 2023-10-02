@@ -271,13 +271,18 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		return nil, err
 	}
 
+	apiserverNames := []string{}
+	if d.Get("apiserver_names").(*schema.Set).Len() > 0 {
+		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
+	}
+
 	k8sVersion := clusterClient.GetK8sVersion()
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion: k8sVersion,
 		ClusterName:       d.Get("cluster_name").(string),
 		Namespace:         d.Get("namespace").(string),
 		APIServerName:     d.Get("apiserver_name").(string),
-		APIServerNames:    []string{d.Get("apiserver_name").(string)},
+		APIServerNames:    apiserverNames,
 		DNSDomain:         d.Get("dns_domain").(string),
 		FeatureGates:      d.Get("feature_gates").(string),
 		ContainerRuntime:  d.Get("container_runtime").(string),

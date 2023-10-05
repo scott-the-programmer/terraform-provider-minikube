@@ -30,11 +30,17 @@ acceptance:
 	go test -c -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5" -o testBinary ./minikube 
 	TF_ACC=true ./testBinary -test.run "TestClusterCreation" -test.v -test.parallel 1 -test.timeout 20m
 
-.PHONY: test-stack
-test-stack: set-local
+.PHONY: test-stack-apply
+test-stack-apply: set-local
 	terraform -chdir=examples/resources/minikube_cluster init || true
 	terraform -chdir=examples/resources/minikube_cluster apply --auto-approve
+
+.PHONY: test-stack-delete
+test-stack-delete:
 	terraform -chdir=examples/resources/minikube_cluster destroy --auto-approve
+
+.PHONY: test-stack
+test-stack: test-stack-apply test-stack-delete
 
 STORAGE_PROVISIONER_TAG ?= v5
 .PHONY: build

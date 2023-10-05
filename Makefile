@@ -41,36 +41,36 @@ STORAGE_PROVISIONER_TAG ?= v5
 build:
 	go build -o bin/terraform-provider-minikube -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=$(STORAGE_PROVISIONER_TAG)"
 
-.PHONY: set-local 
-set-local: build	
-ifeq ($(OS), Windows_NT)
-#amd64
-	mkdir -p $$APPDATA/terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/windows_amd64 
-	cp bin/terraform-provider-minikube $$APPDATA/terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/windows_amd64/terraform-provider-minikube.exe
-
-#arm64
-	mkdir -p $$APPDATA/terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/windows_arm64 
-	cp bin/terraform-provider-minikube $$APPDATA/terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/windows_arm64/terraform-provider-minikube.exe
-
+ARCH_RAW := $(shell uname -m)
+ifeq ($(ARCH_RAW), x86_64)
+	ARCH := amd64
+else ifeq ($(ARCH_RAW), aarch64)
+	ARCH := arm64
 else
-#amd64
-	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_amd64 
-	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_amd64 
-	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_amd64/terraform-provider-minikube
-	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_amd64/terraform-provider-minikube
-
-#arm64
-	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_arm64 
-	mkdir -p $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_arm64 
-	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/linux_arm64/terraform-provider-minikube
-	cp bin/terraform-provider-minikube $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/99.99.99/darwin_arm64/terraform-provider-minikube
+	ARCH := $(ARCH_RAW)
 endif
 
+OS_NAME := $(shell uname -s | tr A-Z a-z)
+PLUGIN_NAME := terraform-provider-minikube
+VERSION := 99.99.99
+DEST_DIR := $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/$(VERSION)
+EXT :=
 
+ifeq ($(OS), Windows_NT)
+	OS_NAME := windows
+	DEST_DIR := $$APPDATA/terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/$(VERSION)
+	EXT := .exe
+endif
 
-
-.PHONY: set-local-windows
+.PHONY: set-local
 set-local: build
+	mkdir -p $(DEST_DIR)/$(OS_NAME)_$(ARCH) && \
+	cp bin/$(PLUGIN_NAME) $(DEST_DIR)/$(OS_NAME)_$(ARCH)/$(PLUGIN_NAME)$(EXT)
+
+.PHONY: reset-local
+reset-local:
+	rm -rf $(DEST_DIR)/$(OS_NAME)_$(ARCH)/$(PLUGIN_NAME)$(EXT)
+
 
 SED_FLAGS := -i
 UNAME_S := $(shell uname -s)

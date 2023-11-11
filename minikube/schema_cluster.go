@@ -98,7 +98,7 @@ var (
 			
 			Optional:			true,
 			ForceNew:			true,
-		
+			
 			Elem: &schema.Schema{
 				Type:	schema.TypeString,
 			},
@@ -113,6 +113,16 @@ var (
 			ForceNew:			true,
 			
 			Default:	8443,
+		},
+	
+		"auto_pause_interval": {
+			Type:					schema.TypeInt,
+			Description:	"Duration of inactivity before the minikube VM is paused (default 1m0s).  To disable, set to 0s (Configured in minutes)",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	1,
 		},
 	
 		"auto_update_drivers": {
@@ -132,7 +142,7 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.40@sha256:8cadf23777709e43eca447c47a45f5a4635615129267ce025193040ec92a1631",
+			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.42@sha256:d35ac07dfda971cabee05e0deca8aeac772f885a5348e1a0c0b0a36db20fcfc0",
 		},
 	
 		"binary_mirror": {
@@ -568,7 +578,7 @@ var (
 	
 		"kubernetes_version": {
 			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.27.3, 'latest' for v1.27.3). Defaults to 'stable'.",
+			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.28.3, 'latest' for v1.28.3). Defaults to 'stable'.",
 			
 			Optional:			true,
 			ForceNew:			true,

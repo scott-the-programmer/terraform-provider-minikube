@@ -14,7 +14,7 @@ Used to create a minikube cluster on the current host
 
 ```terraform
 provider "minikube" {
-  kubernetes_version = "v1.26.3"
+  kubernetes_version = "v1.28.3"
 }
 
 resource "minikube_cluster" "docker" {
@@ -72,7 +72,7 @@ resource "kubernetes_deployment" "deployment" {
       }
       spec {
         container {
-          image = "nginx:1.7.8"
+          image = "nginx:latest"
           name  = "example"
 
           port {
@@ -106,6 +106,7 @@ resource "kubernetes_deployment" "deployment" {
 - `apiserver_name` (String) The authoritative apiserver hostname for apiserver certificates and connectivity. This can be used if you want to make the apiserver available from outside the machine
 - `apiserver_names` (Set of String) A set of apiserver names which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine
 - `apiserver_port` (Number) The apiserver listening port
+- `auto_pause_interval` (Number) Duration of inactivity before the minikube VM is paused (default 1m0s).  To disable, set to 0s (Configured in minutes)
 - `auto_update_drivers` (Boolean) If set, automatically updates drivers to the latest version. Defaults to true.
 - `base_image` (String) The base image to use for docker/podman drivers. Intended for local development.
 - `binary_mirror` (String) Location to fetch kubectl, kubelet, & kubeadm binaries from.
@@ -150,7 +151,7 @@ resource "kubernetes_deployment" "deployment" {
 - `interactive` (Boolean) Allow user prompts for more information
 - `iso_url` (Set of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.27.3, 'latest' for v1.27.3). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.28.3, 'latest' for v1.28.3). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)

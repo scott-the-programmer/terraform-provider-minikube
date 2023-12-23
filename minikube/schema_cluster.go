@@ -5,6 +5,9 @@ package minikube
 import (
 	"runtime"
 	"os"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -648,12 +651,14 @@ var (
 	
 		"memory": {
 			Type:					schema.TypeString,
-			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g)",
+			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"4000mb",
+			Default:	"4g",
+			StateFunc:	state_utils.MemoryConverter(),
+			ValidateDiagFunc:	state_utils.MemoryValidator(),
 		},
 	
 		"mount": {

@@ -51,6 +51,29 @@ You can use `minikube` to verify the cluster is up & running
 |----------------------------------------|-----------|---------|---------------|------|---------|---------|-------|
 ```
 
+## Outputs
+
+In order to integrate the minikube providers with other k8s providers, you can reference the following outputs
+
+- `client_certificate` (string, sensitive) client certificate used in cluster
+- `client_key` (string, sensitive) client key for cluster
+- `cluster_ca_certificate` (string, sensitive) certificate authority for cluster
+- `host` (string) the host name for the cluster
+
+These outputs are consistent across supported by all minikube cluster types
+
+i.e.
+
+```terraform
+provider "kubernetes" {
+  host = minikube_cluster.cluster.host
+
+  client_certificate     = minikube_cluster.cluster.client_certificate
+  client_key             = minikube_cluster.cluster.client_key
+  cluster_ca_certificate = minikube_cluster.cluster.cluster_ca_certificate
+}
+```
+
 ## Want to help out?
 
 See [the contributing doc](./contributing.md) if you wish to get into the details of this terraform minikube provider!

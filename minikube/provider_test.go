@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +36,7 @@ func TestProvider_bootstrap(t *testing.T) {
 
 	m, _ := provider.ConfigureContextFunc(context.TODO(), data)
 
-	clusterClientFactory := m.(func() (service.ClusterClient, error))
+	clusterClientFactory := m.(func() (lib.ClusterClient, error))
 	_, err := clusterClientFactory()
 
 	assert.NoError(t, err)

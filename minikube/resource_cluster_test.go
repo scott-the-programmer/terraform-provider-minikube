@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -215,7 +215,7 @@ func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 
 	configureContext := func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		var diags diag.Diagnostics
-		mockClusterClientFactory := func() (service.ClusterClient, error) {
+		mockClusterClientFactory := func() (lib.ClusterClient, error) {
 			return mockClusterClient, nil
 		}
 		return mockClusterClientFactory, diags
@@ -236,7 +236,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 
 	configureContext := func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		var diags diag.Diagnostics
-		mockClusterClientFactory := func() (service.ClusterClient, error) {
+		mockClusterClientFactory := func() (lib.ClusterClient, error) {
 			return mockClusterClient, nil
 		}
 		return mockClusterClientFactory, diags
@@ -245,8 +245,8 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	return configureContext
 }
 
-func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *service.MockClusterClient {
-	mockClusterClient := service.NewMockClusterClient(ctrl)
+func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClusterClient {
+	mockClusterClient := lib.NewMockClusterClient(ctrl)
 
 	os.Mkdir("test_output", 0755)
 
@@ -257,8 +257,6 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *service.Moc
 
 	clusterSchema := ResourceCluster().Schema
 	mountString, _ := clusterSchema["mount_string"].DefaultFunc()
-
-
 
 	k8sVersion := "v1.26.3"
 	kubernetesConfig := config.KubernetesConfig{
@@ -394,7 +392,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *service.Moc
 
 	mockClusterClient.EXPECT().
 		GetConfig().
-		Return(service.MinikubeClientConfig{}).
+		Return(lib.MinikubeClientConfig{}).
 		AnyTimes()
 
 	return mockClusterClient

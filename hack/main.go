@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube"
-	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
@@ -109,8 +109,8 @@ func main() {
 		MultiNodeRequested: false,
 	}
 
-	minikubeClient := service.NewMinikubeClient(
-		service.MinikubeClientConfig{
+	minikubeClient := lib.NewMinikubeClient(
+		lib.MinikubeClientConfig{
 			ClusterConfig:   cc,
 			ClusterName:     "terraform-provider-minikube-acc",
 			Addons:          []string{},
@@ -118,9 +118,9 @@ func main() {
 			NativeSsh:       true,
 			DeleteOnFailure: true,
 		},
-		service.MinikubeClientDeps{
-			Node:       service.NewMinikubeCluster(),
-			Downloader: service.NewMinikubeDownloader(),
+		lib.MinikubeClientDeps{
+			Node:       lib.NewMinikubeCluster(),
+			Downloader: lib.NewMinikubeDownloader(),
 		})
 
 	kc, err := minikubeClient.Start()

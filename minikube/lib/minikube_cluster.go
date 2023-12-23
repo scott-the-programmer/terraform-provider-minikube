@@ -1,5 +1,5 @@
 //go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_minikube_cluster.go -package=$GOPACKAGE
-package service
+package lib
 
 import (
 	"os"

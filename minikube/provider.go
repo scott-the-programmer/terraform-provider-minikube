@@ -4,10 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 )
 
 func init() {
@@ -41,8 +40,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 	mutex := &sync.Mutex{}
 	k8sVersion := d.Get("kubernetes_version").(string)
-	minikubeClientFactory := func() (service.ClusterClient, error) {
-		return &service.MinikubeClient{
+	minikubeClientFactory := func() (lib.ClusterClient, error) {
+		return &lib.MinikubeClient{
 			TfCreationLock: mutex,
 			K8sVersion:     k8sVersion}, nil
 	}

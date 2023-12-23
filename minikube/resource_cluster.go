@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/service"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	defaultIso = service.GetMinikubeIso()
+	defaultIso = lib.GetMinikubeIso()
 )
 
 func ResourceCluster() *schema.Resource {
@@ -77,7 +77,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		oldAddonStrings := getAddons(oldAddons.(*schema.Set))
 		newAddonStrings := getAddons(newAddons.(*schema.Set))
 
-		client.SetConfig(service.MinikubeClientConfig{
+		client.SetConfig(lib.MinikubeClientConfig{
 			ClusterConfig:   config.ClusterConfig,
 			IsoUrls:         config.IsoUrls,
 			ClusterName:     config.ClusterName,
@@ -191,7 +191,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("nodes", len(config.Nodes))
 	d.Set("ports", state_utils.SliceOrNil(ports))
 	d.Set("registry_mirror", state_utils.SliceOrNil(config.RegistryMirror))
-	d.Set("service_cluster_ip_range", config.KubernetesConfig.ServiceCIDR)
+	d.Set("lib_cluster_ip_range", config.KubernetesConfig.ServiceCIDR)
 	d.Set("ssh_ip_address", config.SSHIPAddress)
 	d.Set("ssh_key", config.SSHKey)
 	d.Set("ssh_port", config.SSHPort)
@@ -224,9 +224,9 @@ func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string,
 	return key, certificate, ca, kc.ClusterServerAddress, nil
 }
 
-func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.ClusterClient, error) {
+func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.ClusterClient, error) {
 
-	clusterClientFactory := m.(func() (service.ClusterClient, error))
+	clusterClientFactory := m.(func() (lib.ClusterClient, error))
 	clusterClient, err := clusterClientFactory()
 	if err != nil {
 		return nil, err
@@ -373,7 +373,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		StaticIP:           d.Get("static_ip").(string),
 	}
 
-	clusterClient.SetConfig(service.MinikubeClientConfig{
+	clusterClient.SetConfig(lib.MinikubeClientConfig{
 		ClusterConfig: cc, ClusterName: d.Get("cluster_name").(string),
 		Addons:          addonStrings,
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
@@ -382,9 +382,9 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (service.Cl
 		NativeSsh:       d.Get("native_ssh").(bool),
 	})
 
-	clusterClient.SetDependencies(service.MinikubeClientDeps{
-		Node:       service.NewMinikubeCluster(),
-		Downloader: service.NewMinikubeDownloader(),
+	clusterClient.SetDependencies(lib.MinikubeClientDeps{
+		Node:       lib.NewMinikubeCluster(),
+		Downloader: lib.NewMinikubeDownloader(),
 	})
 
 	return clusterClient, nil

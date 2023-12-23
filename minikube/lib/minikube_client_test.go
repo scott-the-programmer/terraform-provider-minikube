@@ -1,4 +1,4 @@
-package service
+package lib
 
 import (
 	"errors"

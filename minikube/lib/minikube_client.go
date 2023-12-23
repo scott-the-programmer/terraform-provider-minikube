@@ -1,5 +1,5 @@
 //go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
-package service
+package lib
 
 import (
 	"fmt"

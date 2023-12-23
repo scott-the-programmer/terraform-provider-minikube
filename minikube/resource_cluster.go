@@ -191,7 +191,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("nodes", len(config.Nodes))
 	d.Set("ports", state_utils.SliceOrNil(ports))
 	d.Set("registry_mirror", state_utils.SliceOrNil(config.RegistryMirror))
-	d.Set("lib_cluster_ip_range", config.KubernetesConfig.ServiceCIDR)
+	d.Set("service_cluster_ip_range", config.KubernetesConfig.ServiceCIDR)
 	d.Set("ssh_ip_address", config.SSHIPAddress)
 	d.Set("ssh_key", config.SSHKey)
 	d.Set("ssh_port", config.SSHPort)

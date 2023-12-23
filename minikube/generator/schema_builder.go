@@ -42,10 +42,12 @@ var computedFields []string = []string{
 }
 
 type SchemaOverride struct {
-	Description string
-	Default     string
-	Type        SchemaType
-	DefaultFunc string
+	Description      string
+	Default          string
+	Type             SchemaType
+	DefaultFunc      string
+	StateFunc        string
+	ValidateDiagFunc string
 }
 
 var updateFields = []string{
@@ -54,9 +56,11 @@ var updateFields = []string{
 
 var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 	"memory": {
-		Default:     "4000mb",
-		Description: "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g)",
-		Type:        String,
+		Default:          "4g",
+		Description:      "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
+		Type:             String,
+		StateFunc:        "state_utils.MemoryConverter()",
+		ValidateDiagFunc: "state_utils.MemoryValidator()",
 	},
 	"cpus": {
 		Default:     "2",
@@ -99,12 +103,14 @@ func run(ctx context.Context, args ...string) (string, error) {
 }
 
 type SchemaEntry struct {
-	Parameter   string
-	Default     string
-	DefaultFunc string
-	Description string
-	Type        SchemaType
-	ArrayType   SchemaType
+	Parameter        string
+	Default          string
+	DefaultFunc      string
+	StateFunc        string
+	ValidateDiagFunc string
+	Description      string
+	Type             SchemaType
+	ArrayType        SchemaType
 }
 
 type SchemaBuilder struct {
@@ -194,6 +200,8 @@ func loadParameter(line string) SchemaEntry {
 		schemaEntry.Default = val.Default
 		schemaEntry.DefaultFunc = val.DefaultFunc
 		schemaEntry.Type = val.Type
+		schemaEntry.StateFunc = val.StateFunc
+		schemaEntry.ValidateDiagFunc = val.ValidateDiagFunc
 	}
 
 	if schemaEntry.Type == String {
@@ -207,19 +215,23 @@ func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, e
 	switch currentEntry.Type {
 	case String:
 		entries = append(entries, SchemaEntry{
-			Parameter:   currentEntry.Parameter,
-			Default:     fmt.Sprintf("\"%s\"", currentEntry.Default),
-			Type:        currentEntry.Type,
-			Description: currentEntry.Description,
-			DefaultFunc: currentEntry.DefaultFunc,
+			Parameter:        currentEntry.Parameter,
+			Default:          fmt.Sprintf("\"%s\"", currentEntry.Default),
+			Type:             currentEntry.Type,
+			Description:      currentEntry.Description,
+			DefaultFunc:      currentEntry.DefaultFunc,
+			StateFunc:        currentEntry.StateFunc,
+			ValidateDiagFunc: currentEntry.ValidateDiagFunc,
 		})
 	case Bool:
 		entries = append(entries, SchemaEntry{
-			Parameter:   currentEntry.Parameter,
-			Default:     currentEntry.Default,
-			Type:        currentEntry.Type,
-			Description: currentEntry.Description,
-			DefaultFunc: currentEntry.DefaultFunc,
+			Parameter:        currentEntry.Parameter,
+			Default:          currentEntry.Default,
+			Type:             currentEntry.Type,
+			Description:      currentEntry.Description,
+			DefaultFunc:      currentEntry.DefaultFunc,
+			StateFunc:        currentEntry.StateFunc,
+			ValidateDiagFunc: currentEntry.ValidateDiagFunc,
 		})
 	case Int:
 		val, err := strconv.Atoi(currentEntry.Default)
@@ -233,19 +245,23 @@ func addEntry(entries []SchemaEntry, currentEntry SchemaEntry) ([]SchemaEntry, e
 			currentEntry.Description = fmt.Sprintf("%s (Configured in minutes)", currentEntry.Description)
 		}
 		entries = append(entries, SchemaEntry{
-			Parameter:   currentEntry.Parameter,
-			Default:     strconv.Itoa(val),
-			Type:        currentEntry.Type,
-			Description: currentEntry.Description,
-			DefaultFunc: currentEntry.DefaultFunc,
+			Parameter:        currentEntry.Parameter,
+			Default:          strconv.Itoa(val),
+			Type:             currentEntry.Type,
+			Description:      currentEntry.Description,
+			DefaultFunc:      currentEntry.DefaultFunc,
+			StateFunc:        currentEntry.StateFunc,
+			ValidateDiagFunc: currentEntry.ValidateDiagFunc,
 		})
 	case Array:
 		entries = append(entries, SchemaEntry{
-			Parameter:   currentEntry.Parameter,
-			Type:        Array,
-			ArrayType:   String,
-			Description: currentEntry.Description,
-			DefaultFunc: currentEntry.DefaultFunc,
+			Parameter:        currentEntry.Parameter,
+			Type:             Array,
+			ArrayType:        String,
+			Description:      currentEntry.Description,
+			DefaultFunc:      currentEntry.DefaultFunc,
+			StateFunc:        currentEntry.StateFunc,
+			ValidateDiagFunc: currentEntry.ValidateDiagFunc,
 		})
 	}
 
@@ -265,6 +281,9 @@ package minikube
 import (
 	"runtime"
 	"os"
+
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -346,6 +365,16 @@ var (
 		} else {
 			extraParams += fmt.Sprintf(`
 			Default:	%s,`, entry.Default)
+		}
+
+		if entry.StateFunc != "" {
+			extraParams += fmt.Sprintf(`
+			StateFunc:	%s,`, entry.StateFunc)
+		}
+
+		if entry.ValidateDiagFunc != "" {
+			extraParams += fmt.Sprintf(`
+			ValidateDiagFunc:	%s,`, entry.ValidateDiagFunc)
 		}
 
 		body = body + fmt.Sprintf(`

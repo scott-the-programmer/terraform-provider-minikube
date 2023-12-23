@@ -293,7 +293,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 		MinikubeISO:             defaultIso,
 		KicBaseImage:            clusterSchema["base_image"].Default.(string),
 		Network:                 clusterSchema["network"].Default.(string),
-		Memory:                  4000,
+		Memory:                  4096,
 		CPUs:                    2,
 		DiskSize:                20000,
 		Driver:                  "some_driver",
@@ -429,7 +429,7 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000mb"
+		memory = "6GiB"
 
 		addons = [
 			"dashboard",
@@ -446,7 +446,7 @@ func testAcceptanceClusterConfig_Update(driver string, clusterName string) strin
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000mb"
+		memory = "6GiB"
 
 		addons = [
 			"dashboard",
@@ -464,7 +464,7 @@ func testAcceptanceClusterConfig_StorageProvisioner(driver string, clusterName s
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000mb"
+		memory = "6000GiB"
 
 		addons = [
 			"dashboard",
@@ -482,7 +482,7 @@ func testAcceptanceClusterConfig_OutOfOrderAddons(driver string, clusterName str
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000mb"
+		memory = "6000GiB"
 
 		addons = [
 			"storage-provisioner",

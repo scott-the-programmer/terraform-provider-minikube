@@ -158,7 +158,7 @@ resource "kubernetes_deployment" "deployment" {
 - `kvm_numa_count` (Number) Simulate numa node count in minikube, supported numa node count range is 1-8 (kvm2 driver only)
 - `kvm_qemu_uri` (String) The KVM QEMU connection URI. (kvm2 driver only)
 - `listen_address` (String) IP Address to use to expose ports (docker and podman driver only)
-- `memory` (String) Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g)
+- `memory` (String) Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)
 - `mount` (Boolean) This will start the mount daemon and automatically mount files into minikube.
 - `mount_9p_version` (String) Specify the 9p version that the mount should use
 - `mount_gid` (String) Default group id used for the mount

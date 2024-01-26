@@ -32,6 +32,12 @@ resource "minikube_cluster" "hyperkit" {
   cluster_name = "terraform-provider-minikube-acc-hyperkit"
   nodes        = 3
   cni          = "bridge" # Allows pods to communicate with each other via DNS
+
+  # pass extra configs to control plane components (syntax: "<component>.<key>=<value>")
+  extra_config = [
+    "apiserver.encryption-provider-config=/etc/kubernetes/manifests/encryption_provider_config.yml"
+  ]
+
   addons = [
     "dashboard",
     "default-storageclass",

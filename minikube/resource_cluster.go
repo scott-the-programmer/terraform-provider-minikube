@@ -164,8 +164,8 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	for _, e := range config.KubernetesConfig.ExtraOptions {
 		extra_config = append(extra_config, fmt.Sprintf("%s.%s=%s", e.Component, e.Key, e.Value))
 	}
-	d.Set("extra_config", extra_config)
 
+	d.Set("extra_config", extra_config)
 	d.Set("feature_gates", config.KubernetesConfig.FeatureGates)
 	d.Set("host_dns_resolver", config.HostDNSResolver)
 	d.Set("host_only_cidr", config.HostOnlyCIDR)
@@ -283,31 +283,33 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
 	}
 
-	var extra_configs config.ExtraOptionSlice
+	ecSlice := []string{}
+	if d.Get("extra_config") != nil && d.Get("extra_config").(*schema.Set).Len() > 0 {
+		ecSlice = state_utils.ReadSliceState(d.Get("extra_config"))
+	}
 
-	if v, ok := d.GetOk("extra_config"); ok {
-		for _, e := range v.([]interface{}){
-			if err := extra_configs.Set(e.(string)); err != nil {
-				return nil, fmt.Errorf("invalid extra option: %s: %v", e.(string), err)
-			}
+	var extraConfigs config.ExtraOptionSlice
+	for _, e := range ecSlice {
+		if err := extraConfigs.Set(e); err != nil {
+			return nil, fmt.Errorf("invalid extra option: %s: %v", e, err)
 		}
 	}
 
 	k8sVersion := clusterClient.GetK8sVersion()
 	kubernetesConfig := config.KubernetesConfig{
-		KubernetesVersion: k8sVersion,
-		ClusterName:       d.Get("cluster_name").(string),
-		Namespace:         d.Get("namespace").(string),
-		APIServerName:     d.Get("apiserver_name").(string),
-		APIServerNames:    apiserverNames,
-		DNSDomain:         d.Get("dns_domain").(string),
-		FeatureGates:      d.Get("feature_gates").(string),
-		ContainerRuntime:  d.Get("container_runtime").(string),
-		CRISocket:         d.Get("cri_socket").(string),
-		NetworkPlugin:     d.Get("network_plugin").(string),
-		ServiceCIDR:       d.Get("service_cluster_ip_range").(string),
-		ImageRepository:   "",
-		ExtraOptions:           extra_configs,
+		KubernetesVersion:      k8sVersion,
+		ClusterName:            d.Get("cluster_name").(string),
+		Namespace:              d.Get("namespace").(string),
+		APIServerName:          d.Get("apiserver_name").(string),
+		APIServerNames:         apiserverNames,
+		DNSDomain:              d.Get("dns_domain").(string),
+		FeatureGates:           d.Get("feature_gates").(string),
+		ContainerRuntime:       d.Get("container_runtime").(string),
+		CRISocket:              d.Get("cri_socket").(string),
+		NetworkPlugin:          d.Get("network_plugin").(string),
+		ServiceCIDR:            d.Get("service_cluster_ip_range").(string),
+		ImageRepository:        "",
+		ExtraOptions:           extraConfigs,
 		ShouldLoadCachedImages: d.Get("cache_images").(bool),
 		CNI:                    d.Get("cni").(string),
 		NodePort:               d.Get("apiserver_port").(int),

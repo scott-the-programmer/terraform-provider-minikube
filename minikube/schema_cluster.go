@@ -365,13 +365,15 @@ var (
 		},
 	
 		"extra_config": {
-			Type:					schema.TypeString,
+			Type:					schema.TypeList,
 			Description:	"A set of key=value pairs that describe configuration that may be passed to different components. 		The key should be '.' separated, and the first part before the dot is the component to apply the configuration to. 		Valid components are: kubelet, kubeadm, apiserver, controller-manager, etcd, proxy, scheduler 		Valid kubeadm parameters: ignore-preflight-errors, dry-run, kubeconfig, kubeconfig-dir, node-name, cri-socket, experimental-upload-certs, certificate-key, rootfs, skip-phases, pod-network-cidr",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"",
+			Elem: &schema.Schema{
+				Type:	schema.TypeString,
+			},
 		},
 	
 		"extra_disks": {

@@ -159,6 +159,13 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("driver", config.Driver)
 	d.Set("embed_certs", config.EmbedCerts)
 	d.Set("extra_disks", config.ExtraDisks)
+
+	extra_config := []string{}
+	for _, e := range config.KubernetesConfig.ExtraOptions {
+		extra_config = append(extra_config, fmt.Sprintf("%s.%s=%s", e.Component, e.Key, e.Value))
+	}
+	d.Set("extra_config", extra_config)
+
 	d.Set("feature_gates", config.KubernetesConfig.FeatureGates)
 	d.Set("host_dns_resolver", config.HostDNSResolver)
 	d.Set("host_only_cidr", config.HostOnlyCIDR)
@@ -276,6 +283,16 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
 	}
 
+	var extra_configs config.ExtraOptionSlice
+
+	if v, ok := d.GetOk("extra_config"); ok {
+		for _, e := range v.([]interface{}){
+			if err := extra_configs.Set(e.(string)); err != nil {
+				return nil, fmt.Errorf("invalid extra option: %s: %v", e.(string), err)
+			}
+		}
+	}
+
 	k8sVersion := clusterClient.GetK8sVersion()
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion: k8sVersion,
@@ -290,7 +307,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		NetworkPlugin:     d.Get("network_plugin").(string),
 		ServiceCIDR:       d.Get("service_cluster_ip_range").(string),
 		ImageRepository:   "",
-		// ExtraOptions:           d.Get("extra_config").(string),
+		ExtraOptions:           extra_configs,
 		ShouldLoadCachedImages: d.Get("cache_images").(bool),
 		CNI:                    d.Get("cni").(string),
 		NodePort:               d.Get("apiserver_port").(int),

@@ -77,6 +77,21 @@ func TestClusterCreation_Docker(t *testing.T) {
 	})
 }
 
+func TestClusterCreation_Docker_ExtraConfig(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterExtraConfig("docker", "TestClusterCreationDocker"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+				),
+			},
+		},
+	})
+}
+
 func TestClusterCreation_Docker_Update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Providers:    map[string]*schema.Provider{"minikube": Provider()},
@@ -431,6 +446,24 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 		cpus = 2 
 		memory = "6GiB"
 
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"storage-provisioner",
+		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterExtraConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 2 
+		memory = "6GiB"
+
+		extra_config = ["apiserver.v=3"]
 		addons = [
 			"dashboard",
 			"default-storageclass",

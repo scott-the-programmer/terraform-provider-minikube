@@ -191,7 +191,6 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("namespace", config.KubernetesConfig.Namespace)
 	d.Set("nat_nic_type", config.NatNicType)
 	d.Set("network", config.Network)
-	d.Set("network_plugin", config.KubernetesConfig.NetworkPlugin)
 	d.Set("nfs_share", state_utils.SliceOrNil(config.NFSShare))
 	d.Set("nfs_shares_root", config.NFSSharesRoot)
 	d.Set("no_vtx_check", config.NoVTXCheck)
@@ -239,6 +238,9 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		return nil, err
 	}
 
+	driver := d.Get("driver").(string)
+	containerRuntime := d.Get("container_runtime").(string)
+
 	addons, ok := d.GetOk("addons")
 	if !ok {
 		addons = &schema.Set{}
@@ -283,6 +285,14 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
 	}
 
+	networkPlugin := d.Get("network_plugin").(string) // This is a deprecated parameter in Minikube, however,
+	// it is still used internally, so we need to set it to a default value if it is not set. We should expect
+	// this to be a blank string usually, which should default to cni
+	// Upstream : https://github.com/kubernetes/minikube/blob/37eeaddf7ad63a7f690129247650e8dd4ff3d56a/cmd/minikube/cmd/start_flags.go#L506-L514
+	if networkPlugin == "" {
+		networkPlugin = "cni"
+	}
+
 	ecSlice := []string{}
 	if d.Get("extra_config") != nil && d.Get("extra_config").(*schema.Set).Len() > 0 {
 		ecSlice = state_utils.ReadSliceState(d.Get("extra_config"))
@@ -304,9 +314,9 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		APIServerNames:         apiserverNames,
 		DNSDomain:              d.Get("dns_domain").(string),
 		FeatureGates:           d.Get("feature_gates").(string),
-		ContainerRuntime:       d.Get("container_runtime").(string),
+		ContainerRuntime:       containerRuntime,
 		CRISocket:              d.Get("cri_socket").(string),
-		NetworkPlugin:          d.Get("network_plugin").(string),
+		NetworkPlugin:          networkPlugin,
 		ServiceCIDR:            d.Get("service_cluster_ip_range").(string),
 		ImageRepository:        "",
 		ExtraOptions:           extraConfigs,
@@ -319,7 +329,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Name:              "",
 		Port:              8443,
 		KubernetesVersion: k8sVersion,
-		ContainerRuntime:  d.Get("container_runtime").(string),
+		ContainerRuntime:  containerRuntime,
 		ControlPlane:      true,
 		Worker:            true,
 	}
@@ -327,6 +337,13 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	addonConfig := make(map[string]bool)
 	for _, addon := range addonStrings {
 		addonConfig[addon] = true
+	}
+
+	nodes := d.Get("nodes").(int)
+	multiNode := false
+
+	if nodes > 1 {
+		multiNode = true
 	}
 
 	cc := config.ClusterConfig{
@@ -340,7 +357,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Memory:                  memoryMb,
 		CPUs:                    d.Get("cpus").(int),
 		DiskSize:                diskMb,
-		Driver:                  d.Get("driver").(string),
+		Driver:                  driver,
 		ListenAddress:           d.Get("listen_address").(string),
 		HyperkitVpnKitSock:      d.Get("hyperkit_vpnkit_sock").(string),
 		HyperkitVSockPorts:      state_utils.ReadSliceState(hyperKitSockPorts),
@@ -388,7 +405,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 			n,
 		},
 		KubernetesConfig:   kubernetesConfig,
-		MultiNodeRequested: false,
+		MultiNodeRequested: multiNode,
 		StaticIP:           d.Get("static_ip").(string),
 	}
 
@@ -397,7 +414,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Addons:          addonStrings,
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
 		DeleteOnFailure: d.Get("delete_on_failure").(bool),
-		Nodes:           d.Get("nodes").(int),
+		Nodes:           nodes,
 		NativeSsh:       d.Get("native_ssh").(bool),
 	})
 

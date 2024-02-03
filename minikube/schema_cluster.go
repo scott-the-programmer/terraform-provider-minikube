@@ -190,12 +190,12 @@ var (
 	
 		"container_runtime": {
 			Type:					schema.TypeString,
-			Description:	"The container runtime to be used. Valid options: docker, cri-o, containerd (default: auto)",
+			Description:	"The container runtime to be used. Valid options: docker, cri-o, containerd (default: docker)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"",
+			Default:	"docker",
 		},
 	
 		"cpus": {

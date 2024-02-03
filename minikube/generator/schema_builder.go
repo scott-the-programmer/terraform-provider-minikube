@@ -73,6 +73,11 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 		Description: "Driver is one of the following - Windows: (hyperv, docker, virtualbox, vmware, qemu2, ssh) - OSX: (virtualbox, parallels, vmwarefusion, hyperkit, vmware, qemu2, docker, podman, ssh) - Linux: (docker, kvm2, virtualbox, qemu2, none, podman, ssh)",
 		Type:        String,
 	},
+	"container_runtime": {
+		Default:     "docker",
+		Description: "The container runtime to be used. Valid options: docker, cri-o, containerd (default: docker)",
+		Type:        String,
+	},
 	// Default schema to unix file paths first and let the provider translate them during runtime
 	"mount_string": {
 		Description: "The argument to pass the minikube mount command on start.",

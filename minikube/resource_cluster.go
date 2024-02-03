@@ -239,6 +239,8 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		return nil, err
 	}
 
+	driver := d.Get("driver").(string)
+
 	addons, ok := d.GetOk("addons")
 	if !ok {
 		addons = &schema.Set{}
@@ -295,6 +297,11 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		}
 	}
 
+	containerRuntime := d.Get("container_runtime").(string)
+	if containerRuntime == "" {
+		containerRuntime = driver
+	}
+
 	k8sVersion := clusterClient.GetK8sVersion()
 	kubernetesConfig := config.KubernetesConfig{
 		KubernetesVersion:      k8sVersion,
@@ -304,7 +311,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		APIServerNames:         apiserverNames,
 		DNSDomain:              d.Get("dns_domain").(string),
 		FeatureGates:           d.Get("feature_gates").(string),
-		ContainerRuntime:       d.Get("container_runtime").(string),
+		ContainerRuntime:       containerRuntime,
 		CRISocket:              d.Get("cri_socket").(string),
 		NetworkPlugin:          d.Get("network_plugin").(string),
 		ServiceCIDR:            d.Get("service_cluster_ip_range").(string),
@@ -319,7 +326,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Name:              "",
 		Port:              8443,
 		KubernetesVersion: k8sVersion,
-		ContainerRuntime:  d.Get("container_runtime").(string),
+		ContainerRuntime:  containerRuntime,
 		ControlPlane:      true,
 		Worker:            true,
 	}
@@ -347,7 +354,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Memory:                  memoryMb,
 		CPUs:                    d.Get("cpus").(int),
 		DiskSize:                diskMb,
-		Driver:                  d.Get("driver").(string),
+		Driver:                  driver,
 		ListenAddress:           d.Get("listen_address").(string),
 		HyperkitVpnKitSock:      d.Get("hyperkit_vpnkit_sock").(string),
 		HyperkitVSockPorts:      state_utils.ReadSliceState(hyperKitSockPorts),

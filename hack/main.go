@@ -27,14 +27,14 @@ func main() {
 		APIServerNames:    []string{schema["apiserver_name"].Default.(string)},
 		DNSDomain:         schema["dns_domain"].Default.(string),
 		FeatureGates:      schema["feature_gates"].Default.(string),
-		ContainerRuntime:  schema["container_runtime"].Default.(string),
+		ContainerRuntime:  driver,
 		CRISocket:         schema["cri_socket"].Default.(string),
-		NetworkPlugin:     schema["network_plugin"].Default.(string),
+		NetworkPlugin:     "cni",
 		ServiceCIDR:       schema["service_cluster_ip_range"].Default.(string),
 		ImageRepository:   "",
 		// ExtraOptions:           schema["extra_config"].Default.(string),
 		ShouldLoadCachedImages: schema["cache_images"].Default.(bool),
-		CNI:                    schema["cni"].Default.(string),
+		CNI:                    "auto",
 		NodePort:               schema["apiserver_port"].Default.(int),
 	}
 
@@ -106,7 +106,7 @@ func main() {
 			n,
 		},
 		KubernetesConfig:   kubernetesConfig,
-		MultiNodeRequested: false,
+		MultiNodeRequested: true,
 	}
 
 	minikubeClient := lib.NewMinikubeClient(
@@ -117,6 +117,7 @@ func main() {
 			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.32.0/minikube-v1.32.0-amd64.iso"},
 			NativeSsh:       true,
 			DeleteOnFailure: true,
+			Nodes:           3,
 		},
 		lib.MinikubeClientDeps{
 			Node:       lib.NewMinikubeCluster(),

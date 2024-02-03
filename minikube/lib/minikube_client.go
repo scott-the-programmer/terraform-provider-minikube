@@ -188,6 +188,8 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 
 	klog.Flush()
 
+	e.setAddons(e.addons, true)
+
 	return kc, nil
 }
 

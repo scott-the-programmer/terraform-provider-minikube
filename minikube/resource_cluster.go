@@ -191,7 +191,6 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("namespace", config.KubernetesConfig.Namespace)
 	d.Set("nat_nic_type", config.NatNicType)
 	d.Set("network", config.Network)
-	d.Set("network_plugin", config.KubernetesConfig.NetworkPlugin)
 	d.Set("nfs_share", state_utils.SliceOrNil(config.NFSShare))
 	d.Set("nfs_shares_root", config.NFSSharesRoot)
 	d.Set("no_vtx_check", config.NoVTXCheck)

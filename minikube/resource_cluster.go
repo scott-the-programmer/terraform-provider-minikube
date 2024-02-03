@@ -329,6 +329,13 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		addonConfig[addon] = true
 	}
 
+	nodes := d.Get("nodes").(int)
+	multiNode := false
+
+	if nodes > 1 {
+		multiNode = true
+	}
+
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
 		Name:                    d.Get("cluster_name").(string),
@@ -388,7 +395,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 			n,
 		},
 		KubernetesConfig:   kubernetesConfig,
-		MultiNodeRequested: false,
+		MultiNodeRequested: multiNode,
 		StaticIP:           d.Get("static_ip").(string),
 	}
 
@@ -397,7 +404,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Addons:          addonStrings,
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
 		DeleteOnFailure: d.Get("delete_on_failure").(bool),
-		Nodes:           d.Get("nodes").(int),
+		Nodes:           nodes,
 		NativeSsh:       d.Get("native_ssh").(bool),
 	})
 

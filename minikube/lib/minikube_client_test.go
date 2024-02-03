@@ -762,6 +762,11 @@ func getNodeSuccess(ctrl *gomock.Controller) Cluster {
 		Start(gomock.Any(), true).
 		Return(nil, nil)
 
+	nRunnerSuccess.EXPECT().
+		SetAddon(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
+
 	return nRunnerSuccess
 }
 
@@ -780,6 +785,11 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
 		Add(gomock.Any(), gomock.Any()).
 		Return(nil).
 		Times(n - 1)
+
+	nRunnerSuccess.EXPECT().
+		SetAddon(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
 
 	return nRunnerSuccess
 }

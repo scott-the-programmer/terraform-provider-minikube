@@ -1,6 +1,8 @@
 module github.com/scott-the-programmer/terraform-provider-minikube
 
-go 1.20
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	github.com/docker/machine v0.16.2

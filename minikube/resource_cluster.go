@@ -240,6 +240,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	}
 
 	driver := d.Get("driver").(string)
+	containerRuntime := d.Get("container_runtime").(string)
 
 	addons, ok := d.GetOk("addons")
 	if !ok {
@@ -295,11 +296,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		if err := extraConfigs.Set(e); err != nil {
 			return nil, fmt.Errorf("invalid extra option: %s: %v", e, err)
 		}
-	}
-
-	containerRuntime := d.Get("container_runtime").(string)
-	if containerRuntime == "" {
-		containerRuntime = driver
 	}
 
 	k8sVersion := clusterClient.GetK8sVersion()

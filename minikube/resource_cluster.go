@@ -286,6 +286,14 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
 	}
 
+	networkPlugin := d.Get("network_plugin").(string) // This is a deprecated parameter in Minikube, however,
+	// it is still used internally, so we need to set it to a default value if it is not set. We should expect
+	// this to be a blank string usually, which should default to cni
+	// Upstream : https://github.com/kubernetes/minikube/blob/37eeaddf7ad63a7f690129247650e8dd4ff3d56a/cmd/minikube/cmd/start_flags.go#L506-L514
+	if networkPlugin == "" {
+		networkPlugin = "cni"
+	}
+
 	ecSlice := []string{}
 	if d.Get("extra_config") != nil && d.Get("extra_config").(*schema.Set).Len() > 0 {
 		ecSlice = state_utils.ReadSliceState(d.Get("extra_config"))
@@ -309,7 +317,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		FeatureGates:           d.Get("feature_gates").(string),
 		ContainerRuntime:       containerRuntime,
 		CRISocket:              d.Get("cri_socket").(string),
-		NetworkPlugin:          d.Get("network_plugin").(string),
+		NetworkPlugin:          networkPlugin,
 		ServiceCIDR:            d.Get("service_cluster_ip_range").(string),
 		ImageRepository:        "",
 		ExtraOptions:           extraConfigs,

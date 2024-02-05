@@ -197,6 +197,26 @@ func TestClusterCreation_Hyperkit(t *testing.T) {
 	})
 }
 
+func TestClusterCreation_QemuSocketVmNet(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("Hyperkit is only supported on macOS")
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfigQemuSocketVmNet("qemu2", "TestClusterCreationQemu"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationQemu"),
+				),
+			},
+		},
+	})
+}
+
 func TestClusterCreation_HyperV(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("HyperV is only supported on windows")
@@ -466,6 +486,18 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 			"default-storageclass",
 			"storage-provisioner",
 		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfigQemuSocketVmNet(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		network = "socket_vmnet"
+
 	}
 	`, driver, clusterName)
 }

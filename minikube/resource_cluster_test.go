@@ -486,6 +486,7 @@ func testAcceptanceClusterConfig(driver string, clusterName string) string {
 			"default-storageclass",
 			"storage-provisioner",
 		]
+
 	}
 	`, driver, clusterName)
 }
@@ -498,6 +499,11 @@ func testAcceptanceClusterConfigQemuSocketVmNet(driver string, clusterName strin
 
 		network = "socket_vmnet"
 
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"storage-provisioner",
+		]
 	}
 	`, driver, clusterName)
 }

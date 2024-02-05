@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -159,14 +160,21 @@ func (s *SchemaBuilder) Build() (string, error) {
 
 	currentEntry := SchemaEntry{}
 
+	pattern := "^-[a-zA-Z], "
+
+	srg := regexp.MustCompile(pattern)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimSpace(line)
 
+		// trim the short parameter e.g. -g
+		line = srg.ReplaceAllString(line, "")
+
 		if strings.HasPrefix(line, "--") {
 			currentEntry = loadParameter(line)
 		} else if line != "" {
-			if currentEntry.Description != "" { // Let's readd a space between line blocks
+			if currentEntry.Description != "" { // Let's read a space between line blocks
 				currentEntry.Description += " "
 			}
 			currentEntry.Description += line
@@ -304,14 +312,6 @@ var (
 			ForceNew:			true,
 			Description:	"The name of the minikube cluster",
 			Default:			"terraform-provider-minikube",
-		},
-
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
 		},
 
 		"client_key": {

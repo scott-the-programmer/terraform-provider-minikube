@@ -31,14 +31,6 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
 		"client_key": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -100,6 +92,38 @@ func TestStringProperty(t *testing.T) {
 			ForceNew:			true,
 			
 			Default:	"test-value2",
+		},
+	
+	}
+)
+
+func GetClusterSchema() map[string]*schema.Schema {
+	return clusterSchema
+}
+	`, schema)
+}
+
+func TestAliasProperty(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+-t, --test='test-value':
+	I am a great test description
+
+	`, nil)
+	builder := NewSchemaBuilder("fake.go", mockMinikube)
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, header+`
+		"test": {
+			Type:					schema.TypeString,
+			Description:	"I am a great test description",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"test-value",
 		},
 	
 	}

@@ -407,6 +407,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		KubernetesConfig:   kubernetesConfig,
 		MultiNodeRequested: multiNode,
 		StaticIP:           d.Get("static_ip").(string),
+		GPUs:               d.Get("gpus").(string),
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{

@@ -21,14 +21,6 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
 		"client_key": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -415,6 +407,16 @@ var (
 			ForceNew:			true,
 			
 			Default:	false,
+		},
+	
+		"gpus": {
+			Type:					schema.TypeString,
+			Description:	"Allow pods to use your NVIDIA GPUs. Options include: [all,nvidia] (Docker driver with Docker container-runtime only)",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"",
 		},
 	
 		"host_dns_resolver": {
@@ -871,6 +873,26 @@ var (
 			ForceNew:			true,
 			
 			Default:	false,
+		},
+	
+		"nodes": {
+			Type:					schema.TypeInt,
+			Description:	"The number of nodes to spin up. Defaults to 1.",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	1,
+		},
+	
+		"output": {
+			Type:					schema.TypeString,
+			Description:	"Format to print stdout in. Options include: [text,json]",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"text",
 		},
 	
 		"ports": {

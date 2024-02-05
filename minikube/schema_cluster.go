@@ -21,14 +21,6 @@ var (
 			Default:			"terraform-provider-minikube",
 		},
 
-		"nodes": {
-			Type:					schema.TypeInt,
-			Optional:			true,
-			ForceNew:			true,
-			Description:	"Amount of nodes in the cluster",
-			Default:			1,
-		},
-
 		"client_key": {
 			Type:        schema.TypeString,
 			Computed:    true,

@@ -28,7 +28,7 @@ func NewProvider(providerConfigure schema.ConfigureContextFunc) *schema.Provider
 			"kubernetes_version": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The Kubernetes version that the minikube VM will use. Defaults to 'stable'.",
+				Description: "The Kubernetes version that the minikube VM will use. Defaults to 'v1.28.3'.",
 				Default:     "v1.28.3",
 			},
 		},

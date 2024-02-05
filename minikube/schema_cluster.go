@@ -417,6 +417,16 @@ var (
 			Default:	false,
 		},
 	
+		"gpus": {
+			Type:					schema.TypeString,
+			Description:	"Allow pods to use your NVIDIA GPUs. Options include: [all,nvidia] (Docker driver with Docker container-runtime only)",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"",
+		},
+	
 		"host_dns_resolver": {
 			Type:					schema.TypeBool,
 			Description:	"Enable host resolver for NAT DNS requests (virtualbox driver only)",
@@ -871,6 +881,26 @@ var (
 			ForceNew:			true,
 			
 			Default:	false,
+		},
+	
+		"nodes": {
+			Type:					schema.TypeInt,
+			Description:	"The number of nodes to spin up. Defaults to 1.",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	1,
+		},
+	
+		"output": {
+			Type:					schema.TypeString,
+			Description:	"Format to print stdout in. Options include: [text,json]",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	"text",
 		},
 	
 		"ports": {

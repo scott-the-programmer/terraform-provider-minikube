@@ -32,12 +32,6 @@ resource "minikube_cluster" "hyperkit" {
   cluster_name = "terraform-provider-minikube-acc-hyperkit"
   nodes        = 3
   cni          = "bridge" # Allows pods to communicate with each other via DNS
-
-  # pass extra configs to control plane components (syntax: "<component>.<key>=<value>")
-  extra_config = [
-    "apiserver.encryption-provider-config=/etc/kubernetes/manifests/encryption_provider_config.yml"
-  ]
-
   addons = [
     "dashboard",
     "default-storageclass",
@@ -120,7 +114,7 @@ resource "kubernetes_deployment" "deployment" {
 - `cert_expiration` (Number) Duration until minikube certificate expiration, defaults to three years (26280h). (Configured in minutes)
 - `cluster_name` (String) The name of the minikube cluster
 - `cni` (String) CNI plug-in to use. Valid options: auto, bridge, calico, cilium, flannel, kindnet, or path to a CNI manifest (default: auto)
-- `container_runtime` (String) The container runtime to be used. Valid options: docker, cri-o, containerd (default: auto)
+- `container_runtime` (String) The container runtime to be used. Valid options: docker, cri-o, containerd (default: docker)
 - `cpus` (Number) Amount of CPUs to allocate to Kubernetes
 - `cri_socket` (String) The cri socket path to be used.
 - `delete_on_failure` (Boolean) If set, delete the current cluster if start fails and try again. Defaults to false.
@@ -137,11 +131,12 @@ resource "kubernetes_deployment" "deployment" {
 - `dry_run` (Boolean) dry-run mode. Validates configuration, but does not mutate system state
 - `embed_certs` (Boolean) if true, will embed the certs in kubeconfig.
 - `enable_default_cni` (Boolean) DEPRECATED: Replaced by --cni=bridge
-- `extra_config` (String) A set of key=value pairs that describe configuration that may be passed to different components. 		The key should be '.' separated, and the first part before the dot is the component to apply the configuration to. 		Valid components are: kubelet, kubeadm, apiserver, controller-manager, etcd, proxy, scheduler 		Valid kubeadm parameters: ignore-preflight-errors, dry-run, kubeconfig, kubeconfig-dir, node-name, cri-socket, experimental-upload-certs, certificate-key, rootfs, skip-phases, pod-network-cidr
+- `extra_config` (Set of String) A set of key=value pairs that describe configuration that may be passed to different components. 		The key should be '.' separated, and the first part before the dot is the component to apply the configuration to. 		Valid components are: kubelet, kubeadm, apiserver, controller-manager, etcd, proxy, scheduler 		Valid kubeadm parameters: ignore-preflight-errors, dry-run, kubeconfig, kubeconfig-dir, node-name, cri-socket, experimental-upload-certs, certificate-key, rootfs, skip-phases, pod-network-cidr
 - `extra_disks` (Number) Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, and qemu2 drivers)
 - `feature_gates` (String) A set of key=value pairs that describe feature gates for alpha/experimental features.
 - `force` (Boolean) Force minikube to perform possibly dangerous operations
 - `force_systemd` (Boolean) If set, force the container runtime to use systemd as cgroup manager. Defaults to false.
+- `gpus` (String) Allow pods to use your NVIDIA GPUs. Options include: [all,nvidia] (Docker driver with Docker container-runtime only)
 - `host_dns_resolver` (Boolean) Enable host resolver for NAT DNS requests (virtualbox driver only)
 - `host_only_cidr` (String) The CIDR to be used for the minikube VM (virtualbox driver only)
 - `host_only_nic_type` (String) NIC Type used for host only network. One of Am79C970A, Am79C973, 82540EM, 82543GC, 82545EM, or virtio (virtualbox driver only)
@@ -184,7 +179,8 @@ resource "kubernetes_deployment" "deployment" {
 - `nfs_shares_root` (String) Where to root the NFS Shares, defaults to /nfsshares (hyperkit driver only)
 - `no_kubernetes` (Boolean) If set, minikube VM/container will start without starting or configuring Kubernetes. (only works on new clusters)
 - `no_vtx_check` (Boolean) Disable checking for the availability of hardware virtualization before the vm is started (virtualbox driver only)
-- `nodes` (Number) Amount of nodes in the cluster
+- `nodes` (Number) The number of nodes to spin up. Defaults to 1.
+- `output` (String) Format to print stdout in. Options include: [text,json]
 - `ports` (Set of String) List of ports that should be exposed (docker and podman driver only)
 - `preload` (Boolean) If set, download tarball of preloaded images if available to improve start time. Defaults to true.
 - `qemu_firmware_path` (String) Path to the qemu firmware file. Defaults: For Linux, the default firmware location. For macOS, the brew installation location. For Windows, C:\Program Files\qemu\share

@@ -199,7 +199,7 @@ func TestClusterCreation_Hyperkit(t *testing.T) {
 
 func TestClusterCreation_QemuSocketVmNet(t *testing.T) {
 	if runtime.GOOS != "darwin" {
-		t.Skip("Hyperkit is only supported on macOS")
+		t.Skip("Qemu + SocketVmNet is only supported on macOS")
 		return
 	}
 

@@ -962,7 +962,15 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"",
+			DefaultFunc:	func() (any, error) {
+        var prefix string
+        if runtime.GOARCH == "arm64" {
+            prefix = "/opt/homebrew"
+        } else {
+            prefix = "/usr/local"
+        }
+        return prefix + "/opt/socket_vmnet/bin/socket_vmnet_client", nil
+    },
 		},
 	
 		"socket_vmnet_path": {
@@ -972,7 +980,15 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"",
+			DefaultFunc:	func() (any, error) {
+        var prefix string
+        if runtime.GOARCH == "arm64" {
+            prefix = "/opt/homebrew"
+        } else {
+            prefix = "/usr/local"
+        }
+        return prefix + "/var/run/socket_vmnet", nil
+    },
 		},
 	
 		"ssh_ip_address": {

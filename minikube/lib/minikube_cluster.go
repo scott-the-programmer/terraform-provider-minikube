@@ -20,8 +20,8 @@ import (
 )
 
 type Cluster interface {
-	Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error)
-	Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error)
+	Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error)
+	Start(starter node.Starter) (*kubeconfig.Settings, error)
 	Delete(cc config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) *config.ClusterConfig
 	Add(cc *config.ClusterConfig, starter node.Starter) error
@@ -37,18 +37,18 @@ func NewMinikubeCluster() *MinikubeCluster {
 	return &MinikubeCluster{workerNodes: 0}
 }
 
-func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
+func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
 	makeAllMinikubeDirectories()
 	_, err := node.CacheKubectlBinary(cc.KubernetesConfig.KubernetesVersion, cc.BinaryMirror)
 	if err != nil {
 		return nil, false, nil, nil, err
 	}
 
-	return node.Provision(cc, n, apiServer, delOnFail)
+	return node.Provision(cc, n, delOnFail)
 }
 
-func (m *MinikubeCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
-	s, err := node.Start(starter, apiServer)
+func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
+	s, err := node.Start(starter)
 	if err != nil {
 		return nil, err
 	}

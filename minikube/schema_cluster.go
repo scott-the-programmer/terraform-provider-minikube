@@ -112,7 +112,7 @@ var (
 	
 		"auto_pause_interval": {
 			Type:					schema.TypeInt,
-			Description:	"Duration of inactivity before the minikube VM is paused (default 1m0s).  To disable, set to 0s (Configured in minutes)",
+			Description:	"Duration of inactivity before the minikube VM is paused (default 1m0s) (Configured in minutes)",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -137,7 +137,7 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.42@sha256:d35ac07dfda971cabee05e0deca8aeac772f885a5348e1a0c0b0a36db20fcfc0",
+			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.43@sha256:7ff490df401cc0fbf19a4521544ae8f4a00cc163e92a95017a8d8bfdb1422737",
 		},
 	
 		"binary_mirror": {
@@ -419,6 +419,16 @@ var (
 			Default:	"",
 		},
 	
+		"ha": {
+			Type:					schema.TypeBool,
+			Description:	"Create Highly Available Multi-Control Plane Cluster with a minimum of three control-plane nodes that will also be marked for work.",
+			
+			Optional:			true,
+			ForceNew:			true,
+			
+			Default:	false,
+		},
+	
 		"host_dns_resolver": {
 			Type:					schema.TypeBool,
 			Description:	"Enable host resolver for NAT DNS requests (virtualbox driver only)",
@@ -586,7 +596,7 @@ var (
 	
 		"kubernetes_version": {
 			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.28.3, 'latest' for v1.28.3). Defaults to 'stable'.",
+			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.30.0, 'latest' for v1.30.0). Defaults to 'stable'.",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -877,7 +887,7 @@ var (
 	
 		"nodes": {
 			Type:					schema.TypeInt,
-			Description:	"The number of nodes to spin up. Defaults to 1.",
+			Description:	"The total number of nodes to spin up. Defaults to 1.",
 			
 			Optional:			true,
 			ForceNew:			true,

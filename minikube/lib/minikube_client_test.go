@@ -707,7 +707,7 @@ func getProvisionerFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerProvisionFailure := NewMockCluster(ctrl)
 
 	nRunnerProvisionFailure.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, errors.New("provision error"))
 
 	return nRunnerProvisionFailure
@@ -717,11 +717,11 @@ func getStartFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerStartFailure := NewMockCluster(ctrl)
 
 	nRunnerStartFailure.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerStartFailure.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, errors.New("start error"))
 
 	return nRunnerStartFailure
@@ -755,11 +755,11 @@ func getNodeSuccess(ctrl *gomock.Controller) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
@@ -774,11 +774,11 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
@@ -798,11 +798,11 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().

@@ -324,7 +324,6 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 		ImageRepository:        "",
 		ShouldLoadCachedImages: clusterSchema["cache_images"].Default.(bool),
 		CNI:                    clusterSchema["cni"].Default.(string),
-		NodePort:               clusterSchema["apiserver_port"].Default.(int),
 	}
 
 	n := config.Node{
@@ -338,6 +337,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 
 	cc := config.ClusterConfig{
 		Name:                    "terraform-provider-minikube-acc",
+		APIServerPort:           clusterSchema["apiserver_port"].Default.(int),
 		KeepContext:             clusterSchema["keep_context"].Default.(bool),
 		EmbedCerts:              clusterSchema["embed_certs"].Default.(bool),
 		MinikubeISO:             defaultIso,

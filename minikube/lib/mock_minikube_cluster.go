@@ -39,18 +39,32 @@ func (m *MockCluster) EXPECT() *MockClusterMockRecorder {
 	return m.recorder
 }
 
-// Add mocks base method.
-func (m *MockCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
+// AddControlPlaneNode mocks base method.
+func (m *MockCluster) AddControlPlaneNode(cc *config.ClusterConfig, starter node.Starter) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", cc, starter)
+	ret := m.ctrl.Call(m, "AddControlPlaneNode", cc, starter)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Add indicates an expected call of Add.
-func (mr *MockClusterMockRecorder) Add(cc, starter interface{}) *gomock.Call {
+// AddControlPlaneNode indicates an expected call of AddControlPlaneNode.
+func (mr *MockClusterMockRecorder) AddControlPlaneNode(cc, starter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockCluster)(nil).Add), cc, starter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddControlPlaneNode", reflect.TypeOf((*MockCluster)(nil).AddControlPlaneNode), cc, starter)
+}
+
+// AddWorkerNode mocks base method.
+func (m *MockCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddWorkerNode", cc, starter)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddWorkerNode indicates an expected call of AddWorkerNode.
+func (mr *MockClusterMockRecorder) AddWorkerNode(cc, starter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWorkerNode", reflect.TypeOf((*MockCluster)(nil).AddWorkerNode), cc, starter)
 }
 
 // Delete mocks base method.

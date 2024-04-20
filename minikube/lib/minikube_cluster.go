@@ -24,7 +24,8 @@ type Cluster interface {
 	Start(starter node.Starter) (*kubeconfig.Settings, error)
 	Delete(cc config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) *config.ClusterConfig
-	Add(cc *config.ClusterConfig, starter node.Starter) error
+	AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error
+	AddControlPlaneNode(cc *config.ClusterConfig, starter node.Starter) error
 	SetAddon(name string, addon string, value string) error
 }
 
@@ -52,21 +53,34 @@ func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, err
 	if err != nil {
 		return nil, err
 	}
-	m.controlPlaneNodes++
 	return s, nil
 }
 
-// Add adds nodes to the clusters node pool
-func (m *MinikubeCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
+// AddWorkerNode adds a new worker node to the clusters node pool
+func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error {
+	m.workerNodes++
 	n := config.Node{
 		// index starts from 1 https://github.com/kubernetes/minikube/blob/075c1b01f2f8778ac746e05098044234a3f0b06f/pkg/minikube/driver/driver.go#L387C4-L387C27
-		Name:              node.Name(m.workerNodes + m.controlPlaneNodes + 1),
+		Name:              node.Name(m.workerNodes),
 		Worker:            true,
 		ControlPlane:      false,
 		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,
 		ContainerRuntime:  starter.Cfg.KubernetesConfig.ContainerRuntime,
 	}
-	m.workerNodes++
+	return node.Add(cc, n, true)
+}
+
+// AddControlPlaneNode adds a new control panel node to the clusters node pool
+// useful for provisioning high availability clusters
+func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, starter node.Starter) error {
+	m.controlPlaneNodes++
+	n := config.Node{
+		Name:              node.Name(m.controlPlaneNodes),
+		Worker:            true,
+		ControlPlane:      true,
+		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,
+		ContainerRuntime:  starter.Cfg.KubernetesConfig.ContainerRuntime,
+	}
 	return node.Add(cc, n, true)
 }
 

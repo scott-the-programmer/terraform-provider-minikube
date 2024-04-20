@@ -83,7 +83,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			ClusterName:     config.ClusterName,
 			Addons:          oldAddonStrings,
 			DeleteOnFailure: config.DeleteOnFailure,
-			Nodes:           config.Nodes,
+			WorkerNodes:     config.WorkerNodes,
 		})
 
 		err = client.ApplyAddons(newAddonStrings)
@@ -345,6 +345,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		multiNode = true
 	}
 
+	ha := d.Get("ha").(bool)
+	cpNodes := 1
+	if ha {
+		cpNodes += 2
+	}
+
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
 		APIServerPort:           d.Get("apiserver_port").(int),
@@ -414,11 +420,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{
 		ClusterConfig: cc, ClusterName: d.Get("cluster_name").(string),
-		Addons:          addonStrings,
-		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
-		DeleteOnFailure: d.Get("delete_on_failure").(bool),
-		Nodes:           nodes,
-		NativeSsh:       d.Get("native_ssh").(bool),
+		Addons:            addonStrings,
+		IsoUrls:           state_utils.ReadSliceState(defaultIsos),
+		DeleteOnFailure:   d.Get("delete_on_failure").(bool),
+		WorkerNodes:       nodes,
+		ControlPanelNodes: cpNodes,
+		NativeSsh:         d.Get("native_ssh").(bool),
 	})
 
 	clusterClient.SetDependencies(lib.MinikubeClientDeps{

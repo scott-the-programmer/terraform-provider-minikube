@@ -184,18 +184,9 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		return nil, err
 	}
 
-	for i := 1; i < e.workerNodes; i++ {
-		err := e.nRunner.AddWorkerNode(&e.clusterConfig, starter)
-		if err != nil {
-			return kc, err
-		}
-	}
-
-	for i := 1; i < e.controlPanelNodes; i++ {
-		err := e.nRunner.AddControlPlaneNode(&e.clusterConfig, starter)
-		if err != nil {
-			return kc, err
-		}
+	err = e.provisionNodes(starter)
+	if err != nil {
+		return nil, err
 	}
 
 	klog.Flush()
@@ -203,6 +194,25 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	e.setAddons(e.addons, true)
 
 	return kc, nil
+}
+
+func (e *MinikubeClient) provisionNodes(starter node.Starter) error {
+	for i := 1; i < e.workerNodes; i++ {
+		err := e.nRunner.AddWorkerNode(&e.clusterConfig, starter)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	for i := 1; i < e.controlPanelNodes; i++ {
+		err := e.nRunner.AddControlPlaneNode(&e.clusterConfig, starter)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (e *MinikubeClient) ApplyAddons(addons []string) error {

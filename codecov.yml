@@ -4,3 +4,5 @@ coverage:
       default:
         threshold: 3%
     patch: off
+  ignore:
+    - "hack/main.go"

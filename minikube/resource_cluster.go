@@ -145,7 +145,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("apiserver_ips", state_utils.SliceOrNil(config.KubernetesConfig.APIServerIPs))
 	d.Set("apiserver_name", config.KubernetesConfig.APIServerName)
 	d.Set("apiserver_names", state_utils.SliceOrNil(config.KubernetesConfig.APIServerNames))
-	d.Set("apiserver_port", config.KubernetesConfig.NodePort)
+	d.Set("apiserver_port", config.APIServerPort)
 	d.Set("base_image", config.KicBaseImage)
 	d.Set("cert_expiration", config.CertExpiration.Minutes())
 	d.Set("cni", config.KubernetesConfig.CNI)
@@ -203,7 +203,7 @@ func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports
 	d.Set("ssh_port", config.SSHPort)
 	d.Set("ssh_user", config.SSHUser)
 	d.Set("uuid", config.UUID)
-	d.Set("vm_driver", config.VMDriver)
+	d.Set("driver", config.Driver)
 }
 
 // getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
@@ -322,7 +322,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		ExtraOptions:           extraConfigs,
 		ShouldLoadCachedImages: d.Get("cache_images").(bool),
 		CNI:                    d.Get("cni").(string),
-		NodePort:               d.Get("apiserver_port").(int),
 	}
 
 	n := config.Node{
@@ -348,6 +347,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
+		APIServerPort:           d.Get("apiserver_port").(int),
 		Name:                    d.Get("cluster_name").(string),
 		KeepContext:             d.Get("keep_context").(bool),
 		EmbedCerts:              d.Get("embed_certs").(bool),

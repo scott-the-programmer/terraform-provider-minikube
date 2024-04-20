@@ -14,7 +14,7 @@ Used to create a minikube cluster on the current host
 
 ```terraform
 provider "minikube" {
-  kubernetes_version = "v1.28.3"
+  kubernetes_version = "v1.30.0"
 }
 
 resource "minikube_cluster" "docker" {
@@ -106,7 +106,7 @@ resource "kubernetes_deployment" "deployment" {
 - `apiserver_name` (String) The authoritative apiserver hostname for apiserver certificates and connectivity. This can be used if you want to make the apiserver available from outside the machine
 - `apiserver_names` (Set of String) A set of apiserver names which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine
 - `apiserver_port` (Number) The apiserver listening port
-- `auto_pause_interval` (Number) Duration of inactivity before the minikube VM is paused (default 1m0s).  To disable, set to 0s (Configured in minutes)
+- `auto_pause_interval` (Number) Duration of inactivity before the minikube VM is paused (default 1m0s) (Configured in minutes)
 - `auto_update_drivers` (Boolean) If set, automatically updates drivers to the latest version. Defaults to true.
 - `base_image` (String) The base image to use for docker/podman drivers. Intended for local development.
 - `binary_mirror` (String) Location to fetch kubectl, kubelet, & kubeadm binaries from.
@@ -137,6 +137,7 @@ resource "kubernetes_deployment" "deployment" {
 - `force` (Boolean) Force minikube to perform possibly dangerous operations
 - `force_systemd` (Boolean) If set, force the container runtime to use systemd as cgroup manager. Defaults to false.
 - `gpus` (String) Allow pods to use your NVIDIA GPUs. Options include: [all,nvidia] (Docker driver with Docker container-runtime only)
+- `ha` (Boolean) Create Highly Available Multi-Control Plane Cluster with a minimum of three control-plane nodes that will also be marked for work.
 - `host_dns_resolver` (Boolean) Enable host resolver for NAT DNS requests (virtualbox driver only)
 - `host_only_cidr` (String) The CIDR to be used for the minikube VM (virtualbox driver only)
 - `host_only_nic_type` (String) NIC Type used for host only network. One of Am79C970A, Am79C973, 82540EM, 82543GC, 82545EM, or virtio (virtualbox driver only)
@@ -152,7 +153,7 @@ resource "kubernetes_deployment" "deployment" {
 - `interactive` (Boolean) Allow user prompts for more information
 - `iso_url` (Set of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.28.3, 'latest' for v1.28.3). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.30.0, 'latest' for v1.30.0). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)
@@ -179,7 +180,7 @@ resource "kubernetes_deployment" "deployment" {
 - `nfs_shares_root` (String) Where to root the NFS Shares, defaults to /nfsshares (hyperkit driver only)
 - `no_kubernetes` (Boolean) If set, minikube VM/container will start without starting or configuring Kubernetes. (only works on new clusters)
 - `no_vtx_check` (Boolean) Disable checking for the availability of hardware virtualization before the vm is started (virtualbox driver only)
-- `nodes` (Number) The number of nodes to spin up. Defaults to 1.
+- `nodes` (Number) The total number of nodes to spin up. Defaults to 1.
 - `output` (String) Format to print stdout in. Options include: [text,json]
 - `ports` (Set of String) List of ports that should be exposed (docker and podman driver only)
 - `preload` (Boolean) If set, download tarball of preloaded images if available to improve start time. Defaults to true.

@@ -83,9 +83,9 @@ func (mr *MockClusterMockRecorder) Get(name interface{}) *gomock.Call {
 }
 
 // Provision mocks base method.
-func (m *MockCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiServer, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
+func (m *MockCluster) Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Provision", cc, n, apiServer, delOnFail)
+	ret := m.ctrl.Call(m, "Provision", cc, n, delOnFail)
 	ret0, _ := ret[0].(command.Runner)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(libmachine.API)
@@ -95,9 +95,9 @@ func (m *MockCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiSer
 }
 
 // Provision indicates an expected call of Provision.
-func (mr *MockClusterMockRecorder) Provision(cc, n, apiServer, delOnFail interface{}) *gomock.Call {
+func (mr *MockClusterMockRecorder) Provision(cc, n, delOnFail interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provision", reflect.TypeOf((*MockCluster)(nil).Provision), cc, n, apiServer, delOnFail)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provision", reflect.TypeOf((*MockCluster)(nil).Provision), cc, n, delOnFail)
 }
 
 // SetAddon mocks base method.
@@ -115,16 +115,16 @@ func (mr *MockClusterMockRecorder) SetAddon(name, addon, value interface{}) *gom
 }
 
 // Start mocks base method.
-func (m *MockCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
+func (m *MockCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Start", starter, apiServer)
+	ret := m.ctrl.Call(m, "Start", starter)
 	ret0, _ := ret[0].(*kubeconfig.Settings)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockClusterMockRecorder) Start(starter, apiServer interface{}) *gomock.Call {
+func (mr *MockClusterMockRecorder) Start(starter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockCluster)(nil).Start), starter, apiServer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockCluster)(nil).Start), starter)
 }

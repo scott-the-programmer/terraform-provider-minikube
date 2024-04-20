@@ -159,7 +159,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		ssh.SetDefaultClient(ssh.External)
 	}
 
-	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(&e.clusterConfig, &e.clusterConfig.Nodes[0], true, true)
+	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(&e.clusterConfig, &e.clusterConfig.Nodes[0], true)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		ExistingAddons: e.clusterConfig.Addons,
 	}
 
-	kc, err := e.nRunner.Start(starter, true)
+	kc, err := e.nRunner.Start(starter)
 	if err != nil {
 		return nil, err
 	}

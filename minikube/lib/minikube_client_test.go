@@ -137,6 +137,27 @@ func TestMinikubeClient_Start(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Failure Adding Control Plane Nodes",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:           []string{},
+				deleteOnFailure:   true,
+				nRunner:           getMultipleControlPlaneNodesFailure(ctrl),
+				dLoader:           getDownloadSuccess(ctrl),
+				workerNodes:       1,
+				controlPlaneNodes: 3,
+				tfCreationLock:    sync.Mutex{},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Download Failure",
 			fields: fields{
 				clusterConfig: config.ClusterConfig{
@@ -864,6 +885,23 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 		AddWorkerNode(gomock.Any(), gomock.Any()).
 		Return(errors.New("error adding node"))
 
+	return nRunnerSuccess
+}
+
+func getMultipleControlPlaneNodesFailure(ctrl *gomock.Controller) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Start(gomock.Any()).
+		Return(nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		AddControlPlaneNode(gomock.Any(), gomock.Any()).
+		Return(errors.New("error adding node"))
 	return nRunnerSuccess
 }
 

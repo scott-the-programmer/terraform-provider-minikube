@@ -30,12 +30,11 @@ type Cluster interface {
 }
 
 type MinikubeCluster struct {
-	workerNodes       int
-	controlPlaneNodes int
+	nodes int
 }
 
 func NewMinikubeCluster() *MinikubeCluster {
-	return &MinikubeCluster{workerNodes: 0}
+	return &MinikubeCluster{nodes: 0}
 }
 
 func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
@@ -45,7 +44,12 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 		return nil, false, nil, nil, err
 	}
 
-	return node.Provision(cc, n, delOnFail)
+	r, s, l, h, err := node.Provision(cc, n, delOnFail)
+	if err != nil {
+		return nil, false, nil, nil, err
+	}
+	m.nodes++
+	return r, s, l, h, err
 }
 
 func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
@@ -58,10 +62,10 @@ func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, err
 
 // AddWorkerNode adds a new worker node to the clusters node pool
 func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error {
-	m.workerNodes++
+	m.nodes++
 	n := config.Node{
 		// index starts from 1 https://github.com/kubernetes/minikube/blob/075c1b01f2f8778ac746e05098044234a3f0b06f/pkg/minikube/driver/driver.go#L387C4-L387C27
-		Name:              node.Name(m.workerNodes),
+		Name:              node.Name(m.nodes),
 		Worker:            true,
 		ControlPlane:      false,
 		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,
@@ -70,12 +74,12 @@ func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.S
 	return node.Add(cc, n, true)
 }
 
-// AddControlPlaneNode adds a new control panel node to the clusters node pool
+// AddControlPanelNode adds a new control panel node to the clusters node pool
 // useful for provisioning high availability clusters
 func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, starter node.Starter) error {
-	m.controlPlaneNodes++
+	m.nodes++
 	n := config.Node{
-		Name:              node.Name(m.controlPlaneNodes),
+		Name:              node.Name(m.nodes),
 		Worker:            true,
 		ControlPlane:      true,
 		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,

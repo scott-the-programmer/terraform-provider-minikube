@@ -14,16 +14,16 @@ import (
 
 func TestMinikubeClient_Start(t *testing.T) {
 	type fields struct {
-		clusterConfig     config.ClusterConfig
-		clusterName       string
-		addons            []string
-		isoUrls           []string
-		deleteOnFailure   bool
-		nRunner           Cluster
-		dLoader           Downloader
-		workerNodes       int
-		controlPlaneNodes int
-		tfCreationLock    sync.Mutex
+		clusterConfig   config.ClusterConfig
+		clusterName     string
+		addons          []string
+		isoUrls         []string
+		deleteOnFailure bool
+		nRunner         Cluster
+		dLoader         Downloader
+		nodes           int
+		ha              bool
+		tfCreationLock  sync.Mutex
 	}
 
 	ctrl := gomock.NewController(t)
@@ -41,14 +41,13 @@ func TestMinikubeClient_Start(t *testing.T) {
 						{},
 					},
 				},
-				addons:            []string{},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getNodeSuccess(ctrl),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getNodeSuccess(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -63,13 +62,12 @@ func TestMinikubeClient_Start(t *testing.T) {
 				addons: []string{
 					"mock_addon",
 				},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getNodeSuccess(ctrl),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getNodeSuccess(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -84,34 +82,12 @@ func TestMinikubeClient_Start(t *testing.T) {
 				addons: []string{
 					"mock_addon",
 				},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getMultipleNodesSuccess(ctrl, 3),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       3,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Success With Multiple Control Planes",
-			fields: fields{
-				clusterConfig: config.ClusterConfig{
-					Nodes: []config.Node{
-						{},
-					},
-				},
-				addons: []string{
-					"mock_addon",
-				},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getMultipleControlPlaneNodesSuccess(ctrl, 3),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 3,
-				tfCreationLock:    sync.Mutex{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getMultipleNodesSuccess(ctrl, 3),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           3,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -126,18 +102,17 @@ func TestMinikubeClient_Start(t *testing.T) {
 				addons: []string{
 					"mock_addon",
 				},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getMultipleNodesFailure(ctrl),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       3,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getMultipleNodesFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           3,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
 		{
-			name: "Failure Adding Control Plane Nodes",
+			name: "Adds 3 Control Plane Nodes",
 			fields: fields{
 				clusterConfig: config.ClusterConfig{
 					Nodes: []config.Node{
@@ -147,13 +122,34 @@ func TestMinikubeClient_Start(t *testing.T) {
 				addons: []string{
 					"mock_addon",
 				},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getMultipleControlPlaneNodesFailure(ctrl),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 3,
-				tfCreationLock:    sync.Mutex{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getHANodes(ctrl, 2, 1, false),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           4,
+				ha:              true,
+				tfCreationLock:  sync.Mutex{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Not Enough Nodes For HA",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getHANodes(ctrl, 0, 0, true),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           2,
+				ha:              true,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -165,14 +161,13 @@ func TestMinikubeClient_Start(t *testing.T) {
 						{},
 					},
 				},
-				addons:            []string{},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           nil,
-				dLoader:           getDownloadFailure(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         nil,
+				dLoader:         getDownloadFailure(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -184,14 +179,13 @@ func TestMinikubeClient_Start(t *testing.T) {
 						{},
 					},
 				},
-				addons:            []string{},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           nil,
-				dLoader:           getTarballFailure(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         nil,
+				dLoader:         getTarballFailure(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -203,14 +197,13 @@ func TestMinikubeClient_Start(t *testing.T) {
 						{},
 					},
 				},
-				addons:            []string{},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getProvisionerFailure(ctrl),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getProvisionerFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -222,14 +215,13 @@ func TestMinikubeClient_Start(t *testing.T) {
 						{},
 					},
 				},
-				addons:            []string{},
-				isoUrls:           []string{},
-				deleteOnFailure:   true,
-				nRunner:           getStartFailure(ctrl),
-				dLoader:           getDownloadSuccess(ctrl),
-				workerNodes:       1,
-				controlPlaneNodes: 1,
-				tfCreationLock:    sync.Mutex{},
+				addons:          []string{},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getStartFailure(ctrl),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           1,
+				tfCreationLock:  sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -244,8 +236,8 @@ func TestMinikubeClient_Start(t *testing.T) {
 				deleteOnFailure: tt.fields.deleteOnFailure,
 				nRunner:         tt.fields.nRunner,
 				dLoader:         tt.fields.dLoader,
-				workerNodes:     tt.fields.workerNodes,
-				controlPanelNodes:     tt.fields.controlPlaneNodes,
+				nodes:           tt.fields.nodes,
+				ha:              tt.fields.ha,
 			}
 			if _, err := e.Start(); (err != nil) != tt.wantErr {
 				t.Errorf("MinikubeClient.Start() error = %v, wantErr %v", err, tt.wantErr)
@@ -379,7 +371,7 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 			args: args{
 				args: MinikubeClientConfig{
 					ClusterName: "mock",
-					WorkerNodes: 100,
+					Nodes:       100,
 				},
 			},
 		},
@@ -392,7 +384,7 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
 				deleteOnFailure: tt.fields.deleteOnFailure,
-				workerNodes:     tt.fields.nodes,
+				nodes:           tt.fields.nodes,
 				TfCreationLock:  tt.fields.TfCreationLock,
 				K8sVersion:      tt.fields.K8sVersion,
 				nRunner:         tt.fields.nRunner,
@@ -449,7 +441,7 @@ func TestMinikubeClient_SetDependencies(t *testing.T) {
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
 				deleteOnFailure: tt.fields.deleteOnFailure,
-				workerNodes:     tt.fields.nodes,
+				nodes:           tt.fields.nodes,
 				TfCreationLock:  tt.fields.TfCreationLock,
 				K8sVersion:      tt.fields.K8sVersion,
 				nRunner:         tt.fields.nRunner,
@@ -494,7 +486,7 @@ func TestMinikubeClient_GetConfig(t *testing.T) {
 				ClusterName:     "abc",
 				Addons:          []string{"addon1", "addon2"},
 				DeleteOnFailure: false,
-				WorkerNodes:     1,
+				Nodes:           1,
 			},
 		},
 	}
@@ -506,7 +498,7 @@ func TestMinikubeClient_GetConfig(t *testing.T) {
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
 				deleteOnFailure: tt.fields.deleteOnFailure,
-				workerNodes:     tt.fields.nodes,
+				nodes:           tt.fields.nodes,
 				TfCreationLock:  tt.fields.TfCreationLock,
 				K8sVersion:      tt.fields.K8sVersion,
 				nRunner:         tt.fields.nRunner,
@@ -625,7 +617,7 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
 				deleteOnFailure: tt.fields.deleteOnFailure,
-				workerNodes:     tt.fields.nodes,
+				nodes:           tt.fields.nodes,
 				TfCreationLock:  tt.fields.TfCreationLock,
 				K8sVersion:      tt.fields.K8sVersion,
 				nRunner:         mockNode,
@@ -846,30 +838,6 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
 	return nRunnerSuccess
 }
 
-func getMultipleControlPlaneNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
-	nRunnerSuccess := NewMockCluster(ctrl)
-
-	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, false, nil, nil, nil)
-
-	nRunnerSuccess.EXPECT().
-		Start(gomock.Any()).
-		Return(nil, nil)
-
-	nRunnerSuccess.EXPECT().
-		AddControlPlaneNode(gomock.Any(), gomock.Any()).
-		Return(nil).
-		Times(n - 1)
-
-	nRunnerSuccess.EXPECT().
-		SetAddon(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil).
-		AnyTimes()
-
-	return nRunnerSuccess
-}
-
 func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
@@ -888,7 +856,7 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 	return nRunnerSuccess
 }
 
-func getMultipleControlPlaneNodesFailure(ctrl *gomock.Controller) Cluster {
+func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, wantErr bool) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
@@ -899,9 +867,27 @@ func getMultipleControlPlaneNodesFailure(ctrl *gomock.Controller) Cluster {
 		Start(gomock.Any()).
 		Return(nil, nil)
 
-	nRunnerSuccess.EXPECT().
-		AddControlPlaneNode(gomock.Any(), gomock.Any()).
-		Return(errors.New("error adding node"))
+	if haNodes > 0 {
+		nRunnerSuccess.EXPECT().
+			AddControlPlaneNode(gomock.Any(), gomock.Any()).
+			Return(nil).
+			Times(haNodes)
+	}
+
+	if nodes > 0 {
+		nRunnerSuccess.EXPECT().
+			AddWorkerNode(gomock.Any(), gomock.Any()).
+			Return(nil).
+			Times(nodes)
+	}
+
+	if !wantErr {
+		nRunnerSuccess.EXPECT().
+			SetAddon(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil).
+			AnyTimes()
+	}
+
 	return nRunnerSuccess
 }
 

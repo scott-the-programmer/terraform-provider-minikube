@@ -15,6 +15,9 @@ clean:
 	rm bin/* || true
 	rm tests/terraform.tfstate || true
 	rm tests/terraform.tfstate.backup || true
+	rm examples/resources/minikube_cluster/terraform.tfstate || true
+	rm examples/resources/minikube_cluster/terraform.tfstate.backup || true
+	rm examples/resources/minikube_cluster/.terraform.lock.hcl || true
 	minikube delete -p terraform-provider-minikube
 	minikube delete -p terraform-provider-minikube-acc
 

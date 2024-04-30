@@ -116,7 +116,7 @@ func main() {
 			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.33.0/minikube-v1.33.0-amd64.iso"},
 			NativeSsh:       true,
 			DeleteOnFailure: true,
-			WorkerNodes:     3,
+			Nodes:     3,
 		},
 		lib.MinikubeClientDeps{
 			Node:       lib.NewMinikubeCluster(),

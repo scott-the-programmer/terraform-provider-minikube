@@ -2,6 +2,7 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -24,6 +25,8 @@ import (
 const (
 	Podman = "podman"
 	Docker = "docker"
+
+	MinExtraHANodes = 2
 )
 
 type ClusterClient interface {
@@ -39,14 +42,14 @@ type ClusterClient interface {
 }
 
 type MinikubeClient struct {
-	clusterConfig     config.ClusterConfig
-	clusterName       string
-	addons            []string
-	isoUrls           []string
-	deleteOnFailure   bool
-	workerNodes       int
-	controlPanelNodes int
-	nativeSsh         bool
+	clusterConfig   config.ClusterConfig
+	clusterName     string
+	addons          []string
+	isoUrls         []string
+	deleteOnFailure bool
+	nodes           int
+	ha              bool
+	nativeSsh       bool
 
 	// TfCreationLock is a mutex used to prevent multiple minikube clients from conflicting on Start().
 	// Only set this if you're using MinikubeClient in a concurrent context
@@ -58,14 +61,14 @@ type MinikubeClient struct {
 }
 
 type MinikubeClientConfig struct {
-	ClusterConfig     config.ClusterConfig
-	ClusterName       string
-	Addons            []string
-	IsoUrls           []string
-	DeleteOnFailure   bool
-	WorkerNodes       int
-	ControlPanelNodes int
-	NativeSsh         bool
+	ClusterConfig   config.ClusterConfig
+	ClusterName     string
+	Addons          []string
+	IsoUrls         []string
+	DeleteOnFailure bool
+	Nodes           int
+	HA              bool
+	NativeSsh       bool
 }
 
 type MinikubeClientDeps struct {
@@ -76,15 +79,14 @@ type MinikubeClientDeps struct {
 // NewMinikubeClient creates a new MinikubeClient struct
 func NewMinikubeClient(args MinikubeClientConfig, dep MinikubeClientDeps) *MinikubeClient {
 	return &MinikubeClient{
-		clusterConfig:     args.ClusterConfig,
-		isoUrls:           args.IsoUrls,
-		clusterName:       args.ClusterName,
-		addons:            args.Addons,
-		deleteOnFailure:   args.DeleteOnFailure,
-		TfCreationLock:    nil,
-		workerNodes:       args.WorkerNodes,
-		controlPanelNodes: args.ControlPanelNodes,
-		nativeSsh:         args.NativeSsh,
+		clusterConfig:   args.ClusterConfig,
+		isoUrls:         args.IsoUrls,
+		clusterName:     args.ClusterName,
+		addons:          args.Addons,
+		deleteOnFailure: args.DeleteOnFailure,
+		TfCreationLock:  nil,
+		nodes:           args.Nodes,
+		nativeSsh:       args.NativeSsh,
 
 		nRunner: dep.Node,
 		dLoader: dep.Downloader,
@@ -110,21 +112,20 @@ func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.clusterName = args.ClusterName
 	e.addons = args.Addons
 	e.deleteOnFailure = args.DeleteOnFailure
-	e.workerNodes = args.WorkerNodes
-	e.controlPanelNodes = args.ControlPanelNodes
+	e.nodes = args.Nodes
 	e.nativeSsh = args.NativeSsh
 }
 
 // GetConfig retrieves the current clients configuration
 func (e *MinikubeClient) GetConfig() MinikubeClientConfig {
 	return MinikubeClientConfig{
-		ClusterConfig:     e.clusterConfig,
-		IsoUrls:           e.isoUrls,
-		ClusterName:       e.clusterName,
-		Addons:            e.addons,
-		DeleteOnFailure:   e.deleteOnFailure,
-		WorkerNodes:       e.workerNodes,
-		ControlPanelNodes: e.controlPanelNodes,
+		ClusterConfig:   e.clusterConfig,
+		IsoUrls:         e.isoUrls,
+		ClusterName:     e.clusterName,
+		Addons:          e.addons,
+		DeleteOnFailure: e.deleteOnFailure,
+		Nodes:           e.nodes,
+		HA:              e.ha,
 	}
 }
 
@@ -197,16 +198,24 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 }
 
 func (e *MinikubeClient) provisionNodes(starter node.Starter) error {
-	for i := 1; i < e.workerNodes; i++ {
-		err := e.nRunner.AddWorkerNode(&e.clusterConfig, starter)
-		if err != nil {
-			return err
-		}
-
+	if e.ha && e.nodes-1 < MinExtraHANodes { // excluding the initial node
+		return errors.New("you need at least 3 nodes for high availability")
 	}
 
-	for i := 1; i < e.controlPanelNodes; i++ {
-		err := e.nRunner.AddControlPlaneNode(&e.clusterConfig, starter)
+	if e.ha {
+		for i := 0; i < MinExtraHANodes; i++ {
+			err := e.nRunner.AddControlPlaneNode(&e.clusterConfig, starter)
+			if err != nil {
+				return err
+			}
+		}
+
+		e.nodes -= MinExtraHANodes
+	}
+
+	// Remaining nodes
+	for i := 0; i < e.nodes-1; i++ { // excluding the initial node
+		err := e.nRunner.AddWorkerNode(&e.clusterConfig, starter)
 		if err != nil {
 			return err
 		}

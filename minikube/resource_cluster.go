@@ -2,6 +2,7 @@ package minikube
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -83,7 +84,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			ClusterName:     config.ClusterName,
 			Addons:          oldAddonStrings,
 			DeleteOnFailure: config.DeleteOnFailure,
-			WorkerNodes:     config.WorkerNodes,
+			Nodes:           config.Nodes,
 		})
 
 		err = client.ApplyAddons(newAddonStrings)
@@ -345,11 +346,11 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		multiNode = true
 	}
 
-	ha := d.Get("ha").(bool)
-	cpNodes := 1
-	if ha {
-		cpNodes += 2
+	if nodes == 0 {
+		return nil, errors.New("at least one node is required")
 	}
+
+	ha := d.Get("ha").(bool)
 
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
@@ -420,12 +421,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{
 		ClusterConfig: cc, ClusterName: d.Get("cluster_name").(string),
-		Addons:            addonStrings,
-		IsoUrls:           state_utils.ReadSliceState(defaultIsos),
-		DeleteOnFailure:   d.Get("delete_on_failure").(bool),
-		WorkerNodes:       nodes,
-		ControlPanelNodes: cpNodes,
-		NativeSsh:         d.Get("native_ssh").(bool),
+		Addons:          addonStrings,
+		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
+		DeleteOnFailure: d.Get("delete_on_failure").(bool),
+		Nodes:           nodes,
+		HA:              ha,
+		NativeSsh:       d.Get("native_ssh").(bool),
 	})
 
 	clusterClient.SetDependencies(lib.MinikubeClientDeps{

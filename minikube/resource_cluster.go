@@ -352,6 +352,10 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	ha := d.Get("ha").(bool)
 
+	if ha && nodes < 3 {
+		return nil, errors.New("at least 3 nodes is required for high availability")
+	}
+
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
 		APIServerPort:           d.Get("apiserver_port").(int),

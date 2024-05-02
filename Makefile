@@ -21,6 +21,10 @@ clean:
 	minikube delete -p terraform-provider-minikube
 	minikube delete -p terraform-provider-minikube-acc
 
+.PHONY: nuke
+nuke: clean
+	rm -rf ~/.minikube || true
+
 .PHONY: test
 test:
 	go clean -testcache

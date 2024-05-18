@@ -13,13 +13,15 @@ schema:
 .PHONY: clean
 clean:
 	rm bin/* || true
-	rm tests/terraform.tfstate || true
-	rm tests/terraform.tfstate.backup || true
 	rm examples/resources/minikube_cluster/terraform.tfstate || true
 	rm examples/resources/minikube_cluster/terraform.tfstate.backup || true
 	rm examples/resources/minikube_cluster/.terraform.lock.hcl || true
-	minikube delete -p terraform-provider-minikube
-	minikube delete -p terraform-provider-minikube-acc
+	rm -rf examples/resources/minikube_cluster/.terraform || true
+	minikube delete -p terraform-provider-minikube --purge
+	minikube delete -p terraform-provider-minikube-acc --purge
+	minikube delete -p terraform-provider-minikube-acc-docker --purge
+	minikube delete -p terraform-provider-minikube-acc-hyperkit --purge
+	minikube delete -p terraform-provider-minikube-acc-hyperv --purge
 
 .PHONY: nuke
 nuke: clean

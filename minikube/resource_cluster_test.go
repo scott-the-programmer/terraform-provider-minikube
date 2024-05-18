@@ -177,6 +177,21 @@ func TestClusterCreation_OutOfOrderAddons(t *testing.T) {
 	})
 }
 
+func TestClusterCreation_HAControlPlane(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "TestClusterCreationDocker"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+				),
+			},
+		},
+	})
+}
+
 func TestClusterCreation_Hyperkit(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("Hyperkit is only supported on macOS")
@@ -324,7 +339,6 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 		ImageRepository:        "",
 		ShouldLoadCachedImages: clusterSchema["cache_images"].Default.(bool),
 		CNI:                    clusterSchema["cni"].Default.(string),
-		NodePort:               clusterSchema["apiserver_port"].Default.(int),
 	}
 
 	n := config.Node{
@@ -338,6 +352,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 
 	cc := config.ClusterConfig{
 		Name:                    "terraform-provider-minikube-acc",
+		APIServerPort:           clusterSchema["apiserver_port"].Default.(int),
 		KeepContext:             clusterSchema["keep_context"].Default.(bool),
 		EmbedCerts:              clusterSchema["embed_certs"].Default.(bool),
 		MinikubeISO:             defaultIso,
@@ -595,6 +610,18 @@ func testAcceptanceClusterConfig_OutOfOrderAddons(driver string, clusterName str
 			"ingress",
 			"default-storageclass",
 		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfig_HAControlPlane(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 2
+		memory = "6000GiB"
+		ha = true
 	}
 	`, driver, clusterName)
 }

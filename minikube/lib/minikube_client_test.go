@@ -22,6 +22,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 		nRunner         Cluster
 		dLoader         Downloader
 		nodes           int
+		ha              bool
 		tfCreationLock  sync.Mutex
 	}
 
@@ -111,6 +112,48 @@ func TestMinikubeClient_Start(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Adds 3 Control Plane Nodes",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getHANodes(ctrl, 2, 1, false),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           4,
+				ha:              true,
+				tfCreationLock:  sync.Mutex{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Not Enough Nodes For HA",
+			fields: fields{
+				clusterConfig: config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				},
+				addons: []string{
+					"mock_addon",
+				},
+				isoUrls:         []string{},
+				deleteOnFailure: true,
+				nRunner:         getHANodes(ctrl, 0, 0, true),
+				dLoader:         getDownloadSuccess(ctrl),
+				nodes:           2,
+				ha:              true,
+				tfCreationLock:  sync.Mutex{},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Download Failure",
 			fields: fields{
 				clusterConfig: config.ClusterConfig{
@@ -194,6 +237,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 				nRunner:         tt.fields.nRunner,
 				dLoader:         tt.fields.dLoader,
 				nodes:           tt.fields.nodes,
+				ha:              tt.fields.ha,
 			}
 			if _, err := e.Start(); (err != nil) != tt.wantErr {
 				t.Errorf("MinikubeClient.Start() error = %v, wantErr %v", err, tt.wantErr)
@@ -707,7 +751,7 @@ func getProvisionerFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerProvisionFailure := NewMockCluster(ctrl)
 
 	nRunnerProvisionFailure.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, errors.New("provision error"))
 
 	return nRunnerProvisionFailure
@@ -717,11 +761,11 @@ func getStartFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerStartFailure := NewMockCluster(ctrl)
 
 	nRunnerStartFailure.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerStartFailure.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, errors.New("start error"))
 
 	return nRunnerStartFailure
@@ -755,11 +799,11 @@ func getNodeSuccess(ctrl *gomock.Controller) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
@@ -774,15 +818,15 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Add(gomock.Any(), gomock.Any()).
+		AddWorkerNode(gomock.Any(), gomock.Any()).
 		Return(nil).
 		Times(n - 1)
 
@@ -798,16 +842,51 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Start(gomock.Any(), true).
+		Start(gomock.Any()).
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		Add(gomock.Any(), gomock.Any()).
+		AddWorkerNode(gomock.Any(), gomock.Any()).
 		Return(errors.New("error adding node"))
+
+	return nRunnerSuccess
+}
+
+func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, wantErr bool) Cluster {
+	nRunnerSuccess := NewMockCluster(ctrl)
+
+	nRunnerSuccess.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
+
+	nRunnerSuccess.EXPECT().
+		Start(gomock.Any()).
+		Return(nil, nil)
+
+	if haNodes > 0 {
+		nRunnerSuccess.EXPECT().
+			AddControlPlaneNode(gomock.Any(), gomock.Any()).
+			Return(nil).
+			Times(haNodes)
+	}
+
+	if nodes > 0 {
+		nRunnerSuccess.EXPECT().
+			AddWorkerNode(gomock.Any(), gomock.Any()).
+			Return(nil).
+			Times(nodes)
+	}
+
+	if !wantErr {
+		nRunnerSuccess.EXPECT().
+			SetAddon(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil).
+			AnyTimes()
+	}
 
 	return nRunnerSuccess
 }

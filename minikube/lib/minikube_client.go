@@ -87,6 +87,7 @@ func NewMinikubeClient(args MinikubeClientConfig, dep MinikubeClientDeps) *Minik
 		TfCreationLock:  nil,
 		nodes:           args.Nodes,
 		nativeSsh:       args.NativeSsh,
+		ha:              args.HA,
 
 		nRunner: dep.Node,
 		dLoader: dep.Downloader,
@@ -114,6 +115,7 @@ func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.deleteOnFailure = args.DeleteOnFailure
 	e.nodes = args.Nodes
 	e.nativeSsh = args.NativeSsh
+	e.ha = args.HA
 }
 
 // GetConfig retrieves the current clients configuration

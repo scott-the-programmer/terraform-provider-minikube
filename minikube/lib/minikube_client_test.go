@@ -124,11 +124,15 @@ func TestMinikubeClient_Start(t *testing.T) {
 				},
 				isoUrls:         []string{},
 				deleteOnFailure: true,
-				nRunner:         getHANodes(ctrl, 2, 1, false),
-				dLoader:         getDownloadSuccess(ctrl),
-				nodes:           4,
-				ha:              true,
-				tfCreationLock:  sync.Mutex{},
+				nRunner: getHANodes(ctrl, 2, 1, &config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				}, false),
+				dLoader:        getDownloadSuccess(ctrl),
+				nodes:          4,
+				ha:             true,
+				tfCreationLock: sync.Mutex{},
 			},
 			wantErr: false,
 		},
@@ -145,11 +149,16 @@ func TestMinikubeClient_Start(t *testing.T) {
 				},
 				isoUrls:         []string{},
 				deleteOnFailure: true,
-				nRunner:         getHANodes(ctrl, 0, 0, true),
-				dLoader:         getDownloadSuccess(ctrl),
-				nodes:           2,
-				ha:              true,
-				tfCreationLock:  sync.Mutex{},
+				nRunner: getHANodes(ctrl, 0, 0, &config.ClusterConfig{
+					Nodes: []config.Node{
+						{},
+					},
+				}, true),
+
+				dLoader:        getDownloadSuccess(ctrl),
+				nodes:          2,
+				ha:             true,
+				tfCreationLock: sync.Mutex{},
 			},
 			wantErr: true,
 		},
@@ -229,7 +238,7 @@ func TestMinikubeClient_Start(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
+				clusterConfig:   &tt.fields.clusterConfig,
 				clusterName:     tt.fields.clusterName,
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
@@ -300,7 +309,7 @@ func TestMinikubeClient_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
+				clusterConfig:   &tt.fields.clusterConfig,
 				clusterName:     tt.fields.clusterName,
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
@@ -379,7 +388,7 @@ func TestMinikubeClient_SetConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
+				clusterConfig:   &tt.fields.clusterConfig,
 				clusterName:     tt.fields.clusterName,
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
@@ -436,7 +445,7 @@ func TestMinikubeClient_SetDependencies(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
+				clusterConfig:   &tt.fields.clusterConfig,
 				clusterName:     tt.fields.clusterName,
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
@@ -481,7 +490,7 @@ func TestMinikubeClient_GetConfig(t *testing.T) {
 				nodes:           1,
 			},
 			want: MinikubeClientConfig{
-				ClusterConfig:   config.ClusterConfig{},
+				ClusterConfig:   &config.ClusterConfig{},
 				IsoUrls:         []string{"url1", "url2"},
 				ClusterName:     "abc",
 				Addons:          []string{"addon1", "addon2"},
@@ -493,7 +502,7 @@ func TestMinikubeClient_GetConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
+				clusterConfig:   &tt.fields.clusterConfig,
 				clusterName:     tt.fields.clusterName,
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
@@ -612,7 +621,7 @@ func TestMinikubeClient_ApplyAddons(t *testing.T) {
 			gomock.InAnyOrder(append(delSeq, addSeq...))
 
 			e := &MinikubeClient{
-				clusterConfig:   tt.fields.clusterConfig,
+				clusterConfig:   &tt.fields.clusterConfig,
 				clusterName:     tt.fields.clusterName,
 				addons:          tt.fields.addons,
 				isoUrls:         tt.fields.isoUrls,
@@ -723,7 +732,7 @@ func TestMinikubeClient_ContainerMounts(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
-				clusterConfig: config.ClusterConfig{
+				clusterConfig: &config.ClusterConfig{
 					Driver:      tt.fields.driver,
 					Mount:       tt.fields.mount,
 					MountString: tt.fields.mountString,
@@ -856,9 +865,10 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 	return nRunnerSuccess
 }
 
-func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, wantErr bool) Cluster {
+func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, cc *config.ClusterConfig, wantErr bool) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
+	if !wantErr {
 	nRunnerSuccess.EXPECT().
 		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, false, nil, nil, nil)
@@ -866,11 +876,12 @@ func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, wantErr bool) C
 	nRunnerSuccess.EXPECT().
 		Start(gomock.Any()).
 		Return(nil, nil)
+	}
 
 	if haNodes > 0 {
 		nRunnerSuccess.EXPECT().
-			AddControlPlaneNode(gomock.Any(), gomock.Any()).
-			Return(nil).
+			AddHAConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(cc).
 			Times(haNodes)
 	}
 

@@ -424,7 +424,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{
-		ClusterConfig: cc, ClusterName: d.Get("cluster_name").(string),
+		ClusterConfig: &cc, ClusterName: d.Get("cluster_name").(string),
 		Addons:          addonStrings,
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
 		DeleteOnFailure: d.Get("delete_on_failure").(bool),

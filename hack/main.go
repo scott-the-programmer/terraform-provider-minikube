@@ -110,7 +110,7 @@ func main() {
 
 	minikubeClient := lib.NewMinikubeClient(
 		lib.MinikubeClientConfig{
-			ClusterConfig:   cc,
+			ClusterConfig:   &cc,
 			ClusterName:     "terraform-provider-minikube-acc",
 			Addons:          []string{},
 			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.33.0/minikube-v1.33.0-amd64.iso"},

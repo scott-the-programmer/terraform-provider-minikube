@@ -42,7 +42,7 @@ type ClusterClient interface {
 }
 
 type MinikubeClient struct {
-	clusterConfig   config.ClusterConfig
+	clusterConfig   *config.ClusterConfig
 	clusterName     string
 	addons          []string
 	isoUrls         []string
@@ -61,7 +61,7 @@ type MinikubeClient struct {
 }
 
 type MinikubeClientConfig struct {
-	ClusterConfig   config.ClusterConfig
+	ClusterConfig   *config.ClusterConfig
 	ClusterName     string
 	Addons          []string
 	IsoUrls         []string
@@ -167,7 +167,12 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		ssh.SetDefaultClient(ssh.External)
 	}
 
-	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(&e.clusterConfig, &e.clusterConfig.Nodes[0], true)
+	e.clusterConfig, err = e.addHANodes(e.clusterConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(e.clusterConfig, &e.clusterConfig.Nodes[0], true)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +182,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		StopK8s:        false,
 		MachineAPI:     mAPI,
 		Host:           host,
-		Cfg:            &e.clusterConfig,
+		Cfg:            e.clusterConfig,
 		Node:           &e.clusterConfig.Nodes[0],
 		ExistingAddons: e.clusterConfig.Addons,
 	}
@@ -199,25 +204,30 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	return kc, nil
 }
 
-func (e *MinikubeClient) provisionNodes(starter node.Starter) error {
+func (e *MinikubeClient) addHANodes(cc *config.ClusterConfig) (*config.ClusterConfig, error) {
 	if e.ha && e.nodes-1 < MinExtraHANodes { // excluding the initial node
-		return errors.New("you need at least 3 nodes for high availability")
+		return nil, errors.New("you need at least 3 nodes for high availability")
 	}
 
 	if e.ha {
 		for i := 0; i < MinExtraHANodes; i++ {
-			err := e.nRunner.AddControlPlaneNode(&e.clusterConfig, starter)
-			if err != nil {
-				return err
-			}
+			cc = e.nRunner.AddHAConfig(cc,
+				cc.KubernetesConfig.KubernetesVersion,
+				cc.APIServerPort,
+				cc.KubernetesConfig.ContainerRuntime)
 		}
 
 		e.nodes -= MinExtraHANodes
 	}
 
+	return cc, nil
+
+}
+
+func (e *MinikubeClient) provisionNodes(starter node.Starter) error {
 	// Remaining nodes
 	for i := 0; i < e.nodes-1; i++ { // excluding the initial node
-		err := e.nRunner.AddWorkerNode(&e.clusterConfig, starter)
+		err := e.nRunner.AddWorkerNode(e.clusterConfig, starter)
 		if err != nil {
 			return err
 		}

@@ -92,20 +92,6 @@ func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.S
 	return node.Add(cc, n, true)
 }
 
-// AddControlPanelNode adds a new control panel node to the clusters node pool
-// useful for provisioning high availability clusters
-func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, starter node.Starter) error {
-	m.nodes++
-	n := config.Node{
-		Name:              node.Name(m.nodes),
-		Worker:            true,
-		ControlPlane:      true,
-		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,
-		Port:              starter.Cfg.APIServerPort,
-		ContainerRuntime:  starter.Cfg.KubernetesConfig.ContainerRuntime,
-	}
-	return node.Add(cc, n, true)
-}
 
 func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {
 	errs := delete.DeleteProfiles([]*config.Profile{

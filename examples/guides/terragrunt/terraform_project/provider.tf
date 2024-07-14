@@ -1,3 +1,1 @@
-provider "minikube" {
-  kubernetes_version = "stable"
-}
+provider "minikube" {}

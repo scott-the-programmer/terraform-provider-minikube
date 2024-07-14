@@ -43,9 +43,9 @@ Within `terragrunt_project/dev`, there are two runnable configurations named `cl
 
 ```shell
 cat <<EOF > terraform.tfvars
-nodes        = 1
-cpus         = 2
-memory       = 2048
+nodes  = 1
+cpus   = 2
+memory = 2048
 EOF
 terragrunt init
 terragrunt plan

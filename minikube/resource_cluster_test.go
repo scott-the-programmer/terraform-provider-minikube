@@ -92,6 +92,21 @@ func TestClusterCreation_Docker_Multinode(t *testing.T) {
 	})
 }
 
+func TestClusterCreation_Docker_HA(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfigHighAvailability("docker", "ha"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "ha"),
+				),
+			},
+		},
+	})
+}
+
 func TestClusterCreation_Docker_ExtraConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Providers:    map[string]*schema.Provider{"minikube": Provider()},
@@ -532,6 +547,26 @@ func testAcceptanceClusterConfigMultinode(driver string, clusterName string) str
 		memory = "6GiB"
 
 		nodes = 3
+
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"storage-provisioner",
+		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfigHighAvailability(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 1
+		memory = "2GiB"
+
+		nodes = 4
+		ha = true
 
 		addons = [
 			"dashboard",

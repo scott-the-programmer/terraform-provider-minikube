@@ -54,17 +54,17 @@ func (mr *MockClusterMockRecorder) AddHAConfig(cc, k8sVersion, port, containerRu
 }
 
 // AddWorkerNode mocks base method.
-func (m *MockCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error {
+func (m *MockCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddWorkerNode", cc, starter)
+	ret := m.ctrl.Call(m, "AddWorkerNode", cc, kv, apiServerPort, cr)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddWorkerNode indicates an expected call of AddWorkerNode.
-func (mr *MockClusterMockRecorder) AddWorkerNode(cc, starter interface{}) *gomock.Call {
+func (mr *MockClusterMockRecorder) AddWorkerNode(cc, kv, apiServerPort, cr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWorkerNode", reflect.TypeOf((*MockCluster)(nil).AddWorkerNode), cc, starter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWorkerNode", reflect.TypeOf((*MockCluster)(nil).AddWorkerNode), cc, kv, apiServerPort, cr)
 }
 
 // Delete mocks base method.

@@ -835,7 +835,7 @@ func getMultipleNodesSuccess(ctrl *gomock.Controller, n int) Cluster {
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		AddWorkerNode(gomock.Any(), gomock.Any()).
+		AddWorkerNode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil).
 		Times(n - 1)
 
@@ -859,7 +859,7 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 		Return(nil, nil)
 
 	nRunnerSuccess.EXPECT().
-		AddWorkerNode(gomock.Any(), gomock.Any()).
+		AddWorkerNode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("error adding node"))
 
 	return nRunnerSuccess
@@ -869,13 +869,13 @@ func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, cc *config.Clus
 	nRunnerSuccess := NewMockCluster(ctrl)
 
 	if !wantErr {
-	nRunnerSuccess.EXPECT().
-		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, false, nil, nil, nil)
+		nRunnerSuccess.EXPECT().
+			Provision(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil, false, nil, nil, nil)
 
-	nRunnerSuccess.EXPECT().
-		Start(gomock.Any()).
-		Return(nil, nil)
+		nRunnerSuccess.EXPECT().
+			Start(gomock.Any()).
+			Return(nil, nil)
 	}
 
 	if haNodes > 0 {
@@ -887,7 +887,7 @@ func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, cc *config.Clus
 
 	if nodes > 0 {
 		nRunnerSuccess.EXPECT().
-			AddWorkerNode(gomock.Any(), gomock.Any()).
+			AddWorkerNode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil).
 			Times(nodes)
 	}

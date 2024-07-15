@@ -167,11 +167,6 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		ssh.SetDefaultClient(ssh.External)
 	}
 
-	e.clusterConfig, err = e.addHANodes(e.clusterConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(e.clusterConfig, &e.clusterConfig.Nodes[0], true)
 	if err != nil {
 		return nil, err
@@ -188,6 +183,11 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	}
 
 	kc, err := e.nRunner.Start(starter)
+	if err != nil {
+		return nil, err
+	}
+
+	e.clusterConfig, err = e.addHANodes(e.clusterConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,10 @@ func (e *MinikubeClient) addHANodes(cc *config.ClusterConfig) (*config.ClusterCo
 func (e *MinikubeClient) provisionNodes(starter node.Starter) error {
 	// Remaining nodes
 	for i := 0; i < e.nodes-1; i++ { // excluding the initial node
-		err := e.nRunner.AddWorkerNode(e.clusterConfig, starter)
+		err := e.nRunner.AddWorkerNode(e.clusterConfig,
+			starter.Cfg.KubernetesConfig.KubernetesVersion,
+			starter.Cfg.APIServerPort,
+			starter.Cfg.KubernetesConfig.ContainerRuntime)
 		if err != nil {
 			return err
 		}

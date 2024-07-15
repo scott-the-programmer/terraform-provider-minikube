@@ -88,6 +88,7 @@ func main() {
 		SSHKey:                  schema["ssh_key"].Default.(string),
 		SSHPort:                 schema["ssh_port"].Default.(int),
 		ExtraDisks:              schema["extra_disks"].Default.(int),
+		APIServerPort:           schema["apiserver_port"].Default.(int),
 		CertExpiration:          time.Duration(600 * 600 * time.Second),
 		Mount:                   schema["hyperv_use_external_switch"].Default.(bool),
 		MountString:             mountString.(string),

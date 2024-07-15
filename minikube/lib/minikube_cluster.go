@@ -24,7 +24,7 @@ type Cluster interface {
 	Start(starter node.Starter) (*kubeconfig.Settings, error)
 	Delete(cc *config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) *config.ClusterConfig
-	AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error
+	AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error
 	AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) *config.ClusterConfig
 	SetAddon(name string, addon string, value string) error
 }
@@ -64,7 +64,7 @@ func (m *MinikubeCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion strin
 	m.nodes++
 	for i := 0; i < MinExtraHANodes; i++ {
 		n := config.Node{
-			Name:              node.Name(m.nodes),
+			Name:              node.Name(m.nodes), // bump name to avoid conflict with main node
 			Worker:            true,
 			ControlPlane:      true,
 			KubernetesVersion: k8sVersion,
@@ -73,25 +73,25 @@ func (m *MinikubeCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion strin
 		}
 
 		cc.Nodes = append(cc.Nodes, n)
+		node.Add(cc, n, false)
 	}
 	return cc
 }
 
 // AddWorkerNode adds a new worker node to the clusters node pool
-func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, starter node.Starter) error {
+func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error {
 	m.nodes++
 	n := config.Node{
 		// index starts from 1 https://github.com/kubernetes/minikube/blob/075c1b01f2f8778ac746e05098044234a3f0b06f/pkg/minikube/driver/driver.go#L387C4-L387C27
 		Name:              node.Name(m.nodes),
 		Worker:            true,
 		ControlPlane:      false,
-		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,
-		Port:              starter.Cfg.APIServerPort,
-		ContainerRuntime:  starter.Cfg.KubernetesConfig.ContainerRuntime,
+		KubernetesVersion: kv,
+		Port:              apiServerPort,
+		ContainerRuntime:  cr,
 	}
 	return node.Add(cc, n, true)
 }
-
 
 func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {
 	errs := delete.DeleteProfiles([]*config.Profile{

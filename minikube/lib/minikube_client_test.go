@@ -868,15 +868,13 @@ func getMultipleNodesFailure(ctrl *gomock.Controller) Cluster {
 func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, cc *config.ClusterConfig, wantErr bool) Cluster {
 	nRunnerSuccess := NewMockCluster(ctrl)
 
-	if !wantErr {
-		nRunnerSuccess.EXPECT().
-			Provision(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, false, nil, nil, nil)
+	nRunnerSuccess.EXPECT().
+		Provision(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, false, nil, nil, nil)
 
-		nRunnerSuccess.EXPECT().
-			Start(gomock.Any()).
-			Return(nil, nil)
-	}
+	nRunnerSuccess.EXPECT().
+		Start(gomock.Any()).
+		Return(nil, nil)
 
 	if haNodes > 0 {
 		nRunnerSuccess.EXPECT().

@@ -51,5 +51,3 @@ terragrunt init
 terragrunt plan
 terragrunt apply
 ```
-
-[//]: # (todo: comment on example to expose behavior)

@@ -1,7 +1,7 @@
 locals {
   # todo: change in upstream pr to scott
   # "git::git@github.com:username-goes-here/repository-name-goes-here.git"
-  base_source_url    = "git::git@github.com:caerulescens/terraform-provider-minikube.git//examples/guides/terragrunt/terraform_project"
+  base_source_url    = "git::https://github.com/scott-the-programmer/terraform-provider-minikube.git//examples/guides/terragrunt/terraform_project"
   ref                = "feature/terragrunt-usage"
   kubernetes_version = "v1.28.3"
 }

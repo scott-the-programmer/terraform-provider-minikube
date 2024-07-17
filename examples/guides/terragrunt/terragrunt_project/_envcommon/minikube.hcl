@@ -1,6 +1,6 @@
 locals {
   base_source_url    = "git::https://github.com/scott-the-programmer/terraform-provider-minikube.git//examples/guides/terragrunt/terraform_project"
-  ref                = "feature/terragrunt-usage"
+  ref                = "main"
   kubernetes_version = "v1.28.3"
 }
 

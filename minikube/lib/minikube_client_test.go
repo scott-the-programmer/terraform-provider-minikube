@@ -879,7 +879,7 @@ func getHANodes(ctrl *gomock.Controller, haNodes int, nodes int, cc *config.Clus
 	if haNodes > 0 {
 		nRunnerSuccess.EXPECT().
 			AddHAConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(cc).
+			Return(cc, nil).
 			Times(haNodes)
 	}
 

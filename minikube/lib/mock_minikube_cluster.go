@@ -40,11 +40,12 @@ func (m *MockCluster) EXPECT() *MockClusterMockRecorder {
 }
 
 // AddHAConfig mocks base method.
-func (m *MockCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) *config.ClusterConfig {
+func (m *MockCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddHAConfig", cc, k8sVersion, port, containerRuntime)
 	ret0, _ := ret[0].(*config.ClusterConfig)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddHAConfig indicates an expected call of AddHAConfig.

@@ -25,7 +25,7 @@ type Cluster interface {
 	Delete(cc *config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) *config.ClusterConfig
 	AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error
-	AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) *config.ClusterConfig
+	AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error)
 	SetAddon(name string, addon string, value string) error
 }
 
@@ -60,7 +60,7 @@ func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, err
 	return s, nil
 }
 
-func (m *MinikubeCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) *config.ClusterConfig {
+func (m *MinikubeCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
 	m.nodes++
 	for i := 0; i < MinExtraHANodes; i++ {
 		n := config.Node{
@@ -73,9 +73,12 @@ func (m *MinikubeCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion strin
 		}
 
 		cc.Nodes = append(cc.Nodes, n)
-		node.Add(cc, n, false)
+		err := node.Add(cc, n, false)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return cc
+	return cc, nil
 }
 
 // AddWorkerNode adds a new worker node to the clusters node pool

@@ -150,6 +150,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	viper.Set(cmdcfg.Bootstrapper, "kubeadm")
 	viper.Set(config.ProfileName, e.clusterName)
 	viper.Set("preload", true)
+	viper.Set("ha", e.ha)
 
 	url, err := e.downloadIsos()
 	if err != nil {
@@ -209,12 +210,16 @@ func (e *MinikubeClient) addHANodes(cc *config.ClusterConfig) (*config.ClusterCo
 		return nil, errors.New("you need at least 3 nodes for high availability")
 	}
 
+	var err error
 	if e.ha {
 		for i := 0; i < MinExtraHANodes; i++ {
-			cc = e.nRunner.AddHAConfig(cc,
+			cc, err = e.nRunner.AddHAConfig(cc,
 				cc.KubernetesConfig.KubernetesVersion,
 				cc.APIServerPort,
 				cc.KubernetesConfig.ContainerRuntime)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		e.nodes -= MinExtraHANodes

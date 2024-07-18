@@ -29,10 +29,17 @@ import (
 var _ = flag.String("minikube-start-args", "true", "test") // force minikube into thinking that
 // we're running an integration test
 
+type mockClusterClientProperties struct {
+	t           *testing.T
+	name        string
+	haNodes     int
+	workerNodes int
+}
+
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(t, "TestClusterCreation"))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -47,7 +54,7 @@ func TestClusterCreation(t *testing.T) {
 func TestClusterUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(t, "TestClusterCreation"))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterCreation", 1, 0}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -57,6 +64,18 @@ func TestClusterUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
 				),
+			},
+		},
+	})
+}
+
+func TestClusterHA(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterHAConfig("some_driver", "TestClusterCreationHA"),
 			},
 		},
 	})
@@ -267,10 +286,10 @@ func TestClusterCreation_HyperV(t *testing.T) {
 	})
 }
 
-func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
-	ctrl := gomock.NewController(t)
+func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
+	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, clusterName)
+	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes)
 
 	gomock.InOrder(
 		mockClusterClient.EXPECT().
@@ -304,10 +323,10 @@ func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	return configureContext
 }
 
-func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
-	ctrl := gomock.NewController(t)
+func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc {
+	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, clusterName)
+	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes)
 
 	mockClusterClient.EXPECT().
 		GetAddons().
@@ -325,7 +344,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	return configureContext
 }
 
-func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClusterClient {
+func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int, workerNodes int) *lib.MockClusterClient {
 	mockClusterClient := lib.NewMockClusterClient(ctrl)
 
 	os.Mkdir("test_output", 0755)
@@ -472,7 +491,10 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 
 	mockClusterClient.EXPECT().
 		GetConfig().
-		Return(lib.MinikubeClientConfig{}).
+		Return(lib.MinikubeClientConfig{
+			Nodes: workerNodes + haNodes,
+			HA:    haNodes > 2,
+		}).
 		AnyTimes()
 
 	return mockClusterClient
@@ -483,6 +505,19 @@ func testUnitClusterConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterHAConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		ha = true
+		
+		nodes = 8
 	}
 	`, driver, clusterName)
 }

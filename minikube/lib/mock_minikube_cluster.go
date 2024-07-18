@@ -39,19 +39,19 @@ func (m *MockCluster) EXPECT() *MockClusterMockRecorder {
 	return m.recorder
 }
 
-// AddHAConfig mocks base method.
-func (m *MockCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
+// AddControlPlaneNode mocks base method.
+func (m *MockCluster) AddControlPlaneNode(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddHAConfig", cc, k8sVersion, port, containerRuntime)
+	ret := m.ctrl.Call(m, "AddControlPlaneNode", cc, k8sVersion, port, containerRuntime)
 	ret0, _ := ret[0].(*config.ClusterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddHAConfig indicates an expected call of AddHAConfig.
-func (mr *MockClusterMockRecorder) AddHAConfig(cc, k8sVersion, port, containerRuntime interface{}) *gomock.Call {
+// AddControlPlaneNode indicates an expected call of AddControlPlaneNode.
+func (mr *MockClusterMockRecorder) AddControlPlaneNode(cc, k8sVersion, port, containerRuntime interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddHAConfig", reflect.TypeOf((*MockCluster)(nil).AddHAConfig), cc, k8sVersion, port, containerRuntime)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddControlPlaneNode", reflect.TypeOf((*MockCluster)(nil).AddControlPlaneNode), cc, k8sVersion, port, containerRuntime)
 }
 
 // AddWorkerNode mocks base method.

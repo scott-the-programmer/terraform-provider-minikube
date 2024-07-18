@@ -213,7 +213,7 @@ func (e *MinikubeClient) addHANodes(cc *config.ClusterConfig) (*config.ClusterCo
 	var err error
 	if e.ha {
 		for i := 0; i < MinExtraHANodes; i++ {
-			cc, err = e.nRunner.AddHAConfig(cc,
+			cc, err = e.nRunner.AddControlPlaneNode(cc,
 				cc.KubernetesConfig.KubernetesVersion,
 				cc.APIServerPort,
 				cc.KubernetesConfig.ContainerRuntime)

@@ -25,7 +25,7 @@ type Cluster interface {
 	Delete(cc *config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) *config.ClusterConfig
 	AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error
-	AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error)
+	AddControlPlaneNode(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error)
 	SetAddon(name string, addon string, value string) error
 }
 
@@ -60,24 +60,22 @@ func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, err
 	return s, nil
 }
 
-func (m *MinikubeCluster) AddHAConfig(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
-	m.nodes++
-	for i := 0; i < MinExtraHANodes; i++ {
-		n := config.Node{
-			Name:              node.Name(m.nodes), // bump name to avoid conflict with main node
-			Worker:            true,
-			ControlPlane:      true,
-			KubernetesVersion: k8sVersion,
-			Port:              port,
-			ContainerRuntime:  containerRuntime,
-		}
-
-		cc.Nodes = append(cc.Nodes, n)
-		err := node.Add(cc, n, false)
-		if err != nil {
-			return nil, err
-		}
+func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
+	n := config.Node{
+		Name:              node.Name(m.nodes + 1),
+		Worker:            true,
+		ControlPlane:      true,
+		KubernetesVersion: k8sVersion,
+		Port:              port,
+		ContainerRuntime:  containerRuntime,
 	}
+
+	err := node.Add(cc, n, false)
+	if err != nil {
+		return nil, err
+	}
+
+	m.nodes++
 	return cc, nil
 }
 

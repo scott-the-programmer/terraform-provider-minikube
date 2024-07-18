@@ -2,6 +2,7 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -24,6 +25,8 @@ import (
 const (
 	Podman = "podman"
 	Docker = "docker"
+
+	MinExtraHANodes = 2
 )
 
 type ClusterClient interface {
@@ -39,12 +42,13 @@ type ClusterClient interface {
 }
 
 type MinikubeClient struct {
-	clusterConfig   config.ClusterConfig
+	clusterConfig   *config.ClusterConfig
 	clusterName     string
 	addons          []string
 	isoUrls         []string
 	deleteOnFailure bool
 	nodes           int
+	ha              bool
 	nativeSsh       bool
 
 	// TfCreationLock is a mutex used to prevent multiple minikube clients from conflicting on Start().
@@ -57,12 +61,13 @@ type MinikubeClient struct {
 }
 
 type MinikubeClientConfig struct {
-	ClusterConfig   config.ClusterConfig
+	ClusterConfig   *config.ClusterConfig
 	ClusterName     string
 	Addons          []string
 	IsoUrls         []string
 	DeleteOnFailure bool
 	Nodes           int
+	HA              bool
 	NativeSsh       bool
 }
 
@@ -82,6 +87,7 @@ func NewMinikubeClient(args MinikubeClientConfig, dep MinikubeClientDeps) *Minik
 		TfCreationLock:  nil,
 		nodes:           args.Nodes,
 		nativeSsh:       args.NativeSsh,
+		ha:              args.HA,
 
 		nRunner: dep.Node,
 		dLoader: dep.Downloader,
@@ -109,6 +115,7 @@ func (e *MinikubeClient) SetConfig(args MinikubeClientConfig) {
 	e.deleteOnFailure = args.DeleteOnFailure
 	e.nodes = args.Nodes
 	e.nativeSsh = args.NativeSsh
+	e.ha = args.HA
 }
 
 // GetConfig retrieves the current clients configuration
@@ -120,6 +127,7 @@ func (e *MinikubeClient) GetConfig() MinikubeClientConfig {
 		Addons:          e.addons,
 		DeleteOnFailure: e.deleteOnFailure,
 		Nodes:           e.nodes,
+		HA:              e.ha,
 	}
 }
 
@@ -142,6 +150,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	viper.Set(cmdcfg.Bootstrapper, "kubeadm")
 	viper.Set(config.ProfileName, e.clusterName)
 	viper.Set("preload", true)
+	viper.Set("ha", e.ha)
 
 	url, err := e.downloadIsos()
 	if err != nil {
@@ -159,7 +168,7 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		ssh.SetDefaultClient(ssh.External)
 	}
 
-	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(&e.clusterConfig, &e.clusterConfig.Nodes[0], true, true)
+	mRunner, preExists, mAPI, host, err := e.nRunner.Provision(e.clusterConfig, &e.clusterConfig.Nodes[0], true)
 	if err != nil {
 		return nil, err
 	}
@@ -169,21 +178,24 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 		StopK8s:        false,
 		MachineAPI:     mAPI,
 		Host:           host,
-		Cfg:            &e.clusterConfig,
+		Cfg:            e.clusterConfig,
 		Node:           &e.clusterConfig.Nodes[0],
 		ExistingAddons: e.clusterConfig.Addons,
 	}
 
-	kc, err := e.nRunner.Start(starter, true)
+	kc, err := e.nRunner.Start(starter)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := 1; i < e.nodes; i++ {
-		err := e.nRunner.Add(&e.clusterConfig, starter)
-		if err != nil {
-			return kc, err
-		}
+	e.clusterConfig, err = e.addHANodes(e.clusterConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	err = e.provisionNodes(starter)
+	if err != nil {
+		return nil, err
 	}
 
 	klog.Flush()
@@ -191,6 +203,45 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 	e.setAddons(e.addons, true)
 
 	return kc, nil
+}
+
+func (e *MinikubeClient) addHANodes(cc *config.ClusterConfig) (*config.ClusterConfig, error) {
+	if e.ha && e.nodes-1 < MinExtraHANodes { // excluding the initial node
+		return nil, errors.New("you need at least 3 nodes for high availability")
+	}
+
+	var err error
+	if e.ha {
+		for i := 0; i < MinExtraHANodes; i++ {
+			cc, err = e.nRunner.AddControlPlaneNode(cc,
+				cc.KubernetesConfig.KubernetesVersion,
+				cc.APIServerPort,
+				cc.KubernetesConfig.ContainerRuntime)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		e.nodes -= MinExtraHANodes
+	}
+
+	return cc, nil
+
+}
+
+func (e *MinikubeClient) provisionNodes(starter node.Starter) error {
+	// Remaining nodes
+	for i := 0; i < e.nodes-1; i++ { // excluding the initial node
+		err := e.nRunner.AddWorkerNode(e.clusterConfig,
+			starter.Cfg.KubernetesConfig.KubernetesVersion,
+			starter.Cfg.APIServerPort,
+			starter.Cfg.KubernetesConfig.ContainerRuntime)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (e *MinikubeClient) ApplyAddons(addons []string) error {

@@ -39,22 +39,37 @@ func (m *MockCluster) EXPECT() *MockClusterMockRecorder {
 	return m.recorder
 }
 
-// Add mocks base method.
-func (m *MockCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
+// AddControlPlaneNode mocks base method.
+func (m *MockCluster) AddControlPlaneNode(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", cc, starter)
+	ret := m.ctrl.Call(m, "AddControlPlaneNode", cc, k8sVersion, port, containerRuntime)
+	ret0, _ := ret[0].(*config.ClusterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddControlPlaneNode indicates an expected call of AddControlPlaneNode.
+func (mr *MockClusterMockRecorder) AddControlPlaneNode(cc, k8sVersion, port, containerRuntime interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddControlPlaneNode", reflect.TypeOf((*MockCluster)(nil).AddControlPlaneNode), cc, k8sVersion, port, containerRuntime)
+}
+
+// AddWorkerNode mocks base method.
+func (m *MockCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddWorkerNode", cc, kv, apiServerPort, cr)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Add indicates an expected call of Add.
-func (mr *MockClusterMockRecorder) Add(cc, starter interface{}) *gomock.Call {
+// AddWorkerNode indicates an expected call of AddWorkerNode.
+func (mr *MockClusterMockRecorder) AddWorkerNode(cc, kv, apiServerPort, cr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockCluster)(nil).Add), cc, starter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWorkerNode", reflect.TypeOf((*MockCluster)(nil).AddWorkerNode), cc, kv, apiServerPort, cr)
 }
 
 // Delete mocks base method.
-func (m *MockCluster) Delete(cc config.ClusterConfig, name string) (*config.Node, error) {
+func (m *MockCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", cc, name)
 	ret0, _ := ret[0].(*config.Node)
@@ -83,9 +98,9 @@ func (mr *MockClusterMockRecorder) Get(name interface{}) *gomock.Call {
 }
 
 // Provision mocks base method.
-func (m *MockCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiServer, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
+func (m *MockCluster) Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Provision", cc, n, apiServer, delOnFail)
+	ret := m.ctrl.Call(m, "Provision", cc, n, delOnFail)
 	ret0, _ := ret[0].(command.Runner)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(libmachine.API)
@@ -95,9 +110,9 @@ func (m *MockCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiSer
 }
 
 // Provision indicates an expected call of Provision.
-func (mr *MockClusterMockRecorder) Provision(cc, n, apiServer, delOnFail interface{}) *gomock.Call {
+func (mr *MockClusterMockRecorder) Provision(cc, n, delOnFail interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provision", reflect.TypeOf((*MockCluster)(nil).Provision), cc, n, apiServer, delOnFail)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provision", reflect.TypeOf((*MockCluster)(nil).Provision), cc, n, delOnFail)
 }
 
 // SetAddon mocks base method.
@@ -115,16 +130,16 @@ func (mr *MockClusterMockRecorder) SetAddon(name, addon, value interface{}) *gom
 }
 
 // Start mocks base method.
-func (m *MockCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
+func (m *MockCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Start", starter, apiServer)
+	ret := m.ctrl.Call(m, "Start", starter)
 	ret0, _ := ret[0].(*kubeconfig.Settings)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockClusterMockRecorder) Start(starter, apiServer interface{}) *gomock.Call {
+func (mr *MockClusterMockRecorder) Start(starter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockCluster)(nil).Start), starter, apiServer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockCluster)(nil).Start), starter)
 }

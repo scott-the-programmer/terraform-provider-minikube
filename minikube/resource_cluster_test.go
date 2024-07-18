@@ -29,10 +29,17 @@ import (
 var _ = flag.String("minikube-start-args", "true", "test") // force minikube into thinking that
 // we're running an integration test
 
+type mockClusterClientProperties struct {
+	t           *testing.T
+	name        string
+	haNodes     int
+	workerNodes int
+}
+
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(t, "TestClusterCreation"))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -47,7 +54,7 @@ func TestClusterCreation(t *testing.T) {
 func TestClusterUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(t, "TestClusterCreation"))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterCreation", 1, 0}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -57,6 +64,18 @@ func TestClusterUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
 				),
+			},
+		},
+	})
+}
+
+func TestClusterHA(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterHAConfig("some_driver", "TestClusterCreationHA"),
 			},
 		},
 	})
@@ -86,6 +105,21 @@ func TestClusterCreation_Docker_Multinode(t *testing.T) {
 				Config: testAcceptanceClusterConfigMultinode("docker", "multinode"),
 				Check: resource.ComposeTestCheckFunc(
 					testPropertyExists("minikube_cluster.new", "multinode"),
+				),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_Docker_HA(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfigHighAvailability("docker", "ha"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "ha"),
 				),
 			},
 		},
@@ -177,6 +211,21 @@ func TestClusterCreation_OutOfOrderAddons(t *testing.T) {
 	})
 }
 
+func TestClusterCreation_HAControlPlane(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "TestClusterCreationDocker"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+				),
+			},
+		},
+	})
+}
+
 func TestClusterCreation_Hyperkit(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("Hyperkit is only supported on macOS")
@@ -237,10 +286,10 @@ func TestClusterCreation_HyperV(t *testing.T) {
 	})
 }
 
-func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
-	ctrl := gomock.NewController(t)
+func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
+	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, clusterName)
+	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes)
 
 	gomock.InOrder(
 		mockClusterClient.EXPECT().
@@ -274,10 +323,10 @@ func mockUpdate(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	return configureContext
 }
 
-func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
-	ctrl := gomock.NewController(t)
+func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc {
+	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, clusterName)
+	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes)
 
 	mockClusterClient.EXPECT().
 		GetAddons().
@@ -295,7 +344,7 @@ func mockSuccess(t *testing.T, clusterName string) schema.ConfigureContextFunc {
 	return configureContext
 }
 
-func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClusterClient {
+func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int, workerNodes int) *lib.MockClusterClient {
 	mockClusterClient := lib.NewMockClusterClient(ctrl)
 
 	os.Mkdir("test_output", 0755)
@@ -324,7 +373,6 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 		ImageRepository:        "",
 		ShouldLoadCachedImages: clusterSchema["cache_images"].Default.(bool),
 		CNI:                    clusterSchema["cni"].Default.(string),
-		NodePort:               clusterSchema["apiserver_port"].Default.(int),
 	}
 
 	n := config.Node{
@@ -338,6 +386,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 
 	cc := config.ClusterConfig{
 		Name:                    "terraform-provider-minikube-acc",
+		APIServerPort:           clusterSchema["apiserver_port"].Default.(int),
 		KeepContext:             clusterSchema["keep_context"].Default.(bool),
 		EmbedCerts:              clusterSchema["embed_certs"].Default.(bool),
 		MinikubeISO:             defaultIso,
@@ -442,7 +491,10 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string) *lib.MockClu
 
 	mockClusterClient.EXPECT().
 		GetConfig().
-		Return(lib.MinikubeClientConfig{}).
+		Return(lib.MinikubeClientConfig{
+			Nodes: workerNodes + haNodes,
+			HA:    haNodes > 2,
+		}).
 		AnyTimes()
 
 	return mockClusterClient
@@ -453,6 +505,19 @@ func testUnitClusterConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterHAConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		ha = true
+		
+		nodes = 8
 	}
 	`, driver, clusterName)
 }
@@ -517,6 +582,26 @@ func testAcceptanceClusterConfigMultinode(driver string, clusterName string) str
 		memory = "6GiB"
 
 		nodes = 3
+
+		addons = [
+			"dashboard",
+			"default-storageclass",
+			"storage-provisioner",
+		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfigHighAvailability(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 1
+		memory = "2GiB"
+
+		nodes = 4
+		ha = true
 
 		addons = [
 			"dashboard",
@@ -595,6 +680,18 @@ func testAcceptanceClusterConfig_OutOfOrderAddons(driver string, clusterName str
 			"ingress",
 			"default-storageclass",
 		]
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfig_HAControlPlane(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 2
+		memory = "6000GiB"
+		ha = true
 	}
 	`, driver, clusterName)
 }

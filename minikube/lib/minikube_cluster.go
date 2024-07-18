@@ -20,61 +20,85 @@ import (
 )
 
 type Cluster interface {
-	Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error)
-	Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error)
-	Delete(cc config.ClusterConfig, name string) (*config.Node, error)
+	Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error)
+	Start(starter node.Starter) (*kubeconfig.Settings, error)
+	Delete(cc *config.ClusterConfig, name string) (*config.Node, error)
 	Get(name string) *config.ClusterConfig
-	Add(cc *config.ClusterConfig, starter node.Starter) error
+	AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error
+	AddControlPlaneNode(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error)
 	SetAddon(name string, addon string, value string) error
 }
 
 type MinikubeCluster struct {
-	workerNodes       int
-	controlPlaneNodes int
+	nodes int
 }
 
 func NewMinikubeCluster() *MinikubeCluster {
-	return &MinikubeCluster{workerNodes: 0}
+	return &MinikubeCluster{nodes: 0}
 }
 
-func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, apiServer bool, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
+func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
 	makeAllMinikubeDirectories()
 	_, err := node.CacheKubectlBinary(cc.KubernetesConfig.KubernetesVersion, cc.BinaryMirror)
 	if err != nil {
 		return nil, false, nil, nil, err
 	}
 
-	return node.Provision(cc, n, apiServer, delOnFail)
+	r, s, l, h, err := node.Provision(cc, n, delOnFail)
+	if err != nil {
+		return nil, false, nil, nil, err
+	}
+	m.nodes++
+	return r, s, l, h, err
 }
 
-func (m *MinikubeCluster) Start(starter node.Starter, apiServer bool) (*kubeconfig.Settings, error) {
-	s, err := node.Start(starter, apiServer)
+func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
+	s, err := node.Start(starter)
 	if err != nil {
 		return nil, err
 	}
-	m.controlPlaneNodes++
 	return s, nil
 }
 
-// Add adds nodes to the clusters node pool
-func (m *MinikubeCluster) Add(cc *config.ClusterConfig, starter node.Starter) error {
+func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, k8sVersion string, port int, containerRuntime string) (*config.ClusterConfig, error) {
+	n := config.Node{
+		Name:              node.Name(m.nodes + 1),
+		Worker:            true,
+		ControlPlane:      true,
+		KubernetesVersion: k8sVersion,
+		Port:              port,
+		ContainerRuntime:  containerRuntime,
+	}
+
+	err := node.Add(cc, n, false)
+	if err != nil {
+		return nil, err
+	}
+
+	m.nodes++
+	return cc, nil
+}
+
+// AddWorkerNode adds a new worker node to the clusters node pool
+func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, apiServerPort int, cr string) error {
+	m.nodes++
 	n := config.Node{
 		// index starts from 1 https://github.com/kubernetes/minikube/blob/075c1b01f2f8778ac746e05098044234a3f0b06f/pkg/minikube/driver/driver.go#L387C4-L387C27
-		Name:              node.Name(m.workerNodes + m.controlPlaneNodes + 1),
+		Name:              node.Name(m.nodes),
 		Worker:            true,
 		ControlPlane:      false,
-		KubernetesVersion: starter.Cfg.KubernetesConfig.KubernetesVersion,
-		ContainerRuntime:  starter.Cfg.KubernetesConfig.ContainerRuntime,
+		KubernetesVersion: kv,
+		Port:              apiServerPort,
+		ContainerRuntime:  cr,
 	}
-	m.workerNodes++
 	return node.Add(cc, n, true)
 }
 
-func (m *MinikubeCluster) Delete(cc config.ClusterConfig, name string) (*config.Node, error) {
+func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {
 	errs := delete.DeleteProfiles([]*config.Profile{
 		{
 			Name:   name,
-			Config: &cc,
+			Config: cc,
 		},
 	})
 	if len(errs) > 0 {

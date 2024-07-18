@@ -35,7 +35,6 @@ func main() {
 		// ExtraOptions:           schema["extra_config"].Default.(string),
 		ShouldLoadCachedImages: schema["cache_images"].Default.(bool),
 		CNI:                    "auto",
-		NodePort:               schema["apiserver_port"].Default.(int),
 	}
 
 	n := config.Node{
@@ -52,7 +51,7 @@ func main() {
 		Name:                    "terraform-provider-minikube-acc",
 		KeepContext:             schema["keep_context"].Default.(bool),
 		EmbedCerts:              schema["embed_certs"].Default.(bool),
-		MinikubeISO:             "https://github.com/kubernetes/minikube/releases/download/v1.32.0/minikube-v1.32.0-amd64.iso",
+		MinikubeISO:             "https://github.com/kubernetes/minikube/releases/download/v1.33.0/minikube-v1.33.0-amd64.iso",
 		KicBaseImage:            schema["base_image"].Default.(string),
 		Network:                 schema["network"].Default.(string),
 		Memory:                  6000,
@@ -89,6 +88,7 @@ func main() {
 		SSHKey:                  schema["ssh_key"].Default.(string),
 		SSHPort:                 schema["ssh_port"].Default.(int),
 		ExtraDisks:              schema["extra_disks"].Default.(int),
+		APIServerPort:           schema["apiserver_port"].Default.(int),
 		CertExpiration:          time.Duration(600 * 600 * time.Second),
 		Mount:                   schema["hyperv_use_external_switch"].Default.(bool),
 		MountString:             mountString.(string),
@@ -111,12 +111,13 @@ func main() {
 
 	minikubeClient := lib.NewMinikubeClient(
 		lib.MinikubeClientConfig{
-			ClusterConfig:   cc,
+			ClusterConfig:   &cc,
 			ClusterName:     "terraform-provider-minikube-acc",
 			Addons:          []string{},
-			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.32.0/minikube-v1.32.0-amd64.iso"},
+			IsoUrls:         []string{"https://github.com/kubernetes/minikube/releases/download/v1.33.0/minikube-v1.33.0-amd64.iso"},
 			NativeSsh:       true,
 			DeleteOnFailure: true,
+			HA:              true,
 			Nodes:           3,
 		},
 		lib.MinikubeClientDeps{

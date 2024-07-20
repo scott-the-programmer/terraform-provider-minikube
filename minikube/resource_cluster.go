@@ -2,6 +2,7 @@ package minikube
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -123,87 +124,88 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	config := client.GetClusterConfig()
+	cc := client.GetClusterConfig()
+	tfc := client.GetConfig()
 	addons := client.GetAddons()
 	sort.Strings(addons) //to ensure consistency with TF state
 
-	stringPorts := config.ExposedPorts
+	stringPorts := cc.ExposedPorts
 	ports := make([]int, len(stringPorts))
 	for i, sp := range stringPorts {
 		p, _ := strconv.Atoi(sp)
 		ports[i] = p
 	}
 
-	setClusterState(d, config, ports, addons)
+	setClusterState(d, cc, tfc, ports, addons)
 
 	return diags
 }
 
-func setClusterState(d *schema.ResourceData, config *config.ClusterConfig, ports []int, addons []string) {
+func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.MinikubeClientConfig, ports []int, addons []string) {
 
 	d.Set("addons", addons)
-	d.Set("apiserver_ips", state_utils.SliceOrNil(config.KubernetesConfig.APIServerIPs))
-	d.Set("apiserver_name", config.KubernetesConfig.APIServerName)
-	d.Set("apiserver_names", state_utils.SliceOrNil(config.KubernetesConfig.APIServerNames))
-	d.Set("apiserver_port", config.KubernetesConfig.NodePort)
-	d.Set("base_image", config.KicBaseImage)
-	d.Set("cert_expiration", config.CertExpiration.Minutes())
-	d.Set("cni", config.KubernetesConfig.CNI)
-	d.Set("container_runtime", config.KubernetesConfig.ContainerRuntime)
-	d.Set("cpus", config.CPUs)
-	d.Set("cri_socket", config.KubernetesConfig.CRISocket)
-	d.Set("disable_driver_mounts", config.DisableDriverMounts)
-	d.Set("disk_size", strconv.Itoa(config.DiskSize)+"mb")
-	d.Set("dns_domain", config.KubernetesConfig.DNSDomain)
-	d.Set("dns_proxy", config.DNSProxy)
-	d.Set("driver", config.Driver)
-	d.Set("embed_certs", config.EmbedCerts)
-	d.Set("extra_disks", config.ExtraDisks)
+	d.Set("apiserver_ips", state_utils.SliceOrNil(cc.KubernetesConfig.APIServerIPs))
+	d.Set("apiserver_name", cc.KubernetesConfig.APIServerName)
+	d.Set("apiserver_names", state_utils.SliceOrNil(cc.KubernetesConfig.APIServerNames))
+	d.Set("apiserver_port", cc.APIServerPort)
+	d.Set("base_image", cc.KicBaseImage)
+	d.Set("cert_expiration", cc.CertExpiration.Minutes())
+	d.Set("cni", cc.KubernetesConfig.CNI)
+	d.Set("container_runtime", cc.KubernetesConfig.ContainerRuntime)
+	d.Set("cpus", cc.CPUs)
+	d.Set("cri_socket", cc.KubernetesConfig.CRISocket)
+	d.Set("disable_driver_mounts", cc.DisableDriverMounts)
+	d.Set("disk_size", strconv.Itoa(cc.DiskSize)+"mb")
+	d.Set("dns_domain", cc.KubernetesConfig.DNSDomain)
+	d.Set("dns_proxy", cc.DNSProxy)
+	d.Set("driver", cc.Driver)
+	d.Set("embed_certs", cc.EmbedCerts)
+	d.Set("extra_disks", cc.ExtraDisks)
 
 	extra_config := []string{}
-	for _, e := range config.KubernetesConfig.ExtraOptions {
+	for _, e := range cc.KubernetesConfig.ExtraOptions {
 		extra_config = append(extra_config, fmt.Sprintf("%s.%s=%s", e.Component, e.Key, e.Value))
 	}
 
 	d.Set("extra_config", extra_config)
-	d.Set("feature_gates", config.KubernetesConfig.FeatureGates)
-	d.Set("host_dns_resolver", config.HostDNSResolver)
-	d.Set("host_only_cidr", config.HostOnlyCIDR)
-	d.Set("host_only_nic_type", config.HostOnlyNicType)
-	d.Set("hyperkit_vpnkit_sock", config.HyperkitVpnKitSock)
-	d.Set("hyperkit_vsock_ports", state_utils.SliceOrNil(config.HyperkitVSockPorts))
-	d.Set("hyperv_external_adapter", config.HypervExternalAdapter)
-	d.Set("hyperv_use_external_switch", config.HypervUseExternalSwitch)
-	d.Set("hyperv_virtual_switch", config.HypervVirtualSwitch)
-	d.Set("image_repository", config.KubernetesConfig.ImageRepository)
-	d.Set("insecure_registry", config.InsecureRegistry)
-	d.Set("iso_url", []string{config.MinikubeISO})
-	d.Set("keep_context", config.KeepContext)
-	d.Set("kvm_gpu", config.KVMGPU)
-	d.Set("kvm_hidden", config.KVMHidden)
-	d.Set("kvm_network", config.KVMNetwork)
-	d.Set("kvm_numa_count", config.KVMNUMACount)
-	d.Set("kvm_qemu_uri", config.KVMQemuURI)
-	d.Set("listen_address", config.ListenAddress)
-	d.Set("memory", strconv.Itoa(config.Memory)+"mb")
-	d.Set("mount", config.Mount)
-	d.Set("mount_string", config.MountString)
-	d.Set("namespace", config.KubernetesConfig.Namespace)
-	d.Set("nat_nic_type", config.NatNicType)
-	d.Set("network", config.Network)
-	d.Set("nfs_share", state_utils.SliceOrNil(config.NFSShare))
-	d.Set("nfs_shares_root", config.NFSSharesRoot)
-	d.Set("no_vtx_check", config.NoVTXCheck)
-	d.Set("nodes", len(config.Nodes))
+	d.Set("feature_gates", cc.KubernetesConfig.FeatureGates)
+	d.Set("host_dns_resolver", cc.HostDNSResolver)
+	d.Set("host_only_cidr", cc.HostOnlyCIDR)
+	d.Set("host_only_nic_type", cc.HostOnlyNicType)
+	d.Set("hyperkit_vpnkit_sock", cc.HyperkitVpnKitSock)
+	d.Set("hyperkit_vsock_ports", state_utils.SliceOrNil(cc.HyperkitVSockPorts))
+	d.Set("hyperv_external_adapter", cc.HypervExternalAdapter)
+	d.Set("hyperv_use_external_switch", cc.HypervUseExternalSwitch)
+	d.Set("hyperv_virtual_switch", cc.HypervVirtualSwitch)
+	d.Set("image_repository", cc.KubernetesConfig.ImageRepository)
+	d.Set("insecure_registry", cc.InsecureRegistry)
+	d.Set("iso_url", []string{cc.MinikubeISO})
+	d.Set("keep_context", cc.KeepContext)
+	d.Set("kvm_gpu", cc.KVMGPU)
+	d.Set("kvm_hidden", cc.KVMHidden)
+	d.Set("kvm_network", cc.KVMNetwork)
+	d.Set("kvm_numa_count", cc.KVMNUMACount)
+	d.Set("kvm_qemu_uri", cc.KVMQemuURI)
+	d.Set("listen_address", cc.ListenAddress)
+	d.Set("memory", strconv.Itoa(cc.Memory)+"mb")
+	d.Set("mount", cc.Mount)
+	d.Set("mount_string", cc.MountString)
+	d.Set("namespace", cc.KubernetesConfig.Namespace)
+	d.Set("nat_nic_type", cc.NatNicType)
+	d.Set("network", cc.Network)
+	d.Set("nfs_share", state_utils.SliceOrNil(cc.NFSShare))
+	d.Set("nfs_shares_root", cc.NFSSharesRoot)
+	d.Set("no_vtx_check", cc.NoVTXCheck)
+	d.Set("nodes", tfc.Nodes)
 	d.Set("ports", state_utils.SliceOrNil(ports))
-	d.Set("registry_mirror", state_utils.SliceOrNil(config.RegistryMirror))
-	d.Set("service_cluster_ip_range", config.KubernetesConfig.ServiceCIDR)
-	d.Set("ssh_ip_address", config.SSHIPAddress)
-	d.Set("ssh_key", config.SSHKey)
-	d.Set("ssh_port", config.SSHPort)
-	d.Set("ssh_user", config.SSHUser)
-	d.Set("uuid", config.UUID)
-	d.Set("vm_driver", config.VMDriver)
+	d.Set("registry_mirror", state_utils.SliceOrNil(cc.RegistryMirror))
+	d.Set("service_cluster_ip_range", cc.KubernetesConfig.ServiceCIDR)
+	d.Set("ssh_ip_address", cc.SSHIPAddress)
+	d.Set("ssh_key", cc.SSHKey)
+	d.Set("ssh_port", cc.SSHPort)
+	d.Set("ssh_user", cc.SSHUser)
+	d.Set("uuid", cc.UUID)
+	d.Set("driver", cc.Driver)
 }
 
 // getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
@@ -322,7 +324,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		ExtraOptions:           extraConfigs,
 		ShouldLoadCachedImages: d.Get("cache_images").(bool),
 		CNI:                    d.Get("cni").(string),
-		NodePort:               d.Get("apiserver_port").(int),
 	}
 
 	n := config.Node{
@@ -346,8 +347,19 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		multiNode = true
 	}
 
+	if nodes == 0 {
+		return nil, errors.New("at least one node is required")
+	}
+
+	ha := d.Get("ha").(bool)
+
+	if ha && nodes < 3 {
+		return nil, errors.New("at least 3 nodes is required for high availability")
+	}
+
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
+		APIServerPort:           d.Get("apiserver_port").(int),
 		Name:                    d.Get("cluster_name").(string),
 		KeepContext:             d.Get("keep_context").(bool),
 		EmbedCerts:              d.Get("embed_certs").(bool),
@@ -413,11 +425,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{
-		ClusterConfig: cc, ClusterName: d.Get("cluster_name").(string),
+		ClusterConfig: &cc, ClusterName: d.Get("cluster_name").(string),
 		Addons:          addonStrings,
 		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
 		DeleteOnFailure: d.Get("delete_on_failure").(bool),
 		Nodes:           nodes,
+		HA:              ha,
 		NativeSsh:       d.Get("native_ssh").(bool),
 	})
 

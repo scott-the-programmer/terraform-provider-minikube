@@ -80,6 +80,17 @@ func TestClusterHA(t *testing.T) {
 		},
 	})
 }
+func TestClusterWait(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterWaitConfig("some_driver", "TestClusterCreationWait"),
+			},
+		},
+	})
+}
 
 func TestClusterCreation_Docker(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -518,6 +529,17 @@ func testUnitClusterHAConfig(driver string, clusterName string) string {
 		ha = true
 		
 		nodes = 8
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterWaitConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		wait = [ "apiserver" ]
 	}
 	`, driver, clusterName)
 }

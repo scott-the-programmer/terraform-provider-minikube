@@ -38,3 +38,15 @@ func ReadSliceState(slice interface{}) []string {
 
 	return stringSlice
 }
+
+func SetToSlice(s *schema.Set) []string {
+	ss := make([]string, s.Len())
+	so := s.List()
+	for i, v := range so {
+		ss[i] = v.(string)
+	}
+
+	sort.Strings(ss) //to ensure consistency with TF state
+
+	return ss
+}

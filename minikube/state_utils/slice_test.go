@@ -86,3 +86,41 @@ func TestReadSliceState(t *testing.T) {
 		})
 	}
 }
+
+func TestSetToSlice(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *schema.Set
+		expected []string
+	}{
+		{
+			name:     "Empty set",
+			input:    schema.NewSet(schema.HashString, []interface{}{}),
+			expected: []string{},
+		},
+		{
+			name:     "Set with single item",
+			input:    schema.NewSet(schema.HashString, []interface{}{"apple"}),
+			expected: []string{"apple"},
+		},
+		{
+			name:     "Set with multiple items",
+			input:    schema.NewSet(schema.HashString, []interface{}{"banana", "apple", "cherry"}),
+			expected: []string{"apple", "banana", "cherry"},
+		},
+		{
+			name:     "Set with duplicate items",
+			input:    schema.NewSet(schema.HashString, []interface{}{"apple", "banana", "apple", "cherry"}),
+			expected: []string{"apple", "banana", "cherry"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SetToSlice(tt.input)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("SetToSlice() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}

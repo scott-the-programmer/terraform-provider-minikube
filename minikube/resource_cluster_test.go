@@ -80,6 +80,17 @@ func TestClusterHA(t *testing.T) {
 		},
 	})
 }
+func TestClusterWait(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterWaitConfig("some_driver", "TestClusterCreationWait"),
+			},
+		},
+	})
+}
 
 func TestClusterCreation_Docker(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -218,6 +229,21 @@ func TestClusterCreation_HAControlPlane(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "TestClusterCreationDocker"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+				),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_Wait(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    map[string]*schema.Provider{"minikube": Provider()},
+		CheckDestroy: verifyDelete,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcceptanceClusterConfig_Wait("docker", "TestClusterCreationDocker"),
 				Check: resource.ComposeTestCheckFunc(
 					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
 				),
@@ -522,6 +548,17 @@ func testUnitClusterHAConfig(driver string, clusterName string) string {
 	`, driver, clusterName)
 }
 
+func testUnitClusterWaitConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		wait = [ "apiserver" ]
+	}
+	`, driver, clusterName)
+}
+
 func testUnitClusterConfig_Update(driver string, clusterName string) string {
 	return fmt.Sprintf(`
 	resource "minikube_cluster" "new" {
@@ -692,6 +729,21 @@ func testAcceptanceClusterConfig_HAControlPlane(driver string, clusterName strin
 		cpus = 2
 		memory = "6000GiB"
 		ha = true
+	}
+	`, driver, clusterName)
+}
+
+func testAcceptanceClusterConfig_Wait(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 2
+		memory = "6000GiB"
+
+		wait = [
+			"apps_running"
+		]
 	}
 	`, driver, clusterName)
 }

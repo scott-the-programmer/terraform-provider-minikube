@@ -75,8 +75,8 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if d.HasChange("addons") {
 		config := client.GetConfig()
 		oldAddons, newAddons := d.GetChange("addons")
-		oldAddonStrings := getAddons(oldAddons.(*schema.Set))
-		newAddonStrings := getAddons(newAddons.(*schema.Set))
+		oldAddonStrings := state_utils.SetToSlice(oldAddons.(*schema.Set))
+		newAddonStrings := state_utils.SetToSlice(newAddons.(*schema.Set))
 
 		client.SetConfig(lib.MinikubeClientConfig{
 			ClusterConfig:   config.ClusterConfig,
@@ -248,7 +248,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		addons = &schema.Set{}
 	}
 
-	addonStrings := getAddons(addons.(*schema.Set))
+	addonStrings := state_utils.SetToSlice(addons.(*schema.Set))
 
 	defaultIsos, ok := d.GetOk("iso_url")
 	if !ok {
@@ -357,6 +357,19 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		return nil, errors.New("at least 3 nodes is required for high availability")
 	}
 
+	vcs := state_utils.SetToSlice(d.Get("wait").(*schema.Set))
+	vc := make(map[string]bool)
+	for _, c := range vcs {
+		vc[c] = true
+	}
+
+	err = lib.ValidateWait(vc)
+	if err != nil {
+		return nil, err
+	}
+
+	vc = lib.ResolveSpecialWaitOptions(vc)
+
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
 		APIServerPort:           d.Get("apiserver_port").(int),
@@ -422,6 +435,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		GPUs:                  d.Get("gpus").(string),
 		SocketVMnetPath:       d.Get("socket_vmnet_path").(string),
 		SocketVMnetClientPath: d.Get("socket_vmnet_client_path").(string),
+		VerifyComponents:      vc,
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{
@@ -440,16 +454,4 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	})
 
 	return clusterClient, nil
-}
-
-func getAddons(addons *schema.Set) []string {
-	addonStrings := make([]string, addons.Len())
-	addonObjects := addons.List()
-	for i, v := range addonObjects {
-		addonStrings[i] = v.(string)
-	}
-
-	sort.Strings(addonStrings) //to ensure consistency with TF state
-
-	return addonStrings
 }

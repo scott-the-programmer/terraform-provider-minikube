@@ -363,6 +363,13 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		vc[c] = true
 	}
 
+	err = lib.ValidateWait(vc)
+	if err != nil {
+		return nil, err
+	}
+
+	vc = lib.ResolveSpecialWaitOptions(vc)
+
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
 		APIServerPort:           d.Get("apiserver_port").(int),

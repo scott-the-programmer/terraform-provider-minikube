@@ -25,7 +25,7 @@ func ValidateWait(v map[string]bool) error {
 	var invalidOptions []string
 
 	for key := range v {
-		if !contains(standardOptions, key) || contains(specialOptions, key) {
+		if !contains(standardOptions, key) && !contains(specialOptions, key) {
 			invalidOptions = append(invalidOptions, key)
 		}
 	}

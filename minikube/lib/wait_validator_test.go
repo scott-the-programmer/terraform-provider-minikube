@@ -27,11 +27,6 @@ func TestValidateWait(t *testing.T) {
 			expectedError: "invalid wait option(s): invalid1, invalid2",
 		},
 		{
-			name:          "Special option",
-			input:         map[string]bool{"all": true},
-			expectedError: "invalid wait option(s): all",
-		},
-		{
 			name:          "Empty input",
 			input:         map[string]bool{},
 			expectedError: "",

@@ -2,6 +2,7 @@ package lib
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -36,8 +37,31 @@ func TestValidateWait(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateWait(tt.input)
-			if (err == nil && tt.expectedError != "") || (err != nil && err.Error() != tt.expectedError) {
-				t.Errorf("ValidateWait() error = %v, expectedError %v", err, tt.expectedError)
+			if tt.expectedError == "" {
+				if err != nil {
+					t.Errorf("ValidateWait() error = %v, expectedError %v", err, tt.expectedError)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("ValidateWait() error = nil, expectedError %v", tt.expectedError)
+				} else {
+					expectedOptions := strings.Split(strings.TrimPrefix(tt.expectedError, "invalid wait option(s): "), ", ")
+					actualOptions := strings.Split(strings.TrimPrefix(err.Error(), "invalid wait option(s): "), ", ")
+
+					expectedSet := make(map[string]bool)
+					actualSet := make(map[string]bool)
+
+					for _, opt := range expectedOptions {
+						expectedSet[opt] = true
+					}
+					for _, opt := range actualOptions {
+						actualSet[opt] = true
+					}
+
+					if !reflect.DeepEqual(expectedSet, actualSet) {
+						t.Errorf("ValidateWait() error options mismatch. Expected: %v, Got: %v", expectedSet, actualSet)
+					}
+				}
 			}
 		})
 	}

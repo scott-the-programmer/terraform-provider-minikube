@@ -252,12 +252,14 @@ var (
 	
 		"disk_size": {
 			Type:					schema.TypeString,
-			Description:	"Disk size allocated to the minikube VM (format: <number>[<unit>], where unit = b, k, m or g).",
+			Description:	"Disk size allocated to the minikube VM (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
 			Default:	"20000mb",
+			StateFunc:	state_utils.ResourceSizeConverter(),
+			ValidateDiagFunc:	state_utils.ResourceSizeValidator(),
 		},
 	
 		"dns_domain": {
@@ -672,8 +674,8 @@ var (
 			ForceNew:			true,
 			
 			Default:	"4g",
-			StateFunc:	state_utils.MemoryConverter(),
-			ValidateDiagFunc:	state_utils.MemoryValidator(),
+			StateFunc:	state_utils.ResourceSizeConverter(),
+			ValidateDiagFunc:	state_utils.ResourceSizeValidator(),
 		},
 	
 		"mount": {

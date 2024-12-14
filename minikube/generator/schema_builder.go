@@ -60,8 +60,15 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 		Default:          "4g",
 		Description:      "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
 		Type:             String,
-		StateFunc:        "state_utils.MemoryConverter()",
-		ValidateDiagFunc: "state_utils.MemoryValidator()",
+		StateFunc:        "state_utils.ResourceSizeConverter()",
+		ValidateDiagFunc: "state_utils.ResourceSizeValidator()",
+	},
+	"disk_size": {
+		Default:          "20000mb",
+		Description:      "Disk size allocated to the minikube VM (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
+		Type:             String,
+		StateFunc:        "state_utils.ResourceSizeConverter()",
+		ValidateDiagFunc: "state_utils.ResourceSizeValidator()",
 	},
 	"cpus": {
 		Default:     "2",

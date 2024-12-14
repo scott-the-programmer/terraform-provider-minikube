@@ -366,8 +366,8 @@ func TestOverride(t *testing.T) {
 			ForceNew:			true,
 			
 			Default:	"4g",
-			StateFunc:	state_utils.MemoryConverter(),
-			ValidateDiagFunc:	state_utils.MemoryValidator(),
+			StateFunc:	state_utils.ResourceSizeConverter(),
+			ValidateDiagFunc:	state_utils.ResourceSizeValidator(),
 		},
 	
 	}

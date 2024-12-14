@@ -34,12 +34,13 @@ type mockClusterClientProperties struct {
 	name        string
 	haNodes     int
 	workerNodes int
+	diskSize    int
 }
 
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0, 20000}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -54,13 +55,13 @@ func TestClusterCreation(t *testing.T) {
 func TestClusterUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterCreation", 1, 0}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterUpdate", 1, 0, 20000}))},
 		Steps: []resource.TestStep{
 			{
-				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
+				Config: testUnitClusterConfig("some_driver", "TestClusterUpdate"),
 			},
 			{
-				Config: testUnitClusterConfig_Update("some_driver", "TestClusterCreation"),
+				Config: testUnitClusterConfig_Update("some_driver", "TestClusterUpdate"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
 				),
@@ -72,7 +73,7 @@ func TestClusterUpdate(t *testing.T) {
 func TestClusterHA(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5, 20000}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterHAConfig("some_driver", "TestClusterCreationHA"),
@@ -80,10 +81,23 @@ func TestClusterHA(t *testing.T) {
 		},
 	})
 }
+
+func TestClusterDisk(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationDisk", 1, 0, 20480}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterDiskConfig("some_driver", "TestClusterCreationDisk"),
+			},
+		},
+	})
+}
+
 func TestClusterWait(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0, 20000}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterWaitConfig("some_driver", "TestClusterCreationWait"),
@@ -315,7 +329,7 @@ func TestClusterCreation_HyperV(t *testing.T) {
 func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes)
+	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize)
 
 	gomock.InOrder(
 		mockClusterClient.EXPECT().
@@ -352,7 +366,7 @@ func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes)
+	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize)
 
 	mockClusterClient.EXPECT().
 		GetAddons().
@@ -370,7 +384,7 @@ func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc 
 	return configureContext
 }
 
-func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int, workerNodes int) *lib.MockClusterClient {
+func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int, workerNodes int, diskSize int) *lib.MockClusterClient {
 	mockClusterClient := lib.NewMockClusterClient(ctrl)
 
 	os.Mkdir("test_output", 0755)
@@ -420,7 +434,7 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int,
 		Network:                 clusterSchema["network"].Default.(string),
 		Memory:                  4096,
 		CPUs:                    2,
-		DiskSize:                20000,
+		DiskSize:                diskSize,
 		Driver:                  "some_driver",
 		ListenAddress:           clusterSchema["listen_address"].Default.(string),
 		HyperkitVpnKitSock:      clusterSchema["hyperkit_vpnkit_sock"].Default.(string),
@@ -531,6 +545,17 @@ func testUnitClusterConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterDiskConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+
+		disk_size = "20g"
 	}
 	`, driver, clusterName)
 }

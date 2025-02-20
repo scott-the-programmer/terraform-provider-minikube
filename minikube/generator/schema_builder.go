@@ -60,8 +60,6 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 		Default:          "4g",
 		Description:      "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use \"max\" to use the maximum amount of memory. Use \"no-limit\" to not specify a limit (Docker/Podman only))",
 		Type:             String,
-		StateFunc:        "state_utils.ResourceSizeConverter()",
-		ValidateDiagFunc: "state_utils.ResourceSizeValidator()",
 	},
 	"disk_size": {
 		Default:          "20000mb",

@@ -271,7 +271,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	}
 
 	memoryStr := d.Get("memory").(string)
-	memoryMb, err := pkgutil.CalculateSizeInMB(memoryStr)
+	memoryMb, err := state_utils.GetMemory(memoryStr);
 	if err != nil {
 		return nil, err
 	}

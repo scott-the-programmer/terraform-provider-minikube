@@ -71,7 +71,7 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 	"cpus": {
 		Default:     "2",
 		Description: "Number of CPUs allocated to Kubernetes. Use \\\"max\\\" to use the maximum number of CPUs. Use \\\"no-limit\\\" to not specify a limit (Docker/Podman only)",
-		Type:        String,
+		Type:        Int,
 	},
 	// Customize the description to be the fullset of drivers
 	"driver": {

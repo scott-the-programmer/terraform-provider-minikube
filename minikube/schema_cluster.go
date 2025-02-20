@@ -191,13 +191,13 @@ var (
 		},
 	
 		"cpus": {
-			Type:					schema.TypeInt,
-			Description:	"Amount of CPUs to allocate to Kubernetes",
+			Type:					schema.TypeString,
+			Description:	"Number of CPUs allocated to Kubernetes. Use "max" to use the maximum number of CPUs. Use "no-limit" to not specify a limit (Docker/Podman only)",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	2,
+			Default:	"2",
 		},
 	
 		"cri_socket": {
@@ -668,14 +668,12 @@ var (
 	
 		"memory": {
 			Type:					schema.TypeString,
-			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
+			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use "max" to use the maximum amount of memory. Use "no-limit" to not specify a limit (Docker/Podman only))",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
 			Default:	"4g",
-			StateFunc:	state_utils.ResourceSizeConverter(),
-			ValidateDiagFunc:	state_utils.ResourceSizeValidator(),
 		},
 	
 		"mount": {

@@ -380,7 +380,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		KicBaseImage:            d.Get("base_image").(string),
 		Network:                 d.Get("network").(string),
 		Memory:                  memoryMb,
-		CPUs:                    d.Get("cpus").(int),
+		CPUs:                    state_utils.GetCPUs(d.Get("cpus").(string)),
 		DiskSize:                diskMb,
 		Driver:                  driver,
 		ListenAddress:           d.Get("listen_address").(string),

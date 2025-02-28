@@ -12,5 +12,12 @@ func GetCPUs(cpuStr string) (int, error) {
 	} else if cpuStr == lib.NoLimit {
 		return 0, nil
 	}
-	return strconv.Atoi(cpuStr)
+	cpus, err := strconv.Atoi(cpuStr)
+	if err != nil {
+		return 0, err
+	}
+	if cpus < 0 {
+		return 0, fmt.Errorf("CPU count cannot be negative: %d", cpus)
+	}
+	return cpus, nil
 }

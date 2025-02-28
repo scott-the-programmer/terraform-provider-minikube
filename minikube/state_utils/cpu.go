@@ -3,6 +3,7 @@ package state_utils
 import (
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	"runtime"
+	"strconv"
 )
 
 func GetCPUs(cpuStr string) (int, error) {
@@ -11,5 +12,5 @@ func GetCPUs(cpuStr string) (int, error) {
 	} else if cpuStr == lib.NoLimit {
 		return 0, nil
 	}
-	return cpuStr, nil
+	return strconv.Atoi(cpuStr)
 }

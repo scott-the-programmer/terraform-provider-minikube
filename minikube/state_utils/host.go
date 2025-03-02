@@ -1,6 +1,8 @@
 package state_utils
 
 import (
+	"strconv"
+
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	pkgutil "k8s.io/minikube/pkg/util"
 )
@@ -35,4 +37,24 @@ func GetMemory(memoryStr string) (int, error) {
 	}
 
 	return memoryMb, err
+}
+
+func GetCPU(cpuStr string) (int, error) {
+	var cpu int
+	var err error
+	if cpuStr == lib.Max {
+		cpu, err = lib.GetCPULimit()
+		if err != nil {
+			return 0, err
+		}
+	} else if cpuStr == lib.NoLimit {
+		cpu = 0
+	} else {
+		cpu, err = strconv.Atoi(cpuStr)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return cpu, nil
 }

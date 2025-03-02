@@ -271,7 +271,13 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	}
 
 	memoryStr := d.Get("memory").(string)
-	memoryMb, err := state_utils.GetMemory(memoryStr);
+	memoryMb, err := state_utils.GetMemory(memoryStr)
+	if err != nil {
+		return nil, err
+	}
+
+	cpuStr := d.Get("cpus").(string)
+	cpu, err := state_utils.GetCPU(cpuStr)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +386,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		KicBaseImage:            d.Get("base_image").(string),
 		Network:                 d.Get("network").(string),
 		Memory:                  memoryMb,
-		CPUs:                    d.Get("cpus").(int),
+		CPUs:                    cpu,
 		DiskSize:                diskMb,
 		Driver:                  driver,
 		ListenAddress:           d.Get("listen_address").(string),

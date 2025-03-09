@@ -326,6 +326,54 @@ func TestClusterCreation_HyperV(t *testing.T) {
 	})
 }
 
+func TestClusterNoLimitMemory(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitMemory", 1, 0, 20000}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterNoLimitMemoryConfig("some_driver", "TestClusterNoLimitMemory"),
+			},
+		},
+	})
+}
+
+func TestClusterMaxMemory(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxMemory", 1, 0, 20000}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterMaxMemoryConfig("some_driver", "TestClusterMaxMemory"),
+			},
+		},
+	})
+}
+
+func TestClusterNoLimitCPU(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitCPU", 1, 0, 20000}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterNoLimitCPUConfig("some_driver", "TestClusterNoLimitCPU"),
+			},
+		},
+	})
+}
+
+func TestClusterMaxCPU(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxCPU", 1, 0, 20000}))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterMaxCPUConfig("some_driver", "TestClusterMaxCPU"),
+			},
+		},
+	})
+}
+
 func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
@@ -826,4 +874,44 @@ func testPropertyExists(n string, id string) resource.TestCheckFunc {
 
 		return nil
 	}
+}
+
+func testUnitClusterNoLimitMemoryConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		memory = "NoLimit"
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterMaxMemoryConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		memory = "Max"
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterNoLimitCPUConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = -1
+	}
+	`, driver, clusterName)
+}
+
+func testUnitClusterMaxCPUConfig(driver string, clusterName string) string {
+	return fmt.Sprintf(`
+	resource "minikube_cluster" "new" {
+		driver = "%s"
+		cluster_name = "%s"
+		cpus = 0
+	}
+	`, driver, clusterName)
 }

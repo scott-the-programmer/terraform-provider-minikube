@@ -271,7 +271,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	}
 
 	memoryStr := d.Get("memory").(string)
-	memoryMb, err := state_utils.GetMemory(memoryStr);
+	memoryMb, err := state_utils.GetMemory(memoryStr)
 	if err != nil {
 		return nil, err
 	}
@@ -371,16 +371,16 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	vc = lib.ResolveSpecialWaitOptions(vc)
 
 	cc := config.ClusterConfig{
-		Addons:                  addonConfig,
-		APIServerPort:           d.Get("apiserver_port").(int),
-		Name:                    d.Get("cluster_name").(string),
-		KeepContext:             d.Get("keep_context").(bool),
-		EmbedCerts:              d.Get("embed_certs").(bool),
-		MinikubeISO:             state_utils.ReadSliceState(defaultIsos)[0],
-		KicBaseImage:            d.Get("base_image").(string),
-		Network:                 d.Get("network").(string),
-		Memory:                  memoryMb,
-		CPUs:                    func() int {
+		Addons:        addonConfig,
+		APIServerPort: d.Get("apiserver_port").(int),
+		Name:          d.Get("cluster_name").(string),
+		KeepContext:   d.Get("keep_context").(bool),
+		EmbedCerts:    d.Get("embed_certs").(bool),
+		MinikubeISO:   state_utils.ReadSliceState(defaultIsos)[0],
+		KicBaseImage:  d.Get("base_image").(string),
+		Network:       d.Get("network").(string),
+		Memory:        memoryMb,
+		CPUs: func() int {
 			cpus, err := state_utils.GetCPUs(d.Get("cpus").(string))
 			if err != nil {
 				return 2 // Default to 2 CPUs if there's an error

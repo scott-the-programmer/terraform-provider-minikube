@@ -881,7 +881,7 @@ func testUnitClusterNoLimitMemoryConfig(driver string, clusterName string) strin
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
-		memory = "NoLimit"
+		memory = "no-limit"
 	}
 	`, driver, clusterName)
 }
@@ -891,7 +891,7 @@ func testUnitClusterMaxMemoryConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
-		memory = "Max"
+		memory = "max"
 	}
 	`, driver, clusterName)
 }
@@ -901,7 +901,7 @@ func testUnitClusterNoLimitCPUConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
-		cpus = -1
+		cpus = "no-limit"
 	}
 	`, driver, clusterName)
 }
@@ -911,7 +911,7 @@ func testUnitClusterMaxCPUConfig(driver string, clusterName string) string {
 	resource "minikube_cluster" "new" {
 		driver = "%s"
 		cluster_name = "%s"
-		cpus = 0
+		cpus = "max"
 	}
 	`, driver, clusterName)
 }

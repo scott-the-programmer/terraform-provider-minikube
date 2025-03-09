@@ -4,6 +4,7 @@ import (
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	"runtime"
 	"strconv"
+	"fmt"
 )
 
 func GetCPUs(cpuStr string) (int, error) {

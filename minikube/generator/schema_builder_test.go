@@ -360,14 +360,14 @@ func TestOverride(t *testing.T) {
 	assert.Equal(t, header+`
 		"memory": {
 			Type:					schema.TypeString,
-			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
+			Description:	"Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use \"max\" to use the maximum amount of memory. Use \"no-limit\" to not specify a limit (Docker/Podman only))",
 			
 			Optional:			true,
 			ForceNew:			true,
 			
 			Default:	"4g",
-			StateFunc:	state_utils.ResourceSizeConverter(),
-			ValidateDiagFunc:	state_utils.ResourceSizeValidator(),
+			StateFunc:	state_utils.MemoryConverter(),
+			ValidateDiagFunc:	state_utils.MemoryValidator(),
 		},
 	
 	}

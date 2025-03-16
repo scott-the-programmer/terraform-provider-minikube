@@ -58,10 +58,10 @@ var updateFields = []string{
 var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 	"memory": {
 		Default:          "4g",
-		Description:      "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)",
+		Description:      "Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use \\\"max\\\" to use the maximum amount of memory. Use \\\"no-limit\\\" to not specify a limit (Docker/Podman only))",
 		Type:             String,
-		StateFunc:        "state_utils.ResourceSizeConverter()",
-		ValidateDiagFunc: "state_utils.ResourceSizeValidator()",
+		StateFunc:        "state_utils.MemoryConverter()",
+		ValidateDiagFunc: "state_utils.MemoryValidator()",
 	},
 	"disk_size": {
 		Default:          "20000mb",
@@ -71,9 +71,11 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 		ValidateDiagFunc: "state_utils.ResourceSizeValidator()",
 	},
 	"cpus": {
-		Default:     "2",
-		Description: "Amount of CPUs to allocate to Kubernetes",
-		Type:        Int,
+		Default:          "2",
+		Description:      "Number of CPUs allocated to Kubernetes. Use \\\"max\\\" to use the maximum number of CPUs. Use \\\"no-limit\\\" to not specify a limit (Docker/Podman only)",
+		Type:             String,
+		StateFunc:        "state_utils.CPUConverter()",
+		ValidateDiagFunc: "state_utils.CPUValidator()",
 	},
 	// Customize the description to be the fullset of drivers
 	"driver": {

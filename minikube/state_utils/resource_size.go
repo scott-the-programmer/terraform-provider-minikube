@@ -13,31 +13,46 @@ import (
 
 func ResourceSizeConverter() schema.SchemaStateFunc {
 	return func(val interface{}) string {
-		size, ok := val.(string)
-		if !ok {
-			panic(errors.New("resource size is not a string"))
-		}
-		sizeMb, err := pkgutil.CalculateSizeInMB(size)
+		result, err := ResourceSizeConverterImpl(val)
 		if err != nil {
-			panic(errors.New("invalid resource size value"))
+			panic(err)
 		}
-
-		return strconv.Itoa(sizeMb) + "mb"
+		return result
 	}
+}
+
+func ResourceSizeConverterImpl(val interface{}) (string, error) {
+	size, ok := val.(string)
+	if !ok {
+		return "", errors.New("resource size is not a string")
+	}
+	sizeMb, err := pkgutil.CalculateSizeInMB(size)
+	if err != nil {
+		return "", errors.New("invalid resource size value")
+	}
+
+	return strconv.Itoa(sizeMb) + "mb", nil
 }
 
 func ResourceSizeValidator() schema.SchemaValidateDiagFunc {
 	return schema.SchemaValidateDiagFunc(func(val interface{}, path cty.Path) diag.Diagnostics {
-		size, ok := val.(string)
-		if !ok {
-			diag := diag.FromErr(errors.New("resource size is not a string"))
-			return diag
-		}
-		_, err := pkgutil.CalculateSizeInMB(size)
+		err := ResourceSizeValidatorImpl(val)
 		if err != nil {
-			diag := diag.FromErr(errors.New("invalid resource size value"))
-			return diag
+			return diag.FromErr(err)
 		}
 		return nil
+
 	})
+}
+
+func ResourceSizeValidatorImpl(val interface{}) error {
+	size, ok := val.(string)
+	if !ok {
+		return errors.New("resource size is not a string")
+	}
+	_, err := pkgutil.CalculateSizeInMB(size)
+	if err != nil {
+		return errors.New("invalid resource size value")
+	}
+	return nil
 }

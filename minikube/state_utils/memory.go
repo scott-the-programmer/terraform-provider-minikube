@@ -2,6 +2,7 @@ package state_utils
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -58,11 +59,14 @@ func MemoryConverterImpl(val interface{}) (string, error) {
 		return "", errors.New("memory value is not a string")
 	}
 
-	if memoryStr == lib.Max || memoryStr == lib.NoLimit {
-		return memoryStr, nil
+	mem, err := GetMemory(memoryStr)
+	if err != nil {
+		return "", err
 	}
 
-	return ResourceSizeConverterImpl(memoryStr)
+	memoryStr = strconv.Itoa(mem) + "mb"
+
+	return memoryStr, err
 }
 
 func MemoryValidator() schema.SchemaValidateDiagFunc {

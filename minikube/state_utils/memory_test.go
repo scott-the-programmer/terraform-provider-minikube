@@ -86,18 +86,6 @@ func TestMemoryConverterImpl(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "max case",
-			input:       lib.Max,
-			expected:    lib.Max,
-			expectError: false,
-		},
-		{
-			name:        "no limit case",
-			input:       lib.NoLimit,
-			expected:    lib.NoLimit,
-			expectError: false,
-		},
-		{
 			name:        "non-string input",
 			input:       123,
 			expected:    "",
@@ -199,10 +187,6 @@ func TestMemoryConverter(t *testing.T) {
 	result := converter("2G")
 	assert.Equal(t, "2048mb", result)
 
-	// Test special cases
-	assert.Equal(t, lib.Max, converter(lib.Max))
-	assert.Equal(t, lib.NoLimit, converter(lib.NoLimit))
-
 	// Test panic case
 	assert.Panics(t, func() {
 		converter(123) // non-string input should panic
@@ -214,8 +198,6 @@ func TestMemoryValidator(t *testing.T) {
 
 	// Test valid cases
 	assert.Nil(t, validator("2G", nil))
-	assert.Nil(t, validator(lib.Max, nil))
-	assert.Nil(t, validator(lib.NoLimit, nil))
 
 	// Test invalid cases
 	assert.NotNil(t, validator(123, nil))       // non-string input

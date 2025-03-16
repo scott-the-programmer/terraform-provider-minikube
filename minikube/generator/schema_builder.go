@@ -71,9 +71,11 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
 		ValidateDiagFunc: "state_utils.ResourceSizeValidator()",
 	},
 	"cpus": {
-		Default:     "2",
-		Description: "Number of CPUs allocated to Kubernetes. Use \\\"max\\\" to use the maximum number of CPUs. Use \\\"no-limit\\\" to not specify a limit (Docker/Podman only)",
-		Type:        String,
+		Default:          "2",
+		Description:      "Number of CPUs allocated to Kubernetes. Use \\\"max\\\" to use the maximum number of CPUs. Use \\\"no-limit\\\" to not specify a limit (Docker/Podman only)",
+		Type:             String,
+		StateFunc:        "state_utils.CPUConverter()",
+		ValidateDiagFunc: "state_utils.CPUValidator()",
 	},
 	// Customize the description to be the fullset of drivers
 	"driver": {

@@ -276,6 +276,12 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		return nil, err
 	}
 
+	cpuStr := d.Get("cpus").(string)
+	cpus, err := state_utils.GetCPUs(cpuStr)
+	if err != nil {
+		return nil, err
+	}
+
 	diskStr := d.Get("disk_size").(string)
 	diskMb, err := pkgutil.CalculateSizeInMB(diskStr)
 	if err != nil {
@@ -371,22 +377,16 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	vc = lib.ResolveSpecialWaitOptions(vc)
 
 	cc := config.ClusterConfig{
-		Addons:        addonConfig,
-		APIServerPort: d.Get("apiserver_port").(int),
-		Name:          d.Get("cluster_name").(string),
-		KeepContext:   d.Get("keep_context").(bool),
-		EmbedCerts:    d.Get("embed_certs").(bool),
-		MinikubeISO:   state_utils.ReadSliceState(defaultIsos)[0],
-		KicBaseImage:  d.Get("base_image").(string),
-		Network:       d.Get("network").(string),
-		Memory:        memoryMb,
-		CPUs: func() int {
-			cpus, err := state_utils.GetCPUs(d.Get("cpus").(string))
-			if err != nil {
-				return 2 // Default to 2 CPUs if there's an error
-			}
-			return cpus
-		}(),
+		Addons:                  addonConfig,
+		APIServerPort:           d.Get("apiserver_port").(int),
+		Name:                    d.Get("cluster_name").(string),
+		KeepContext:             d.Get("keep_context").(bool),
+		EmbedCerts:              d.Get("embed_certs").(bool),
+		MinikubeISO:             state_utils.ReadSliceState(defaultIsos)[0],
+		KicBaseImage:            d.Get("base_image").(string),
+		Network:                 d.Get("network").(string),
+		Memory:                  memoryMb,
+		CPUs:                    cpus,
 		DiskSize:                diskMb,
 		Driver:                  driver,
 		ListenAddress:           d.Get("listen_address").(string),

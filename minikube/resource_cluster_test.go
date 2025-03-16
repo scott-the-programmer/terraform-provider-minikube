@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -35,12 +36,14 @@ type mockClusterClientProperties struct {
 	haNodes     int
 	workerNodes int
 	diskSize    int
+	memory      string
+	cpu         string
 }
 
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0, 20000, "4096mb", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -55,7 +58,7 @@ func TestClusterCreation(t *testing.T) {
 func TestClusterUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterUpdate", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterUpdate", 1, 0, 20000, "4096mb", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterUpdate"),
@@ -73,7 +76,7 @@ func TestClusterUpdate(t *testing.T) {
 func TestClusterHA(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5, 20000, "4096mb", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterHAConfig("some_driver", "TestClusterCreationHA"),
@@ -85,7 +88,7 @@ func TestClusterHA(t *testing.T) {
 func TestClusterDisk(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationDisk", 1, 0, 20480}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationDisk", 1, 0, 20480, "4096mb", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterDiskConfig("some_driver", "TestClusterCreationDisk"),
@@ -97,7 +100,7 @@ func TestClusterDisk(t *testing.T) {
 func TestClusterWait(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0, 20000, "4096mb", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterWaitConfig("some_driver", "TestClusterCreationWait"),
@@ -329,7 +332,7 @@ func TestClusterCreation_HyperV(t *testing.T) {
 func TestClusterNoLimitMemory(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitMemory", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitMemory", 1, 0, 20000, "no-limit", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterNoLimitMemoryConfig("some_driver", "TestClusterNoLimitMemory"),
@@ -341,7 +344,7 @@ func TestClusterNoLimitMemory(t *testing.T) {
 func TestClusterMaxMemory(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxMemory", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxMemory", 1, 0, 20000, "max", "1"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterMaxMemoryConfig("some_driver", "TestClusterMaxMemory"),
@@ -353,7 +356,7 @@ func TestClusterMaxMemory(t *testing.T) {
 func TestClusterNoLimitCPU(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitCPU", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitCPU", 1, 0, 20000, "4096mb", "no-limit"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterNoLimitCPUConfig("some_driver", "TestClusterNoLimitCPU"),
@@ -365,7 +368,7 @@ func TestClusterNoLimitCPU(t *testing.T) {
 func TestClusterMaxCPU(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxCPU", 1, 0, 20000}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxCPU", 1, 0, 20000, "4096mb", "max"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterMaxCPUConfig("some_driver", "TestClusterMaxCPU"),
@@ -377,7 +380,7 @@ func TestClusterMaxCPU(t *testing.T) {
 func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize)
+	mockClusterClient := getBaseMockClient(props.t, ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize, props.memory, props.cpu)
 
 	gomock.InOrder(
 		mockClusterClient.EXPECT().
@@ -414,7 +417,7 @@ func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
-	mockClusterClient := getBaseMockClient(ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize)
+	mockClusterClient := getBaseMockClient(props.t, ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize, props.memory, props.cpu)
 
 	mockClusterClient.EXPECT().
 		GetAddons().
@@ -432,7 +435,7 @@ func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc 
 	return configureContext
 }
 
-func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int, workerNodes int, diskSize int) *lib.MockClusterClient {
+func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string, haNodes int, workerNodes int, diskSize int, memory string, cpu string) *lib.MockClusterClient {
 	mockClusterClient := lib.NewMockClusterClient(ctrl)
 
 	os.Mkdir("test_output", 0755)
@@ -472,6 +475,16 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int,
 		Worker:            true,
 	}
 
+	mem, err := state_utils.GetMemory(memory)
+	if err != nil {
+		t.Fatalf("Failed to get memory: %v", err)
+	}
+
+	c, err := state_utils.GetCPUs(cpu)
+	if err != nil {
+		t.Fatalf("Failed to get cpu: %v", err)
+	}
+
 	cc := config.ClusterConfig{
 		Name:                    "terraform-provider-minikube-acc",
 		APIServerPort:           clusterSchema["apiserver_port"].Default.(int),
@@ -480,8 +493,8 @@ func getBaseMockClient(ctrl *gomock.Controller, clusterName string, haNodes int,
 		MinikubeISO:             defaultIso,
 		KicBaseImage:            clusterSchema["base_image"].Default.(string),
 		Network:                 clusterSchema["network"].Default.(string),
-		Memory:                  4096,
-		CPUs:                    2,
+		Memory:                  mem,
+		CPUs:                    c,
 		DiskSize:                diskSize,
 		Driver:                  "some_driver",
 		ListenAddress:           clusterSchema["listen_address"].Default.(string),

@@ -198,6 +198,8 @@ var (
 			ForceNew:			true,
 			
 			Default:	"2",
+			StateFunc:	state_utils.CPUConverter(),
+			ValidateDiagFunc:	state_utils.CPUValidator(),
 		},
 	
 		"cri_socket": {

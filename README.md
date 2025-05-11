@@ -2,10 +2,11 @@
 
  [![Go Report Card](https://goreportcard.com/badge/github.com/scott-the-programmer/terraform-provider-minikube)](https://goreportcard.com/report/github.com/scott-the-programmer/terraform-provider-minikube)
 [![codecov](https://codecov.io/gh/scott-the-programmer/terraform-provider-minikube/graph/badge.svg?token=MH35FEWVAH)](https://codecov.io/gh/scott-the-programmer/terraform-provider-minikube)
+![Terraform Provider Downloads](https://img.shields.io/terraform/provider/dt/3266)
 
 A terraform provider for [minikube!](https://minikube.sigs.k8s.io/docs/)
 
-The goal of this project is to allow developers to create minikube clusters and integrate it with common kubernetes terraform providers such as [hashicorp/kubernetes](https://registry.terraform.io/providers/hashicorp/kubernetes/2.12.1) and [hashicorp/helm](https://registry.terraform.io/providers/hashicorp/helm/2.6.0) all within the comfort of Minikube!
+The goal of this project is to allow developers to create minikube clusters and integrate it with common kubernetes terraform providers such as [hashicorp/kubernetes](https://registry.terraform.io/providers/hashicorp/kubernetes/2.12.1) and [hashicorp/helm](https://registry.terraform.io/providers/hashicorp/helm/2.6.0) all within the comfort of minikube!
 
 You can learn more about how to use the provider at https://registry.terraform.io/providers/scott-the-programmer/minikube/latest/docs
 

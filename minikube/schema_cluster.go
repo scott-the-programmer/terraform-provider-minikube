@@ -137,7 +137,7 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.46@sha256:fd2d445ddcc33ebc5c6b68a17e6219ea207ce63c005095ea1525296da2d1a279",
+			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.45@sha256:81df288595202a317b1a4dc2506ca2e4ed5f22373c19a441b88cfbf4b9867c85",
 		},
 	
 		"binary_mirror": {
@@ -415,7 +415,7 @@ var (
 	
 		"gpus": {
 			Type:					schema.TypeString,
-			Description:	"Allow pods to use your GPUs. Options include: [all,nvidia,amd] (Docker driver with Docker container-runtime only)",
+			Description:	"Allow pods to use your NVIDIA GPUs. Options include: [all,nvidia] (Docker driver with Docker container-runtime only)",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -600,7 +600,7 @@ var (
 	
 		"kubernetes_version": {
 			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.32.0, 'latest' for v1.32.0). Defaults to 'stable'.",
+			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.31.0, 'latest' for v1.31.0). Defaults to 'stable'.",
 			
 			Optional:			true,
 			ForceNew:			true,

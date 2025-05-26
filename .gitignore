@@ -26,3 +26,4 @@ crash.log
 test_output
 schema-generator
 testBinary
+.aider*

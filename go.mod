@@ -14,7 +14,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/minikube v1.34.0
+	k8s.io/minikube v1.35.0
 )
 
 replace (

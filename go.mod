@@ -1,6 +1,6 @@
 module github.com/scott-the-programmer/terraform-provider-minikube
 
-go 1.23.0
+go 1.24.1
 
 toolchain go1.24.1
 

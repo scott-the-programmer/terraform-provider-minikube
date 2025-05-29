@@ -2,8 +2,6 @@ module github.com/scott-the-programmer/terraform-provider-minikube
 
 go 1.24.1
 
-toolchain go1.24.1
-
 require (
 	github.com/docker/machine v0.16.2
 	github.com/golang/mock v1.6.0
@@ -186,7 +184,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/opencontainers/runc v1.2.3 // indirect
+	github.com/opencontainers/runc v1.2.6 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/otiai10/copy v1.14.1 // indirect
 	github.com/otiai10/mint v1.6.3 // indirect

@@ -35,7 +35,7 @@ func main() {
 		Debug:   debug,
 	}
 
-	err := providerserver.Serve(context.Background(), minikube.NewFrameworkProvider(version), opts)
+	err := providerserver.Serve(context.Background(), minikube.NewProvider(version), opts)
 
 	if err != nil {
 		log.Fatal(err.Error())

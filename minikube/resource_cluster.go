@@ -2,214 +2,651 @@ package minikube
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"sort"
-	"strconv"
+	"net"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
 	pkgutil "k8s.io/minikube/pkg/util"
 )
 
 var (
+	_ resource.Resource                = &ClusterResource{}
+	_ resource.ResourceWithImportState = &ClusterResource{}
+	
 	defaultIso = lib.GetMinikubeIso()
 )
 
-func ResourceCluster() *schema.Resource {
-	return &schema.Resource{
-		Description:   "Used to create a minikube cluster on the current host",
-		CreateContext: resourceClusterCreate,
-		ReadContext:   resourceClusterRead,
-		DeleteContext: resourceClusterDelete,
-		UpdateContext: resourceClusterUpdate,
-		Schema:        GetClusterSchema(),
-		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+func NewClusterResource() resource.Resource {
+	return &ClusterResource{}
+}
+
+// ClusterResource defines the resource implementation.
+type ClusterResource struct {
+	clientFactory func() (lib.ClusterClient, error)
+}
+
+// ClusterResourceModel describes the resource data model.
+type ClusterResourceModel struct {
+	ID                        types.String `tfsdk:"id"`
+	ClusterName               types.String `tfsdk:"cluster_name"`
+	Driver                    types.String `tfsdk:"driver"`
+	ContainerRuntime          types.String `tfsdk:"container_runtime"`
+	Memory                    types.String `tfsdk:"memory"`
+	CPUs                      types.String `tfsdk:"cpus"`
+	DiskSize                  types.String `tfsdk:"disk_size"`
+	Nodes                     types.Int64  `tfsdk:"nodes"`
+	CacheImages               types.Bool   `tfsdk:"cache_images"`
+	DeleteOnFailure           types.Bool   `tfsdk:"delete_on_failure"`
+	Namespace                 types.String `tfsdk:"namespace"`
+	APIServerName             types.String `tfsdk:"apiserver_name"`
+	DNSDomain                 types.String `tfsdk:"dns_domain"`
+	FeatureGates              types.String `tfsdk:"feature_gates"`
+	CRISocket                 types.String `tfsdk:"cri_socket"`
+	NetworkPlugin             types.String `tfsdk:"network_plugin"`
+	ServiceClusterIPRange     types.String `tfsdk:"service_cluster_ip_range"`
+	CNI                       types.String `tfsdk:"cni"`
+	
+	// Sets/Lists
+	Addons                    types.Set    `tfsdk:"addons"`
+	APIServerIPs              types.Set    `tfsdk:"apiserver_ips"`
+	APIServerNames            types.Set    `tfsdk:"apiserver_names"`
+	IsoURL                    types.Set    `tfsdk:"iso_url"`
+	HyperkitVsockPorts        types.Set    `tfsdk:"hyperkit_vsock_ports"`
+	NFSShare                  types.Set    `tfsdk:"nfs_share"`
+	Ports                     types.Set    `tfsdk:"ports"`
+	ExtraConfig               types.Set    `tfsdk:"extra_config"`
+	
+	// Computed attributes
+	ClientKey                 types.String `tfsdk:"client_key"`
+	ClientCertificate         types.String `tfsdk:"client_certificate"`
+	ClusterCACertificate      types.String `tfsdk:"cluster_ca_certificate"`
+	Host                      types.String `tfsdk:"host"`
+}
+
+func (r *ClusterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_cluster"
+}
+
+func (r *ClusterResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Used to create a minikube cluster on the current host",
+
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "Cluster identifier",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"cluster_name": schema.StringAttribute{
+				MarkdownDescription: "The name of the minikube cluster",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("terraform-provider-minikube"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"driver": schema.StringAttribute{
+				MarkdownDescription: "Driver is one of: virtualbox, vmwarefusion, kvm2, vmware, none, docker, podman, ssh",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("docker"),
+			},
+			"container_runtime": schema.StringAttribute{
+				MarkdownDescription: "The container runtime to be used",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("docker"),
+			},
+			"memory": schema.StringAttribute{
+				MarkdownDescription: "Amount of RAM to allocate to the minikube VM (format: <number>[<unit>])",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("6000mb"),
+			},
+			"cpus": schema.StringAttribute{
+				MarkdownDescription: "Number of CPUs allocated to the minikube VM",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("2"),
+			},
+			"disk_size": schema.StringAttribute{
+				MarkdownDescription: "Disk size allocated to the minikube VM (format: <number>[<unit>])",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("20000mb"),
+			},
+			"nodes": schema.Int64Attribute{
+				MarkdownDescription: "The total number of nodes to spin up. Defaults to 1",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(1),
+			},
+			"cache_images": schema.BoolAttribute{
+				MarkdownDescription: "If true, cache docker images for the current bootstrapper and load them into the machine",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+			"delete_on_failure": schema.BoolAttribute{
+				MarkdownDescription: "If set, delete the current cluster if start fails and try again",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
+			"namespace": schema.StringAttribute{
+				MarkdownDescription: "The namespace to create",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("default"),
+			},
+			"apiserver_name": schema.StringAttribute{
+				MarkdownDescription: "The authoritative apiserver hostname for apiserver certificates and connectivity",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("minikubeCA"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"dns_domain": schema.StringAttribute{
+				MarkdownDescription: "The cluster dns domain name used in the kubernetes cluster",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("cluster.local"),
+			},
+			"feature_gates": schema.StringAttribute{
+				MarkdownDescription: "A set of key=value pairs that describe feature gates for alpha/experimental features",
+				Optional:            true,
+			},
+			"cri_socket": schema.StringAttribute{
+				MarkdownDescription: "The cri socket path to be used",
+				Optional:            true,
+			},
+			"network_plugin": schema.StringAttribute{
+				MarkdownDescription: "The name of the network plugin",
+				Optional:            true,
+			},
+			"service_cluster_ip_range": schema.StringAttribute{
+				MarkdownDescription: "The CIDR to be used for service cluster IPs",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("10.96.0.0/12"),
+			},
+			"cni": schema.StringAttribute{
+				MarkdownDescription: "CNI plug-in to use",
+				Optional:            true,
+			},
+			"addons": schema.SetAttribute{
+				MarkdownDescription: "Enable addons. see `minikube addons list` for a list of valid addon names",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.StringType,
+				Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
+			},
+			"apiserver_ips": schema.SetAttribute{
+				MarkdownDescription: "A set of apiserver IP Addresses which are used in the generated certificate for kubernetes",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.StringType,
+				Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
+				PlanModifiers: []planmodifier.Set{},
+			},
+			"apiserver_names": schema.SetAttribute{
+				MarkdownDescription: "A set of apiserver names which are used in the generated certificate for kubernetes",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.StringType,
+				Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
+				PlanModifiers: []planmodifier.Set{},
+			},
+			"iso_url": schema.SetAttribute{
+				MarkdownDescription: "Location of the minikube iso",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"hyperkit_vsock_ports": schema.SetAttribute{
+				MarkdownDescription: "List of guest VSock ports that should be exposed as sockets on the host",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"nfs_share": schema.SetAttribute{
+				MarkdownDescription: "Local folders to share with Guest via NFS mounts",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"ports": schema.SetAttribute{
+				MarkdownDescription: "List of ports that should be exposed",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"extra_config": schema.SetAttribute{
+				MarkdownDescription: "A set of key=value pairs that describe configuration that may be passed to different components",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			
+			// Computed attributes
+			"client_key": schema.StringAttribute{
+				MarkdownDescription: "client key for cluster",
+				Computed:            true,
+				Sensitive:           true,
+			},
+			"client_certificate": schema.StringAttribute{
+				MarkdownDescription: "client certificate used in cluster",
+				Computed:            true,
+				Sensitive:           true,
+			},
+			"cluster_ca_certificate": schema.StringAttribute{
+				MarkdownDescription: "certificate authority for cluster",
+				Computed:            true,
+				Sensitive:           true,
+			},
+			"host": schema.StringAttribute{
+				MarkdownDescription: "the host name for the cluster",
+				Computed:            true,
+			},
 		},
 	}
 }
 
-func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	client, err := initialiseMinikubeClient(d, m)
-	if err != nil {
-		return diag.FromErr(err)
+func (r *ClusterResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
 	}
+
+	clientFactory, ok := req.ProviderData.(func() (lib.ClusterClient, error))
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected func() (lib.ClusterClient, error), got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+		return
+	}
+
+	r.clientFactory = clientFactory
+}
+
+func (r *ClusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data ClusterResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create minikube client with the simplified type-safe access
+	client, err := r.createMinikubeClient(ctx, &data)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create minikube client, got error: %s", err))
+		return
+	}
+
+	// Start the cluster
 	kc, err := client.Start()
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.AddError("Cluster Creation Error", fmt.Sprintf("Unable to start cluster, got error: %s", err))
+		return
 	}
 
-	key, certificate, ca, address, err := getClusterOutputs(kc)
+	// Extract kubeconfig details
+	key, certificate, ca, host, err := extractKubeconfig(kc, data.ClusterName.ValueString())
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.AddError("Kubeconfig Error", fmt.Sprintf("Unable to extract kubeconfig, got error: %s", err))
+		return
 	}
 
-	d.SetId(d.Get("cluster_name").(string))
-	d.Set("client_key", key)
-	d.Set("client_certificate", certificate)
-	d.Set("cluster_ca_certificate", ca)
-	d.Set("host", address)
-	d.Set("cluster_name", kc.ClusterName)
+	// Set computed values
+	data.ID = types.StringValue(data.ClusterName.ValueString())
+	data.ClientKey = types.StringValue(key)
+	data.ClientCertificate = types.StringValue(certificate)
+	data.ClusterCACertificate = types.StringValue(ca)
+	data.Host = types.StringValue(host)
 
-	diags = resourceClusterRead(ctx, d, m)
-
-	return diags
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-	client, err := initialiseMinikubeClient(d, m)
-	if err != nil {
-		return diag.FromErr(err)
+func (r *ClusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data ClusterResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if d.HasChange("addons") {
-		config := client.GetConfig()
-		oldAddons, newAddons := d.GetChange("addons")
-		oldAddonStrings := state_utils.SetToSlice(oldAddons.(*schema.Set))
-		newAddonStrings := state_utils.SetToSlice(newAddons.(*schema.Set))
+	// Create client to check cluster status
+	client, err := r.createMinikubeClient(ctx, &data)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create minikube client, got error: %s", err))
+		return
+	}
 
-		client.SetConfig(lib.MinikubeClientConfig{
-			ClusterConfig:   config.ClusterConfig,
-			IsoUrls:         config.IsoUrls,
-			ClusterName:     config.ClusterName,
-			Addons:          oldAddonStrings,
-			DeleteOnFailure: config.DeleteOnFailure,
-			Nodes:           config.Nodes,
-		})
+	// Get current cluster configuration
+	config := client.GetConfig()
+	
+	// Try to get kubeconfig through the cluster config
+	clusterConfig := config.ClusterConfig
+	if clusterConfig == nil {
+		// If cluster doesn't exist, remove from state
+		resp.State.RemoveResource(ctx)
+		return
+	}
 
-		err = client.ApplyAddons(newAddonStrings)
-		if err != nil {
-			return diag.FromErr(err)
+	// For read operation, we just check if cluster exists and maintain state
+	// The actual kubeconfig details are computed during create/update
+
+	// Update computed values (maintain existing state for read)
+	// The kubeconfig details are already in state from create/update operations
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *ClusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data ClusterResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create minikube client
+	client, err := r.createMinikubeClient(ctx, &data)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create minikube client, got error: %s", err))
+		return
+	}
+
+	// Apply addons (simplified from the original complex parsing)
+	if !data.Addons.IsNull() {
+		var addons []string
+		resp.Diagnostics.Append(data.Addons.ElementsAs(ctx, &addons, false)...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
-		sort.Strings(newAddonStrings) //to ensure consistency with TF state
-
-		d.Set("addons", newAddonStrings)
+		err = client.ApplyAddons(addons)
+		if err != nil {
+			resp.Diagnostics.AddError("Addon Error", fmt.Sprintf("Unable to apply addons, got error: %s", err))
+			return
+		}
 	}
 
-	return diags
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+func (r *ClusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data ClusterResourceModel
 
-	client, err := initialiseMinikubeClient(d, m)
-	if err != nil {
-		return diag.FromErr(err)
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
+	// Create minikube client
+	client, err := r.createMinikubeClient(ctx, &data)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create minikube client, got error: %s", err))
+		return
+	}
+
+	// Delete the cluster
 	err = client.Delete()
 	if err != nil {
-		fmt.Printf("Failed to delete cluster - you might want to consider running `minikube delete -p %s`", d.Get("cluster_name").(string))
+		resp.Diagnostics.AddError("Deletion Error", fmt.Sprintf("Unable to delete cluster, got error: %s", err))
+		return
 	}
-
-	d.SetId("")
-
-	return diags
 }
 
-func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+func (r *ClusterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Import requires the path package
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_name"), req.ID)...)
+}
 
-	client, err := initialiseMinikubeClient(d, m)
+// createMinikubeClient creates a configured minikube client from the resource data
+// This replaces the complex type parsing in the original initialiseMinikubeClient function
+func (r *ClusterResource) createMinikubeClient(ctx context.Context, data *ClusterResourceModel) (lib.ClusterClient, error) {
+	clusterClient, err := r.clientFactory()
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	cc := client.GetClusterConfig()
-	tfc := client.GetConfig()
-	addons := client.GetAddons()
-	sort.Strings(addons) //to ensure consistency with TF state
-
-	stringPorts := cc.ExposedPorts
-	ports := make([]int, len(stringPorts))
-	for i, sp := range stringPorts {
-		p, _ := strconv.Atoi(sp)
-		ports[i] = p
+		return nil, err
 	}
 
-	setClusterState(d, cc, tfc, ports, addons)
+	// Convert string values with type-safe access (no more manual type assertions!)
+	driver := data.Driver.ValueString()
+	containerRuntime := data.ContainerRuntime.ValueString()
 
-	return diags
+	// Handle sets with type-safe extraction
+	var addons []string
+	if !data.Addons.IsNull() {
+		data.Addons.ElementsAs(ctx, &addons, false)
+	}
+
+	var isoURLs []string
+	if !data.IsoURL.IsNull() {
+		data.IsoURL.ElementsAs(ctx, &isoURLs, false)
+	} else {
+		isoURLs = []string{defaultIso}
+	}
+
+	var hyperKitSockPorts []string
+	if !data.HyperkitVsockPorts.IsNull() {
+		data.HyperkitVsockPorts.ElementsAs(ctx, &hyperKitSockPorts, false)
+	}
+
+	var nfsShare []string
+	if !data.NFSShare.IsNull() {
+		data.NFSShare.ElementsAs(ctx, &nfsShare, false)
+	}
+
+	var ports []string
+	if !data.Ports.IsNull() {
+		data.Ports.ElementsAs(ctx, &ports, false)
+	}
+
+	var apiServerNames []string
+	if !data.APIServerNames.IsNull() {
+		data.APIServerNames.ElementsAs(ctx, &apiServerNames, false)
+	}
+
+	// Type-safe numeric conversions
+	memoryMb, err := state_utils.GetMemory(data.Memory.ValueString())
+	if err != nil {
+		return nil, err
+	}
+
+	cpus, err := state_utils.GetCPUs(data.CPUs.ValueString())
+	if err != nil {
+		return nil, err
+	}
+
+	diskMb, err := pkgutil.CalculateSizeInMB(data.DiskSize.ValueString())
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle network plugin default
+	networkPlugin := data.NetworkPlugin.ValueString()
+	if networkPlugin == "" {
+		networkPlugin = "cni"
+	}
+
+	// Handle extra config with type-safe access
+	var extraConfigs config.ExtraOptionSlice
+	if !data.ExtraConfig.IsNull() {
+		var extraConfigSlice []string
+		data.ExtraConfig.ElementsAs(ctx, &extraConfigSlice, false)
+		
+		for _, e := range extraConfigSlice {
+			if err := extraConfigs.Set(e); err != nil {
+				return nil, fmt.Errorf("invalid extra option: %s: %v", e, err)
+			}
+		}
+	}
+
+	// Variables needed for configuration
+	nodes := int(data.Nodes.ValueInt64())
+	multiNode := false
+	if nodes > 1 {
+		multiNode = true
+	}
+
+	var apiServerIPsStr []string
+	if !data.APIServerIPs.IsNull() {
+		data.APIServerIPs.ElementsAs(ctx, &apiServerIPsStr, false)
+	}
+
+	// Convert string IPs to net.IP
+	var apiServerIPs []net.IP
+	for _, ipStr := range apiServerIPsStr {
+		if ip := net.ParseIP(ipStr); ip != nil {
+			apiServerIPs = append(apiServerIPs, ip)
+		}
+	}
+
+	addonConfig := make(map[string]bool)
+	for _, addon := range addons {
+		addonConfig[addon] = true
+	}
+
+	k8sVersion := clusterClient.GetK8sVersion()
+	kubernetesConfig := config.KubernetesConfig{
+		KubernetesVersion:      k8sVersion,
+		ClusterName:            data.ClusterName.ValueString(),
+		Namespace:              data.Namespace.ValueString(),
+		APIServerName:          data.APIServerName.ValueString(),
+		APIServerNames:         apiServerNames,
+		APIServerIPs:           apiServerIPs,
+		DNSDomain:              data.DNSDomain.ValueString(),
+		FeatureGates:           data.FeatureGates.ValueString(),
+		ContainerRuntime:       containerRuntime,
+		CRISocket:              data.CRISocket.ValueString(),
+		NetworkPlugin:          networkPlugin,
+		ServiceCIDR:            data.ServiceClusterIPRange.ValueString(),
+		ImageRepository:        "",
+		ExtraOptions:           extraConfigs,
+		ShouldLoadCachedImages: data.CacheImages.ValueBool(),
+		CNI:                    data.CNI.ValueString(),
+	}
+
+	n := config.Node{
+		Name:              "",
+		Port:              8443,
+		KubernetesVersion: k8sVersion,
+		ContainerRuntime:  containerRuntime,
+		ControlPlane:      true,
+		Worker:            true,
+	}
+
+	cc := &config.ClusterConfig{
+		Name:                    data.ClusterName.ValueString(),
+		KeepContext:             false,
+		EmbedCerts:              false,
+		MinikubeISO:             isoURLs[0], // Use first ISO URL
+		KicBaseImage:            "",
+		Network:                 "",
+		Memory:                  memoryMb,
+		CPUs:                    cpus,
+		DiskSize:                diskMb,
+		Driver:                  driver,
+		HyperkitVpnKitSock:      "",
+		HyperkitVSockPorts:      hyperKitSockPorts,
+		DockerEnv:               nil,
+		DockerOpt:               nil,
+		InsecureRegistry:        nil,
+		RegistryMirror:          nil,
+		HostOnlyCIDR:            "192.168.59.1/24",
+		HypervVirtualSwitch:     "",
+		KVMNetwork:              "default",
+		KVMQemuURI:              "qemu:///system",
+		KVMGPU:                  false,
+		KVMHidden:               false,
+		KVMNUMACount:            1,
+		DisableDriverMounts:     false,
+		NFSShare:                nfsShare,
+		NFSSharesRoot:           "/nfsshares",
+		UUID:                    "",
+		NoVTXCheck:              false,
+		DNSProxy:                false,
+		HostDNSResolver:         true,
+		HostOnlyNicType:         "virtio",
+		NatNicType:              "virtio",
+		StartHostTimeout:        6 * time.Minute,
+		ExposedPorts:            ports,
+		ListenAddress:           "",
+		ExtraDisks:              0,
+		CertExpiration:          time.Duration(0),
+		Mount:                   true,
+		MountString:             "",
+		Mount9PVersion:          "9p2000.L",
+		MountGID:                "docker",
+		MountIP:                 "",
+		MountMSize:              262144,
+		MountOptions:            []string{},
+		MountPort:               0,
+		MountType:               "9p",
+		MountUID:                "docker",
+		BinaryMirror:            "",
+		DisableOptimizations:    false,
+		DisableMetrics:          false,
+		Nodes:                   []config.Node{n},
+		Addons:                  addonConfig,
+		VerifyComponents:        map[string]bool{},
+		ScheduledStop:           nil,
+		KubernetesConfig:        kubernetesConfig,
+		MultiNodeRequested:      multiNode,
+	}
+
+	clusterClient.SetConfig(lib.MinikubeClientConfig{
+		ClusterConfig:   cc,
+		ClusterName:     data.ClusterName.ValueString(),
+		Addons:          addons,
+		IsoUrls:         isoURLs,
+		DeleteOnFailure: data.DeleteOnFailure.ValueBool(),
+		Nodes:           nodes,
+		HA:              multiNode,
+		NativeSsh:       false,
+	})
+
+	clusterClient.SetDependencies(lib.MinikubeClientDeps{
+		Node:       lib.NewMinikubeCluster(),
+		Downloader: lib.NewMinikubeDownloader(),
+	})
+
+	return clusterClient, nil
 }
 
-func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.MinikubeClientConfig, ports []int, addons []string) {
-
-	d.Set("addons", addons)
-	d.Set("apiserver_ips", state_utils.SliceOrNil(cc.KubernetesConfig.APIServerIPs))
-	d.Set("apiserver_name", cc.KubernetesConfig.APIServerName)
-	d.Set("apiserver_names", state_utils.SliceOrNil(cc.KubernetesConfig.APIServerNames))
-	d.Set("apiserver_port", cc.APIServerPort)
-	d.Set("base_image", cc.KicBaseImage)
-	d.Set("cert_expiration", cc.CertExpiration.Minutes())
-	d.Set("cni", cc.KubernetesConfig.CNI)
-	d.Set("container_runtime", cc.KubernetesConfig.ContainerRuntime)
-	d.Set("cpus", cc.CPUs)
-	d.Set("cri_socket", cc.KubernetesConfig.CRISocket)
-	d.Set("disable_driver_mounts", cc.DisableDriverMounts)
-	d.Set("disk_size", strconv.Itoa(cc.DiskSize)+"mb")
-	d.Set("dns_domain", cc.KubernetesConfig.DNSDomain)
-	d.Set("dns_proxy", cc.DNSProxy)
-	d.Set("driver", cc.Driver)
-	d.Set("embed_certs", cc.EmbedCerts)
-	d.Set("extra_disks", cc.ExtraDisks)
-
-	extra_config := []string{}
-	for _, e := range cc.KubernetesConfig.ExtraOptions {
-		extra_config = append(extra_config, fmt.Sprintf("%s.%s=%s", e.Component, e.Key, e.Value))
+// extractKubeconfig extracts kubeconfig details (simplified from original)
+func extractKubeconfig(kc *kubeconfig.Settings, clusterName string) (string, string, string, string, error) {
+	if kc == nil {
+		return "", "", "", "", fmt.Errorf("kubeconfig is nil")
 	}
 
-	d.Set("extra_config", extra_config)
-	d.Set("feature_gates", cc.KubernetesConfig.FeatureGates)
-	d.Set("host_dns_resolver", cc.HostDNSResolver)
-	d.Set("host_only_cidr", cc.HostOnlyCIDR)
-	d.Set("host_only_nic_type", cc.HostOnlyNicType)
-	d.Set("hyperkit_vpnkit_sock", cc.HyperkitVpnKitSock)
-	d.Set("hyperkit_vsock_ports", state_utils.SliceOrNil(cc.HyperkitVSockPorts))
-	d.Set("hyperv_external_adapter", cc.HypervExternalAdapter)
-	d.Set("hyperv_use_external_switch", cc.HypervUseExternalSwitch)
-	d.Set("hyperv_virtual_switch", cc.HypervVirtualSwitch)
-	d.Set("image_repository", cc.KubernetesConfig.ImageRepository)
-	d.Set("insecure_registry", cc.InsecureRegistry)
-	d.Set("iso_url", []string{cc.MinikubeISO})
-	d.Set("keep_context", cc.KeepContext)
-	d.Set("kvm_gpu", cc.KVMGPU)
-	d.Set("kvm_hidden", cc.KVMHidden)
-	d.Set("kvm_network", cc.KVMNetwork)
-	d.Set("kvm_numa_count", cc.KVMNUMACount)
-	d.Set("kvm_qemu_uri", cc.KVMQemuURI)
-	d.Set("listen_address", cc.ListenAddress)
-	d.Set("memory", strconv.Itoa(cc.Memory)+"mb")
-	d.Set("mount", cc.Mount)
-	d.Set("mount_string", cc.MountString)
-	d.Set("namespace", cc.KubernetesConfig.Namespace)
-	d.Set("nat_nic_type", cc.NatNicType)
-	d.Set("network", cc.Network)
-	d.Set("nfs_share", state_utils.SliceOrNil(cc.NFSShare))
-	d.Set("nfs_shares_root", cc.NFSSharesRoot)
-	d.Set("no_vtx_check", cc.NoVTXCheck)
-	d.Set("nodes", tfc.Nodes)
-	d.Set("ports", state_utils.SliceOrNil(ports))
-	d.Set("registry_mirror", state_utils.SliceOrNil(cc.RegistryMirror))
-	d.Set("service_cluster_ip_range", cc.KubernetesConfig.ServiceCIDR)
-	d.Set("ssh_ip_address", cc.SSHIPAddress)
-	d.Set("ssh_key", cc.SSHKey)
-	d.Set("ssh_port", cc.SSHPort)
-	d.Set("ssh_user", cc.SSHUser)
-	d.Set("uuid", cc.UUID)
-	d.Set("driver", cc.Driver)
-}
-
-// getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
-func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string, error) {
 	key, err := state_utils.ReadContents(kc.ClientKey)
 	if err != nil {
 		return "", "", "", "", err
@@ -225,239 +662,5 @@ func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string,
 		return "", "", "", "", err
 	}
 
-	if err != nil {
-		return "", "", "", "", err
-	}
-
 	return key, certificate, ca, kc.ClusterServerAddress, nil
-}
-
-func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.ClusterClient, error) {
-
-	clusterClientFactory := m.(func() (lib.ClusterClient, error))
-	clusterClient, err := clusterClientFactory()
-	if err != nil {
-		return nil, err
-	}
-
-	driver := d.Get("driver").(string)
-	containerRuntime := d.Get("container_runtime").(string)
-
-	addons, ok := d.GetOk("addons")
-	if !ok {
-		addons = &schema.Set{}
-	}
-
-	addonStrings := state_utils.SetToSlice(addons.(*schema.Set))
-
-	defaultIsos, ok := d.GetOk("iso_url")
-	if !ok {
-		defaultIsos = []string{defaultIso}
-	}
-
-	hyperKitSockPorts, ok := d.GetOk("hyperkit_vsock_ports")
-	if !ok {
-		hyperKitSockPorts = []string{}
-	}
-
-	nfsShare, ok := d.GetOk("nfs_share")
-	if !ok {
-		nfsShare = []string{}
-	}
-
-	ports, ok := d.GetOk("ports")
-	if !ok {
-		ports = []string{}
-	}
-
-	memoryStr := d.Get("memory").(string)
-	memoryMb, err := state_utils.GetMemory(memoryStr)
-	if err != nil {
-		return nil, err
-	}
-
-	cpuStr := d.Get("cpus").(string)
-	cpus, err := state_utils.GetCPUs(cpuStr)
-	if err != nil {
-		return nil, err
-	}
-
-	diskStr := d.Get("disk_size").(string)
-	diskMb, err := pkgutil.CalculateSizeInMB(diskStr)
-	if err != nil {
-		return nil, err
-	}
-
-	apiserverNames := []string{}
-	if d.Get("apiserver_names").(*schema.Set).Len() > 0 {
-		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
-	}
-
-	networkPlugin := d.Get("network_plugin").(string) // This is a deprecated parameter in Minikube, however,
-	// it is still used internally, so we need to set it to a default value if it is not set. We should expect
-	// this to be a blank string usually, which should default to cni
-	// Upstream : https://github.com/kubernetes/minikube/blob/37eeaddf7ad63a7f690129247650e8dd4ff3d56a/cmd/minikube/cmd/start_flags.go#L506-L514
-	if networkPlugin == "" {
-		networkPlugin = "cni"
-	}
-
-	ecSlice := []string{}
-	if d.Get("extra_config") != nil && d.Get("extra_config").(*schema.Set).Len() > 0 {
-		ecSlice = state_utils.ReadSliceState(d.Get("extra_config"))
-	}
-
-	var extraConfigs config.ExtraOptionSlice
-	for _, e := range ecSlice {
-		if err := extraConfigs.Set(e); err != nil {
-			return nil, fmt.Errorf("invalid extra option: %s: %v", e, err)
-		}
-	}
-
-	k8sVersion := clusterClient.GetK8sVersion()
-	kubernetesConfig := config.KubernetesConfig{
-		KubernetesVersion:      k8sVersion,
-		ClusterName:            d.Get("cluster_name").(string),
-		Namespace:              d.Get("namespace").(string),
-		APIServerName:          d.Get("apiserver_name").(string),
-		APIServerNames:         apiserverNames,
-		DNSDomain:              d.Get("dns_domain").(string),
-		FeatureGates:           d.Get("feature_gates").(string),
-		ContainerRuntime:       containerRuntime,
-		CRISocket:              d.Get("cri_socket").(string),
-		NetworkPlugin:          networkPlugin,
-		ServiceCIDR:            d.Get("service_cluster_ip_range").(string),
-		ImageRepository:        "",
-		ExtraOptions:           extraConfigs,
-		ShouldLoadCachedImages: d.Get("cache_images").(bool),
-		CNI:                    d.Get("cni").(string),
-	}
-
-	n := config.Node{
-		Name:              "",
-		Port:              8443,
-		KubernetesVersion: k8sVersion,
-		ContainerRuntime:  containerRuntime,
-		ControlPlane:      true,
-		Worker:            true,
-	}
-
-	addonConfig := make(map[string]bool)
-	for _, addon := range addonStrings {
-		addonConfig[addon] = true
-	}
-
-	nodes := d.Get("nodes").(int)
-	multiNode := false
-
-	if nodes > 1 {
-		multiNode = true
-	}
-
-	if nodes == 0 {
-		return nil, errors.New("at least one node is required")
-	}
-
-	ha := d.Get("ha").(bool)
-
-	if ha && nodes < 3 {
-		return nil, errors.New("at least 3 nodes is required for high availability")
-	}
-
-	vcs := state_utils.SetToSlice(d.Get("wait").(*schema.Set))
-	vc := make(map[string]bool)
-	for _, c := range vcs {
-		vc[c] = true
-	}
-
-	err = lib.ValidateWait(vc)
-	if err != nil {
-		return nil, err
-	}
-
-	vc = lib.ResolveSpecialWaitOptions(vc)
-
-	cc := config.ClusterConfig{
-		Addons:                  addonConfig,
-		APIServerPort:           d.Get("apiserver_port").(int),
-		Name:                    d.Get("cluster_name").(string),
-		KeepContext:             d.Get("keep_context").(bool),
-		EmbedCerts:              d.Get("embed_certs").(bool),
-		MinikubeISO:             state_utils.ReadSliceState(defaultIsos)[0],
-		KicBaseImage:            d.Get("base_image").(string),
-		Network:                 d.Get("network").(string),
-		Memory:                  memoryMb,
-		CPUs:                    cpus,
-		DiskSize:                diskMb,
-		Driver:                  driver,
-		ListenAddress:           d.Get("listen_address").(string),
-		HyperkitVpnKitSock:      d.Get("hyperkit_vpnkit_sock").(string),
-		HyperkitVSockPorts:      state_utils.ReadSliceState(hyperKitSockPorts),
-		NFSShare:                state_utils.ReadSliceState(nfsShare),
-		NFSSharesRoot:           d.Get("nfs_shares_root").(string),
-		DockerEnv:               config.DockerEnv,
-		DockerOpt:               config.DockerOpt,
-		HostOnlyCIDR:            d.Get("host_only_cidr").(string),
-		HypervVirtualSwitch:     d.Get("hyperv_virtual_switch").(string),
-		HypervUseExternalSwitch: d.Get("hyperv_use_external_switch").(bool),
-		HypervExternalAdapter:   d.Get("hyperv_external_adapter").(string),
-		KVMNetwork:              d.Get("kvm_network").(string),
-		KVMQemuURI:              d.Get("kvm_qemu_uri").(string),
-		KVMGPU:                  d.Get("kvm_gpu").(bool),
-		KVMHidden:               d.Get("kvm_hidden").(bool),
-		KVMNUMACount:            d.Get("kvm_numa_count").(int),
-		DisableDriverMounts:     d.Get("disable_driver_mounts").(bool),
-		UUID:                    d.Get("uuid").(string),
-		NoVTXCheck:              d.Get("no_vtx_check").(bool),
-		DNSProxy:                d.Get("dns_proxy").(bool),
-		HostDNSResolver:         d.Get("host_dns_resolver").(bool),
-		HostOnlyNicType:         d.Get("host_only_nic_type").(string),
-		NatNicType:              d.Get("host_only_nic_type").(string),
-		StartHostTimeout:        time.Duration(d.Get("wait_timeout").(int)) * time.Minute,
-		ExposedPorts:            state_utils.ReadSliceState(ports),
-		SSHIPAddress:            d.Get("ssh_ip_address").(string),
-		SSHUser:                 d.Get("ssh_user").(string),
-		SSHKey:                  d.Get("ssh_key").(string),
-		SSHPort:                 d.Get("ssh_port").(int),
-		ExtraDisks:              d.Get("extra_disks").(int),
-		CertExpiration:          time.Duration(d.Get("cert_expiration").(int)) * time.Minute,
-		Mount:                   d.Get("mount").(bool),
-		MountString:             d.Get("mount_string").(string),
-		Mount9PVersion:          "9p2000.L",
-		MountGID:                "docker",
-		MountIP:                 "",
-		MountMSize:              262144,
-		MountOptions:            []string{},
-		MountPort:               0,
-		MountType:               "9p",
-		MountUID:                "docker",
-		BinaryMirror:            "",
-		DisableOptimizations:    d.Get("hyperv_use_external_switch").(bool),
-		Nodes: []config.Node{
-			n,
-		},
-		KubernetesConfig:      kubernetesConfig,
-		MultiNodeRequested:    multiNode,
-		StaticIP:              d.Get("static_ip").(string),
-		GPUs:                  d.Get("gpus").(string),
-		SocketVMnetPath:       d.Get("socket_vmnet_path").(string),
-		SocketVMnetClientPath: d.Get("socket_vmnet_client_path").(string),
-		VerifyComponents:      vc,
-	}
-
-	clusterClient.SetConfig(lib.MinikubeClientConfig{
-		ClusterConfig: &cc, ClusterName: d.Get("cluster_name").(string),
-		Addons:          addonStrings,
-		IsoUrls:         state_utils.ReadSliceState(defaultIsos),
-		DeleteOnFailure: d.Get("delete_on_failure").(bool),
-		Nodes:           nodes,
-		HA:              ha,
-		NativeSsh:       d.Get("native_ssh").(bool),
-	})
-
-	clusterClient.SetDependencies(lib.MinikubeClientDeps{
-		Node:       lib.NewMinikubeCluster(),
-		Downloader: lib.NewMinikubeDownloader(),
-	})
-
-	return clusterClient, nil
 }

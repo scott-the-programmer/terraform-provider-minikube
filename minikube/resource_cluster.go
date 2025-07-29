@@ -293,6 +293,8 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
 	}
 
+	apiserverPort := d.Get("apiserver_port").(int)
+
 	networkPlugin := d.Get("network_plugin").(string) // This is a deprecated parameter in Minikube, however,
 	// it is still used internally, so we need to set it to a default value if it is not set. We should expect
 	// this to be a blank string usually, which should default to cni
@@ -334,7 +336,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	n := config.Node{
 		Name:              "",
-		Port:              8443,
+		Port:              apiserverPort,
 		KubernetesVersion: k8sVersion,
 		ContainerRuntime:  containerRuntime,
 		ControlPlane:      true,
@@ -378,7 +380,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	cc := config.ClusterConfig{
 		Addons:                  addonConfig,
-		APIServerPort:           d.Get("apiserver_port").(int),
+		APIServerPort:           apiserverPort,
 		Name:                    d.Get("cluster_name").(string),
 		KeepContext:             d.Get("keep_context").(bool),
 		EmbedCerts:              d.Get("embed_certs").(bool),

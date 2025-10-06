@@ -6,7 +6,7 @@ require (
 	github.com/docker/machine v0.16.2
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-cty v1.5.0
-	github.com/hashicorp/terraform-plugin-docs v0.22.0
+	github.com/hashicorp/terraform-plugin-docs v0.23.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.1
 	github.com/spf13/viper v1.21.0
@@ -62,7 +62,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.8.1 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.9.1 // indirect
 	github.com/briandowns/spinner v1.11.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect

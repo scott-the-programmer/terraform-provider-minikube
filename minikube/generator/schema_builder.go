@@ -32,7 +32,6 @@ func (m *MinikubeHostBinary) GetStartHelpText(ctx context.Context) (string, erro
 }
 
 var computedFields []string = []string{
-	"apiserver_ips",
 	"apiserver_names",
 	"hyperkit_vsock_ports",
 	"insecure_registry",

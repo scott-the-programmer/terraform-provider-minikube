@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"time"
@@ -293,6 +294,13 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		apiserverNames = state_utils.ReadSliceState(d.Get("apiserver_names"))
 	}
 
+	var apiServerIPs []net.IP
+	if v, ok := d.GetOk("apiserver_ips"); ok {
+		for _, ip := range v.(*schema.Set).List() {
+			apiServerIPs = append(apiServerIPs, net.ParseIP(ip.(string)))
+		}
+	}
+
 	apiserverPort := d.Get("apiserver_port").(int)
 
 	networkPlugin := d.Get("network_plugin").(string) // This is a deprecated parameter in Minikube, however,
@@ -322,6 +330,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		Namespace:              d.Get("namespace").(string),
 		APIServerName:          d.Get("apiserver_name").(string),
 		APIServerNames:         apiserverNames,
+		APIServerIPs:           apiServerIPs,
 		DNSDomain:              d.Get("dns_domain").(string),
 		FeatureGates:           d.Get("feature_gates").(string),
 		ContainerRuntime:       containerRuntime,

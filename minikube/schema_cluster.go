@@ -64,8 +64,6 @@ var (
 			Type:					schema.TypeSet,
 			Description:	"A set of apiserver IP Addresses which are used in the generated certificate for kubernetes.  This can be used if you want to make the apiserver available from outside the machine",
 			
-			Computed:			true,
-			
 			Optional:			true,
 			ForceNew:			true,
 			
@@ -137,7 +135,7 @@ var (
 			Optional:			true,
 			ForceNew:			true,
 			
-			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.46@sha256:fd2d445ddcc33ebc5c6b68a17e6219ea207ce63c005095ea1525296da2d1a279",
+			Default:	"gcr.io/k8s-minikube/kicbase:v0.0.47@sha256:6ed579c9292b4370177b7ef3c42cc4b4a6dcd0735a1814916cbc22c8bf38412b",
 		},
 	
 		"binary_mirror": {
@@ -375,7 +373,7 @@ var (
 	
 		"extra_disks": {
 			Type:					schema.TypeInt,
-			Description:	"Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, and qemu2 drivers)",
+			Description:	"Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, qemu2, and vfkit drivers)",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -600,7 +598,7 @@ var (
 	
 		"kubernetes_version": {
 			Type:					schema.TypeString,
-			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.32.0, 'latest' for v1.32.0). Defaults to 'stable'.",
+			Description:	"The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.33.1, 'latest' for v1.33.1). Defaults to 'stable'.",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -826,7 +824,7 @@ var (
 	
 		"network": {
 			Type:					schema.TypeString,
-			Description:	"network to run minikube with. Now it is used by docker/podman and KVM drivers. If left empty, minikube will create a new network.",
+			Description:	"network to run minikube with. Used by docker/podman, qemu, kvm, and vfkit drivers. If left empty, minikube will create a new network.",
 			
 			Optional:			true,
 			ForceNew:			true,
@@ -1107,7 +1105,7 @@ var (
 	
 		"wait": {
 			Type:					schema.TypeSet,
-			Description:	"comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to \"apiserver,system_pods\", available options: \"apiserver,system_pods,default_sa,apps_running,node_ready,kubelet\" . other acceptable values are 'all' or 'none', 'true' and 'false'",
+			Description:	"comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to \"apiserver,system_pods\", available options: \"apiserver,system_pods,default_sa,apps_running,node_ready,kubelet,extra\" . other acceptable values are 'all' or 'none', 'true' and 'false'",
 			
 			Optional:			true,
 			ForceNew:			true,

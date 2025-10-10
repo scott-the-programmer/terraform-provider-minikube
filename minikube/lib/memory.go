@@ -4,13 +4,12 @@ import (
 	"k8s.io/minikube/pkg/minikube/machine"
 )
 
-
 var NoLimit = "no-limit"
 var Max = "max"
 
 // MemoryInfo holds system and container memory information
 type MemoryInfo struct {
-	SystemMemory    int
+	SystemMemory int
 }
 
 // GetMemoryLimits returns the amount of memory allocated to the system and container
@@ -24,9 +23,8 @@ func GetMemoryLimit() (*MemoryInfo, error) {
 
 	// Subtract 1gb for overhead
 	memInfo := &MemoryInfo{
-		SystemMemory:    int(info.Memory) - 1024,
+		SystemMemory: int(info.Memory) - 1024,
 	}
 
 	return memInfo, nil
 }
-

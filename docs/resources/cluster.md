@@ -14,7 +14,7 @@ Used to create a minikube cluster on the current host
 
 ```terraform
 provider "minikube" {
-  kubernetes_version = "v1.30.0"
+  kubernetes_version = "v1.30.2"
 }
 
 resource "minikube_cluster" "docker" {
@@ -115,13 +115,13 @@ resource "kubernetes_deployment" "deployment" {
 - `cluster_name` (String) The name of the minikube cluster
 - `cni` (String) CNI plug-in to use. Valid options: auto, bridge, calico, cilium, flannel, kindnet, or path to a CNI manifest (default: auto)
 - `container_runtime` (String) The container runtime to be used. Valid options: docker, cri-o, containerd (default: docker)
-- `cpus` (Number) Amount of CPUs to allocate to Kubernetes
+- `cpus` (String) Number of CPUs allocated to Kubernetes. Use "max" to use the maximum number of CPUs. Use "no-limit" to not specify a limit (Docker/Podman only)
 - `cri_socket` (String) The cri socket path to be used.
 - `delete_on_failure` (Boolean) If set, delete the current cluster if start fails and try again. Defaults to false.
 - `disable_driver_mounts` (Boolean) Disables the filesystem mounts provided by the hypervisors
 - `disable_metrics` (Boolean) If set, disables metrics reporting (CPU and memory usage), this can improve CPU usage. Defaults to false.
 - `disable_optimizations` (Boolean) If set, disables optimizations that are set for local Kubernetes. Including decreasing CoreDNS replicas from 2 to 1. Defaults to false.
-- `disk_size` (String) Disk size allocated to the minikube VM (format: <number>[<unit>], where unit = b, k, m or g).
+- `disk_size` (String) Disk size allocated to the minikube VM (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)
 - `dns_domain` (String) The cluster dns domain name used in the Kubernetes cluster
 - `dns_proxy` (Boolean) Enable proxy for NAT DNS requests (virtualbox driver only)
 - `docker_env` (Set of String) Environment variables to pass to the Docker daemon. (format: key=value)
@@ -132,11 +132,11 @@ resource "kubernetes_deployment" "deployment" {
 - `embed_certs` (Boolean) if true, will embed the certs in kubeconfig.
 - `enable_default_cni` (Boolean) DEPRECATED: Replaced by --cni=bridge
 - `extra_config` (Set of String) A set of key=value pairs that describe configuration that may be passed to different components. 		The key should be '.' separated, and the first part before the dot is the component to apply the configuration to. 		Valid components are: kubelet, kubeadm, apiserver, controller-manager, etcd, proxy, scheduler 		Valid kubeadm parameters: ignore-preflight-errors, dry-run, kubeconfig, kubeconfig-dir, node-name, cri-socket, experimental-upload-certs, certificate-key, rootfs, skip-phases, pod-network-cidr
-- `extra_disks` (Number) Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, and qemu2 drivers)
+- `extra_disks` (Number) Number of extra disks created and attached to the minikube VM (currently only implemented for hyperkit, kvm2, qemu2, and vfkit drivers)
 - `feature_gates` (String) A set of key=value pairs that describe feature gates for alpha/experimental features.
 - `force` (Boolean) Force minikube to perform possibly dangerous operations
 - `force_systemd` (Boolean) If set, force the container runtime to use systemd as cgroup manager. Defaults to false.
-- `gpus` (String) Allow pods to use your NVIDIA GPUs. Options include: [all,nvidia] (Docker driver with Docker container-runtime only)
+- `gpus` (String) Allow pods to use your GPUs. Options include: [all,nvidia,amd] (Docker driver with Docker container-runtime only)
 - `ha` (Boolean) Create Highly Available Multi-Control Plane Cluster with a minimum of three control-plane nodes that will also be marked for work.
 - `host_dns_resolver` (Boolean) Enable host resolver for NAT DNS requests (virtualbox driver only)
 - `host_only_cidr` (String) The CIDR to be used for the minikube VM (virtualbox driver only)
@@ -153,14 +153,14 @@ resource "kubernetes_deployment" "deployment" {
 - `interactive` (Boolean) Allow user prompts for more information
 - `iso_url` (Set of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.30.0, 'latest' for v1.30.0). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.33.1, 'latest' for v1.33.1). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)
 - `kvm_numa_count` (Number) Simulate numa node count in minikube, supported numa node count range is 1-8 (kvm2 driver only)
 - `kvm_qemu_uri` (String) The KVM QEMU connection URI. (kvm2 driver only)
 - `listen_address` (String) IP Address to use to expose ports (docker and podman driver only)
-- `memory` (String) Amount of RAM to allocate to Kubernetes (format: <number>[<unit>(case-insensitive)], where unit = b, k, kb, m, mb, g or gb)
+- `memory` (String) Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use "max" to use the maximum amount of memory. Use "no-limit" to not specify a limit (Docker/Podman only))
 - `mount` (Boolean) This will start the mount daemon and automatically mount files into minikube.
 - `mount_9p_version` (String) Specify the 9p version that the mount should use
 - `mount_gid` (String) Default group id used for the mount
@@ -174,7 +174,7 @@ resource "kubernetes_deployment" "deployment" {
 - `namespace` (String) The named space to activate after start
 - `nat_nic_type` (String) NIC Type used for nat network. One of Am79C970A, Am79C973, 82540EM, 82543GC, 82545EM, or virtio (virtualbox driver only)
 - `native_ssh` (Boolean) Use native Golang SSH client (default true). Set to 'false' to use the command line 'ssh' command when accessing the docker machine. Useful for the machine drivers when they will not start with 'Waiting for SSH'.
-- `network` (String) network to run minikube with. Now it is used by docker/podman and KVM drivers. If left empty, minikube will create a new network.
+- `network` (String) network to run minikube with. Used by docker/podman, qemu, kvm, and vfkit drivers. If left empty, minikube will create a new network.
 - `network_plugin` (String) DEPRECATED: Replaced by --cni
 - `nfs_share` (Set of String) Local folders to share with Guest via NFS mounts (hyperkit driver only)
 - `nfs_shares_root` (String) Where to root the NFS Shares, defaults to /nfsshares (hyperkit driver only)
@@ -199,7 +199,7 @@ resource "kubernetes_deployment" "deployment" {
 - `uuid` (String) Provide VM UUID to restore MAC address (hyperkit driver only)
 - `vm` (Boolean) Filter to use only VM Drivers
 - `vm_driver` (String) DEPRECATED, use `driver` instead.
-- `wait` (Set of String) comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to "apiserver,system_pods", available options: "apiserver,system_pods,default_sa,apps_running,node_ready,kubelet" . other acceptable values are 'all' or 'none', 'true' and 'false'
+- `wait` (Set of String) comma separated list of Kubernetes components to verify and wait for after starting a cluster. defaults to "apiserver,system_pods", available options: "apiserver,system_pods,default_sa,apps_running,node_ready,kubelet,extra" . other acceptable values are 'all' or 'none', 'true' and 'false'
 - `wait_timeout` (Number) max time to wait per Kubernetes or host to be healthy. (Configured in minutes)
 
 ### Read-Only

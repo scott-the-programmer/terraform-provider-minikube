@@ -27,3 +27,6 @@ test_output
 schema-generator
 testBinary
 .aider*
+
+# Ignore IntelliJ based IDE detritus
+.idea/**

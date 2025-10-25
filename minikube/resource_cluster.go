@@ -189,7 +189,6 @@ func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.M
 	d.Set("kvm_qemu_uri", cc.KVMQemuURI)
 	d.Set("listen_address", cc.ListenAddress)
 	d.Set("memory", strconv.Itoa(cc.Memory)+"mb")
-	d.Set("mount", cc.Mount)
 	d.Set("mount_string", cc.MountString)
 	d.Set("namespace", cc.KubernetesConfig.Namespace)
 	d.Set("nat_nic_type", cc.NatNicType)
@@ -207,6 +206,8 @@ func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.M
 	d.Set("ssh_user", cc.SSHUser)
 	d.Set("uuid", cc.UUID)
 	d.Set("driver", cc.Driver)
+	d.Set("disable_coredns_log", cc.DisableCoreDNSLog)
+	d.Set("disable_metrics", cc.DisableMetrics)
 }
 
 // getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
@@ -222,10 +223,6 @@ func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string,
 	}
 
 	ca, err := state_utils.ReadContents(kc.CertificateAuthority)
-	if err != nil {
-		return "", "", "", "", err
-	}
-
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -436,7 +433,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		SSHPort:                 d.Get("ssh_port").(int),
 		ExtraDisks:              d.Get("extra_disks").(int),
 		CertExpiration:          time.Duration(d.Get("cert_expiration").(int)) * time.Minute,
-		Mount:                   d.Get("mount").(bool),
 		MountString:             d.Get("mount_string").(string),
 		Mount9PVersion:          "9p2000.L",
 		MountGID:                "docker",
@@ -458,6 +454,8 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		SocketVMnetPath:       d.Get("socket_vmnet_path").(string),
 		SocketVMnetClientPath: d.Get("socket_vmnet_client_path").(string),
 		VerifyComponents:      vc,
+		DisableCoreDNSLog:     d.Get("disable_coredns_log").(bool),
+		DisableMetrics:        d.Get("disable_metrics").(bool),
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{

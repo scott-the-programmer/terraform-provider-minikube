@@ -134,6 +134,10 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
         return prefix + "/opt/socket_vmnet/bin/socket_vmnet_client", nil
     }`,
 	},
+	"addons": {
+		Type:        Array,
+		Description: "Enable addons. see `minikube addons list` for a list of valid addon names.",
+	},
 }
 
 func run(ctx context.Context, args ...string) (string, error) {

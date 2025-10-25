@@ -528,7 +528,6 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 		SSHPort:                 clusterSchema["ssh_port"].Default.(int),
 		ExtraDisks:              clusterSchema["extra_disks"].Default.(int),
 		CertExpiration:          time.Duration(clusterSchema["cert_expiration"].Default.(int)) * time.Minute,
-		Mount:                   clusterSchema["hyperv_use_external_switch"].Default.(bool),
 		MountString:             mountString.(string),
 		Mount9PVersion:          "9p2000.L",
 		MountGID:                "docker",
@@ -545,6 +544,8 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 		},
 		KubernetesConfig:   kubernetesConfig,
 		MultiNodeRequested: false,
+		DisableCoreDNSLog:  clusterSchema["disable_coredns_log"].Default.(bool),
+		DisableMetrics:     clusterSchema["disable_metrics"].Default.(bool),
 	}
 
 	mockClusterClient.EXPECT().

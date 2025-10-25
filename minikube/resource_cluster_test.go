@@ -459,7 +459,6 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 		FeatureGates:           clusterSchema["feature_gates"].Default.(string),
 		ContainerRuntime:       clusterSchema["container_runtime"].Default.(string),
 		CRISocket:              clusterSchema["cri_socket"].Default.(string),
-		NetworkPlugin:          clusterSchema["network_plugin"].Default.(string),
 		ServiceCIDR:            clusterSchema["service_cluster_ip_range"].Default.(string),
 		ImageRepository:        "",
 		ShouldLoadCachedImages: clusterSchema["cache_images"].Default.(bool),

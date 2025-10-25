@@ -134,6 +134,10 @@ var schemaOverrides map[string]SchemaOverride = map[string]SchemaOverride{
         return prefix + "/opt/socket_vmnet/bin/socket_vmnet_client", nil
     }`,
 	},
+	"addons": {
+		Type:        Array,
+		Description: "Enable addons. see `minikube addons list` for a list of valid addon names.",
+	},
 }
 
 func run(ctx context.Context, args ...string) (string, error) {
@@ -382,18 +386,18 @@ var (
 		if contains(computedFields, entry.Parameter) {
 			extraParams = `
 			Computed:			true,
-			`
+`
 		}
 
 		if !contains(updateFields, entry.Parameter) {
 			extraParams += `
 			Optional:			true,
 			ForceNew:			true,
-			`
+`
 		} else {
 			extraParams += `
 			Optional:			true,
-			`
+`
 		}
 
 		if entry.Type == Array {
@@ -401,7 +405,7 @@ var (
 			Elem: &schema.Schema{
 				Type:	%s,
 			},
-			`, "schema.Type"+entry.ArrayType)
+`, "schema.Type"+entry.ArrayType)
 		} else if entry.DefaultFunc != "" {
 			extraParams += fmt.Sprintf(`
 			DefaultFunc:	%s,`, entry.DefaultFunc)
@@ -424,9 +428,9 @@ var (
 		"%s": {
 			Type:					%s,
 			Description:	"%s",
-			%s
+%s
 		},
-	`, entry.Parameter, "schema.Type"+entry.Type, entry.Description, extraParams)
+`, entry.Parameter, "schema.Type"+entry.Type, entry.Description, extraParams)
 	}
 
 	footer := `

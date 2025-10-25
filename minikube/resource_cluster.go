@@ -189,7 +189,6 @@ func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.M
 	d.Set("kvm_qemu_uri", cc.KVMQemuURI)
 	d.Set("listen_address", cc.ListenAddress)
 	d.Set("memory", strconv.Itoa(cc.Memory)+"mb")
-	d.Set("mount", cc.Mount)
 	d.Set("mount_string", cc.MountString)
 	d.Set("namespace", cc.KubernetesConfig.Namespace)
 	d.Set("nat_nic_type", cc.NatNicType)
@@ -207,6 +206,8 @@ func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.M
 	d.Set("ssh_user", cc.SSHUser)
 	d.Set("uuid", cc.UUID)
 	d.Set("driver", cc.Driver)
+	d.Set("disable_coredns_log", cc.DisableCoreDNSLog)
+	d.Set("disable_metrics", cc.DisableMetrics)
 }
 
 // getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
@@ -222,10 +223,6 @@ func getClusterOutputs(kc *kubeconfig.Settings) (string, string, string, string,
 	}
 
 	ca, err := state_utils.ReadContents(kc.CertificateAuthority)
-	if err != nil {
-		return "", "", "", "", err
-	}
-
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -303,14 +300,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	apiserverPort := d.Get("apiserver_port").(int)
 
-	networkPlugin := d.Get("network_plugin").(string) // This is a deprecated parameter in Minikube, however,
-	// it is still used internally, so we need to set it to a default value if it is not set. We should expect
-	// this to be a blank string usually, which should default to cni
-	// Upstream : https://github.com/kubernetes/minikube/blob/37eeaddf7ad63a7f690129247650e8dd4ff3d56a/cmd/minikube/cmd/start_flags.go#L506-L514
-	if networkPlugin == "" {
-		networkPlugin = "cni"
-	}
-
 	ecSlice := []string{}
 	if d.Get("extra_config") != nil && d.Get("extra_config").(*schema.Set).Len() > 0 {
 		ecSlice = state_utils.ReadSliceState(d.Get("extra_config"))
@@ -339,7 +328,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		FeatureGates:           d.Get("feature_gates").(string),
 		ContainerRuntime:       containerRuntime,
 		CRISocket:              d.Get("cri_socket").(string),
-		NetworkPlugin:          networkPlugin,
 		ServiceCIDR:            d.Get("service_cluster_ip_range").(string),
 		ImageRepository:        "",
 		ExtraOptions:           extraConfigs,
@@ -436,7 +424,6 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		SSHPort:                 d.Get("ssh_port").(int),
 		ExtraDisks:              d.Get("extra_disks").(int),
 		CertExpiration:          time.Duration(d.Get("cert_expiration").(int)) * time.Minute,
-		Mount:                   d.Get("mount").(bool),
 		MountString:             d.Get("mount_string").(string),
 		Mount9PVersion:          "9p2000.L",
 		MountGID:                "docker",
@@ -458,6 +445,8 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		SocketVMnetPath:       d.Get("socket_vmnet_path").(string),
 		SocketVMnetClientPath: d.Get("socket_vmnet_client_path").(string),
 		VerifyComponents:      vc,
+		DisableCoreDNSLog:     d.Get("disable_coredns_log").(bool),
+		DisableMetrics:        d.Get("disable_metrics").(bool),
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{

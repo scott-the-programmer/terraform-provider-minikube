@@ -90,7 +90,6 @@ func main() {
 		ExtraDisks:              schema["extra_disks"].Default.(int),
 		APIServerPort:           schema["apiserver_port"].Default.(int),
 		CertExpiration:          time.Duration(600 * 600 * time.Second),
-		Mount:                   schema["hyperv_use_external_switch"].Default.(bool),
 		MountString:             mountString.(string),
 		Mount9PVersion:          "9p2000.L",
 		MountGID:                "docker",

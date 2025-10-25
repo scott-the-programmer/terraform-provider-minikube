@@ -51,7 +51,7 @@ var (
 
 		"addons": {
 			Type:        schema.TypeSet,
-			Description: "Enable one or more addons, in a comma-separated format. See `minikube addons list` for a list of valid addon names.",
+			Description: "Enable addons. see `minikube addons list` for a list of valid addon names.",
 
 			Optional: true,
 
@@ -133,7 +133,7 @@ var (
 			Optional: true,
 			ForceNew: true,
 
-			Default: "gcr.io/k8s-minikube/kicbase-builds:v0.0.48-1759745255-21703@sha256:cb5cd2ea26aaf2d64a5ec385670af2f770e759461e4b662fd7a8fae305b74c92",
+			Default: "gcr.io/k8s-minikube/kicbase:v0.0.48@sha256:7171c97a51623558720f8e5878e4f4637da093e2f2ed589997bedc6c1549b2b1",
 		},
 
 		"binary_mirror": {
@@ -532,7 +532,7 @@ var (
 
 		"insecure_registry": {
 			Type:        schema.TypeSet,
-			Description: "Insecure Docker registries to pass to the Docker daemon",
+			Description: "Insecure Docker registries to pass to the Docker daemon.  The default service CIDR range will automatically be added.",
 
 			Computed: true,
 
@@ -590,7 +590,7 @@ var (
 
 		"kubernetes_version": {
 			Type:        schema.TypeString,
-			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.34.1, 'latest' for v1.34.1). Defaults to 'stable'.",
+			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.34.0, 'latest' for v1.34.0). Defaults to 'stable'.",
 
 			Optional: true,
 			ForceNew: true,

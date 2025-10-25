@@ -6,16 +6,16 @@ If you want to jump in and help out, here's the best way to get started
 
 ## Prerequisites
 
-* [docker](https://www.docker.com/get-started/)
-* [golang](https://go.dev/)
-* [terraform 1.* and onwards](https://www.terraform.io/)
-* make
-  * Windows: http://gnuwin32.sourceforge.net/packages/make.htm
-  * OSX: `brew install make`
-  * Debian/Ubuntu: `apt-get make`
-* [minikube](https://minikube.sigs.k8s.io/docs/start/) (for testing)
+- [docker](https://www.docker.com/get-started/)
+- [golang](https://go.dev/)
+- [terraform 1.\* and onwards](https://www.terraform.io/)
+- make
+  - Windows: http://gnuwin32.sourceforge.net/packages/make.htm
+  - OSX: `brew install make`
+  - Debian/Ubuntu: `apt-get make`
+- [minikube](https://minikube.sigs.k8s.io/docs/start/) (for testing)
 
-## Package dependencies 
+## Package dependencies
 
 ```console
 make init
@@ -30,7 +30,6 @@ make build
 ## Tests
 
 ### Unit Tests
-
 
 ```console
 make test
@@ -55,16 +54,21 @@ or
 
 ```console
 make set-local
-make build 
-terraform -chdir=examples/resources/minikube_cluster apply 
+make build
+terraform -chdir=examples/resources/minikube_cluster apply
 ```
+
+## Regenerating Schema
+
+[schema_cluster.go](./minikube/schema_cluster.go) is generated via the `make schema` command which will use the output of your currently installed minikube version i.e. `minikube --help` to generate the terraform schema.
+
+There are a few cases where the cli output doesn't map well to terraform. In these cases, we specify overrides in [schema_builder.go](./minikube/generator/schema_builder.go) to make sure the parameters make sense in the context of terraform
 
 ## Debugging via vscode
 
 ### Attaching to the terraform provider binary
 
 To debug your terraform provider, run the `Debug Terraform Provider` vscode task. This will then output an environment variable that you will need to set in a new shell like so
-
 
 ```console
 export TF_REATTACH_PROVIDERS='*output from vscode debug session'

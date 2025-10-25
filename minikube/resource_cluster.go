@@ -316,6 +316,10 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		ecSlice = state_utils.ReadSliceState(d.Get("extra_config"))
 	}
 
+  ir := []string{}
+  if v, ok := d.GetOk("insecure_registry"); ok {
+      ir = state_utils.ReadSliceState(v)
+  }
 	var extraConfigs config.ExtraOptionSlice
 	for _, e := range ecSlice {
 		if err := extraConfigs.Set(e); err != nil {
@@ -404,6 +408,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		HyperkitVpnKitSock:      d.Get("hyperkit_vpnkit_sock").(string),
 		HyperkitVSockPorts:      state_utils.ReadSliceState(hyperKitSockPorts),
 		NFSShare:                state_utils.ReadSliceState(nfsShare),
+		InsecureRegistry:        ir,
 		NFSSharesRoot:           d.Get("nfs_shares_root").(string),
 		DockerEnv:               config.DockerEnv,
 		DockerOpt:               config.DockerOpt,

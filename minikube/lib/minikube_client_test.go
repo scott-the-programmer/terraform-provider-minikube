@@ -733,7 +733,7 @@ func TestMinikubeClient_ContainerMounts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &MinikubeClient{
 				clusterConfig: &config.ClusterConfig{
-					Driver:      tt.fields.driver,
+					Driver: tt.fields.driver,
 					// Note: Mount field removed in minikube 1.37.0 - mount is deprecated
 					MountString: tt.fields.mountString,
 					Nodes: []config.Node{

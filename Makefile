@@ -11,6 +11,10 @@ schema:
 	go generate ./minikube/schema_cluster.go
 	go fmt ./minikube/schema_cluster.go
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 .PHONY: clean
 clean:
 	rm bin/* || true

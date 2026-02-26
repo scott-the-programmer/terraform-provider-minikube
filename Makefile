@@ -11,6 +11,14 @@ schema:
 	go generate ./minikube/schema_cluster.go
 	go fmt ./minikube/schema_cluster.go
 
+# Containerized schema generation with version control
+# Usage: make schema-container
+#        make schema-container MINIKUBE_VERSION=v1.36.0
+MINIKUBE_VERSION ?= v1.37.0
+.PHONY: schema-container
+schema-container:
+	./scripts/schema-container.sh $(MINIKUBE_VERSION)
+
 .PHONY: fmt
 fmt:
 	go fmt ./...

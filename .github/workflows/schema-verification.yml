@@ -1,0 +1,67 @@
+name: Schema Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      minikube_version:
+        description: 'Minikube version to test schema generation'
+        required: false
+        default: 'v1.37.0'
+        type: string
+
+jobs:
+  verify-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Generate schema with minikube ${{ inputs.minikube_version }}
+        run: |
+          chmod +x ./scripts/schema-container.sh
+          ./scripts/schema-container.sh ${{ inputs.minikube_version }}
+
+      - name: Check for schema changes
+        id: schema_check
+        run: |
+          if git diff --quiet minikube/schema_cluster.go; then
+            echo "status=clean" >> $GITHUB_OUTPUT
+            echo "✅ Schema is up-to-date (no changes)"
+          else
+            echo "status=changed" >> $GITHUB_OUTPUT
+            echo "⚠️  Schema has changed"
+            echo "differences<<EOF" >> $GITHUB_OUTPUT
+            git diff minikube/schema_cluster.go >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display schema changes
+        if: steps.schema_check.outputs.status == 'changed'
+        run: |
+          echo "Schema differences detected:"
+          echo "---"
+          git diff minikube/schema_cluster.go
+
+      - name: Fail if schema changed unexpectedly
+        if: steps.schema_check.outputs.status == 'changed'
+        run: |
+          echo "❌ Schema verification failed!"
+          echo "The generated schema differs from the committed version."
+          echo ""
+          echo "To update the schema, run locally:"
+          echo "  make schema-container MINIKUBE_VERSION=${{ inputs.minikube_version }}"
+          echo ""
+          echo "Then commit the changes:"
+          echo "  git add minikube/schema_cluster.go"
+          echo "  git commit -m 'Update schema for minikube ${{ inputs.minikube_version }}'"
+          exit 1
+
+      - name: Success message
+        if: steps.schema_check.outputs.status == 'clean'
+        run: |
+          echo "✅ Schema verification passed for minikube ${{ inputs.minikube_version }}"
+          echo "The committed schema matches the generated schema."

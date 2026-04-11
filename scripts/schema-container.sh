@@ -10,7 +10,7 @@
 set -e
 
 # Default minikube version if not specified
-MINIKUBE_VERSION="${1:-v1.37.0}"
+MINIKUBE_VERSION="${1:-v1.38.0}"
 
 # Get the project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

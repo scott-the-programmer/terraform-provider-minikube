@@ -131,7 +131,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	co := mustload.Running(kc.ClusterName)
+	co := mustload.Running(kc.ClusterName, nil)
 	kubeconfig.UpdateEndpoint(kc.ClusterName, co.CP.Hostname, co.CP.Port, kubeconfig.PathFromEnv(), kubeconfig.NewExtension())
 	kubeconfig.SetCurrentContext(kc.ClusterName, kubeconfig.PathFromEnv())
 

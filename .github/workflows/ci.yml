@@ -20,7 +20,10 @@ jobs:
         cache: true
 
     - name: Install prerequisites
-      run: make init
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq libvirt-dev
+        make init
 
     - name: Build
       run: make build

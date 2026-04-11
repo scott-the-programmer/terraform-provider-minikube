@@ -14,7 +14,7 @@ schema:
 # Containerized schema generation with version control
 # Usage: make schema-container
 #        make schema-container MINIKUBE_VERSION=v1.36.0
-MINIKUBE_VERSION ?= v1.37.0
+MINIKUBE_VERSION ?= v1.38.0
 .PHONY: schema-container
 schema-container:
 	./scripts/schema-container.sh $(MINIKUBE_VERSION)
@@ -43,13 +43,13 @@ nuke: clean
 .PHONY: test
 test:
 	go clean -testcache
-	go test ./...  -coverprofile cover.out.tmp
+	go test -tags $(BUILD_TAGS) ./...  -coverprofile cover.out.tmp
 	cat cover.out.tmp | grep -v "mock_" > cover.out
 
 .PHONY: acceptance
 acceptance:
 	go clean -testcache
-	go test -c -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5" -o testBinary ./minikube 
+	go test -c -tags $(BUILD_TAGS) -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5" -o testBinary ./minikube 
 	TF_ACC=true ./testBinary -test.run "TestClusterCreation" -test.v -test.parallel 1 -test.timeout 20m
 
 .PHONY: test-stack-apply
@@ -65,9 +65,10 @@ test-stack-delete:
 test-stack: test-stack-apply test-stack-delete
 
 STORAGE_PROVISIONER_TAG ?= v5
+BUILD_TAGS ?= libvirt_dlopen
 .PHONY: build
 build:
-	go build -o bin/terraform-provider-minikube -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=$(STORAGE_PROVISIONER_TAG)"
+	go build -tags $(BUILD_TAGS) -o bin/terraform-provider-minikube -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=$(STORAGE_PROVISIONER_TAG)"
 
 ARCH_RAW := $(shell uname -m)
 ifeq ($(ARCH_RAW), x86_64)

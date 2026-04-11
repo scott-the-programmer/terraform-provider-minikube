@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strconv"
 
-	mlog "github.com/docker/machine/libmachine/log"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"k8s.io/klog/v2"
+	mlog "k8s.io/minikube/pkg/libmachine/log"
 )
 
 var (

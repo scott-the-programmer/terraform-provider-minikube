@@ -7,13 +7,14 @@ before:
     - go mod tidy
 builds:
 - env:
-    # goreleaser does not work with CGO, it could also complicate
-    # usage by users in CI/CD systems like Terraform Cloud where
-    # they are unable to install libraries.
+    # CGO is disabled by default for most targets. linux/amd64 requires
+    # CGO_ENABLED=1 because minikube's in-tree KVM driver imports
+    # libvirt.org/go/libvirt which uses cgo (even with libvirt_dlopen).
     - CGO_ENABLED=0
   mod_timestamp: '{{ .CommitTimestamp }}'
   flags:
     - -trimpath
+    - -tags=libvirt_dlopen
   ldflags:
     - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
     - '-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5'
@@ -29,6 +30,11 @@ builds:
   ignore:
     - goos: darwin
       goarch: '386'
+  overrides:
+    - goos: linux
+      goarch: amd64
+      env:
+        - CGO_ENABLED=1
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
 - format: zip

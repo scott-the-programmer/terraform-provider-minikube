@@ -34,6 +34,9 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       -
+        name: Install libvirt-dev
+        run: sudo apt-get update && sudo apt-get install -y -qq libvirt-dev
+      -
         name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v5
         id: import_gpg

@@ -133,7 +133,7 @@ var (
 			Optional: true,
 			ForceNew: true,
 
-			Default: "gcr.io/k8s-minikube/kicbase:v0.0.48@sha256:7171c97a51623558720f8e5878e4f4637da093e2f2ed589997bedc6c1549b2b1",
+			Default: "gcr.io/k8s-minikube/kicbase:v0.0.50@sha256:eb4fec00e8ad70adf8e6436f195cc429825ffb85f95afcdb5d8d9deb576f3e93",
 		},
 
 		"binary_mirror": {
@@ -590,7 +590,7 @@ var (
 
 		"kubernetes_version": {
 			Type:        schema.TypeString,
-			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.34.0, 'latest' for v1.34.0). Defaults to 'stable'.",
+			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.35.1, 'latest' for v1.35.1). Defaults to 'stable'.",
 
 			Optional: true,
 			ForceNew: true,
@@ -911,6 +911,16 @@ var (
 			Default: true,
 		},
 
+		"preload_source": {
+			Type:        schema.TypeString,
+			Description: "Which source to download the preload from (valid options: gcs, github, auto). Defaults to auto (try both).",
+
+			Optional: true,
+			ForceNew: true,
+
+			Default: "auto",
+		},
+
 		"qemu_firmware_path": {
 			Type:        schema.TypeString,
 			Description: "Path to the qemu firmware file. Defaults: For Linux, the default firmware location. For macOS, the brew installation location. For Windows, C:\\Program Files\\qemu\\share",
@@ -933,6 +943,16 @@ var (
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
+		},
+
+		"rosetta": {
+			Type:        schema.TypeBool,
+			Description: "Enable Rosetta to support apps built for Intel processor on a Mac with Apple silicon (vfkit driver only)",
+
+			Optional: true,
+			ForceNew: true,
+
+			Default: false,
 		},
 
 		"service_cluster_ip_range": {

@@ -7,9 +7,9 @@ package lib
 import (
 	reflect "reflect"
 
-	libmachine "github.com/docker/machine/libmachine"
-	host "github.com/docker/machine/libmachine/host"
 	gomock "github.com/golang/mock/gomock"
+	libmachine "k8s.io/minikube/pkg/libmachine"
+	host "k8s.io/minikube/pkg/libmachine/host"
 	command "k8s.io/minikube/pkg/minikube/command"
 	config "k8s.io/minikube/pkg/minikube/config"
 	kubeconfig "k8s.io/minikube/pkg/minikube/kubeconfig"

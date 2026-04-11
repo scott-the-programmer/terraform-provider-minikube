@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/host"
 	delete "k8s.io/minikube/cmd/minikube/cmd"
 	minikubeAddons "k8s.io/minikube/pkg/addons"
+	"k8s.io/minikube/pkg/libmachine"
+	"k8s.io/minikube/pkg/libmachine/host"
 	"k8s.io/minikube/pkg/minikube/command"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/exit"
@@ -44,7 +44,7 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 		return nil, false, nil, nil, err
 	}
 
-	r, s, l, h, err := node.Provision(cc, n, delOnFail)
+	r, s, l, h, err := node.Provision(cc, n, delOnFail, nil)
 	if err != nil {
 		return nil, false, nil, nil, err
 	}
@@ -53,7 +53,7 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 }
 
 func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
-	s, err := node.Start(starter)
+	s, err := node.Start(starter, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, k8sVersi
 		ContainerRuntime:  containerRuntime,
 	}
 
-	err := node.Add(cc, n, false)
+	err := node.Add(cc, n, false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, api
 		Port:              apiServerPort,
 		ContainerRuntime:  cr,
 	}
-	return node.Add(cc, n, true)
+	return node.Add(cc, n, true, nil)
 }
 
 func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {
@@ -100,7 +100,7 @@ func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config
 			Name:   name,
 			Config: cc,
 		},
-	})
+	}, nil)
 	if len(errs) > 0 {
 		return nil, errs[0]
 	}
@@ -121,11 +121,11 @@ func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config
 }
 
 func (m *MinikubeCluster) SetAddon(name string, addon string, value string) error {
-	return minikubeAddons.SetAndSave(name, addon, value)
+	return minikubeAddons.SetAndSave(name, addon, value, nil)
 }
 
 func (m *MinikubeCluster) Get(name string) *config.ClusterConfig {
-	_, config := mustload.Partial(name)
+	_, config := mustload.Partial(name, nil)
 	return config
 }
 

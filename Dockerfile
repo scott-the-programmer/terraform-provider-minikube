@@ -1,9 +1,9 @@
 # Build stage for containerized schema generation
 # This allows generating Terraform provider schema with a specific minikube version
-FROM golang:1.24-alpine
+FROM golang:1.25-alpine
 
 # Build arguments for version control
-ARG MINIKUBE_VERSION=v1.38.0
+ARG MINIKUBE_VERSION=v1.38.1
 
 # Install dependencies
 RUN apk add --no-cache \

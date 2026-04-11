@@ -13,7 +13,7 @@ func TestGetMinikubeIso(t *testing.T) {
 	}{
 		{
 			name: "Retrieves minikube iso",
-			want: fmt.Sprintf("https://github.com/kubernetes/minikube/releases/download/v1.38.0/minikube-v1.38.0-%s.iso", runtime.GOARCH),
+			want: fmt.Sprintf("https://github.com/kubernetes/minikube/releases/download/v1.38.1/minikube-v1.38.1-%s.iso", runtime.GOARCH),
 		},
 	}
 	for _, tt := range tests {

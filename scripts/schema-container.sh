@@ -4,13 +4,13 @@
 # Allows generating Terraform provider schema with a specific minikube version
 #
 # Usage: ./scripts/schema-container.sh [MINIKUBE_VERSION]
-#        ./scripts/schema-container.sh v1.38.0
-#        ./scripts/schema-container.sh          # defaults to v1.37.0
+#        ./scripts/schema-container.sh v1.38.1
+#        ./scripts/schema-container.sh          # defaults to v1.38.0
 
 set -e
 
 # Default minikube version if not specified
-MINIKUBE_VERSION="${1:-v1.38.0}"
+MINIKUBE_VERSION="${1:-v1.38.1}"
 
 # Get the project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

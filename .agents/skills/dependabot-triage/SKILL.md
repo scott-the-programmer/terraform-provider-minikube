@@ -22,18 +22,17 @@ Automate the dependabot PR grind. Never blind-merge — always gate on CI + semv
 This skill ships with its own sandbox so you don't pollute the host:
 
 ```bash
-./.Codex/skills/dependabot-triage/run.sh               # headless
-./.Codex/skills/dependabot-triage/run.sh --interactive # drop into a shell
-./.Codex/skills/dependabot-triage/run.sh --rebuild     # rebuild image
+./.agents/skills/dependabot-triage/run.sh               # headless
+./.agents/skills/dependabot-triage/run.sh --interactive # drop into a shell
+./.agents/skills/dependabot-triage/run.sh --rebuild     # rebuild image
 ```
 
 The runner mounts:
 - repo at the **same path** inside + outside the container (so sibling
   containers spawned by `make schema-container` resolve bind mounts correctly)
-- `$HOME/.Codex` → `/root/.Codex` (Codex session + global skills)
+- `$HOME/.claude` → `/root/.claude` (Claude session)
 - `/var/run/docker.sock` (sibling container spawning)
 - `$HOME/.gitconfig` (read-only)
-- `GITHUB_TOKEN` env (auto-extracted via `gh auth token` if unset)
 
 If running on the host directly (not in the container), just ensure `gh`,
 `git`, `make`, and `docker` are on PATH.

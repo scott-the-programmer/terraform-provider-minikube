@@ -153,7 +153,7 @@ func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.M
 	d.Set("cert_expiration", cc.CertExpiration.Minutes())
 	d.Set("cni", cc.KubernetesConfig.CNI)
 	d.Set("container_runtime", cc.KubernetesConfig.ContainerRuntime)
-	d.Set("cpus", cc.CPUs)
+	d.Set("cpus", strconv.Itoa(cc.CPUs))
 	d.Set("cri_socket", cc.KubernetesConfig.CRISocket)
 	d.Set("disable_driver_mounts", cc.DisableDriverMounts)
 	d.Set("disk_size", strconv.Itoa(cc.DiskSize)+"mb")

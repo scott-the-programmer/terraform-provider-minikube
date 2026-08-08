@@ -54,7 +54,19 @@ acceptance:
 
 .PHONY: test-stack-apply
 test-stack-apply: set-local
-	terraform -chdir=examples/resources/minikube_cluster init || true
+	@config=$$(mktemp); \
+	trap 'rm -f "$$config"' EXIT; \
+	printf '%s\n' \
+		'provider_installation {' \
+		'  filesystem_mirror {' \
+		"    path    = \"$$HOME/.terraform.d/plugins\"" \
+		'    include = ["registry.terraform.io/scott-the-programmer/minikube"]' \
+		'  }' \
+		'  direct {' \
+		'    exclude = ["registry.terraform.io/scott-the-programmer/minikube"]' \
+		'  }' \
+		'}' > "$$config"; \
+	TF_CLI_CONFIG_FILE="$$config" terraform -chdir=examples/resources/minikube_cluster init
 	terraform -chdir=examples/resources/minikube_cluster apply --auto-approve
 
 .PHONY: test-stack-delete

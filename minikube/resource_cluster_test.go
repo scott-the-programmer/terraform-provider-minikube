@@ -43,7 +43,7 @@ type mockClusterClientProperties struct {
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0, 20000, "4096mb", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreation", 1, 0, 20000, "4096mb", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterCreation"),
@@ -58,7 +58,7 @@ func TestClusterCreation(t *testing.T) {
 func TestClusterUpdate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterUpdate", 1, 0, 20000, "4096mb", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockUpdate(mockClusterClientProperties{t, "TestClusterUpdate", 1, 0, 20000, "4096mb", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterConfig("some_driver", "TestClusterUpdate"),
@@ -76,7 +76,7 @@ func TestClusterUpdate(t *testing.T) {
 func TestClusterHA(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5, 20000, "4096mb", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationHA", 3, 5, 20000, "4096mb", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterHAConfig("some_driver", "TestClusterCreationHA"),
@@ -88,7 +88,7 @@ func TestClusterHA(t *testing.T) {
 func TestClusterDisk(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationDisk", 1, 0, 20480, "4096mb", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationDisk", 1, 0, 20480, "4096mb", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterDiskConfig("some_driver", "TestClusterCreationDisk"),
@@ -100,7 +100,7 @@ func TestClusterDisk(t *testing.T) {
 func TestClusterWait(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0, 20000, "4096mb", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterCreationWait", 1, 0, 20000, "4096mb", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterWaitConfig("some_driver", "TestClusterCreationWait"),
@@ -332,7 +332,7 @@ func TestClusterCreation_HyperV(t *testing.T) {
 func TestClusterNoLimitMemory(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitMemory", 1, 0, 20000, "no-limit", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterNoLimitMemory", 1, 0, 20000, "no-limit", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterNoLimitMemoryConfig("some_driver", "TestClusterNoLimitMemory"),
@@ -344,7 +344,7 @@ func TestClusterNoLimitMemory(t *testing.T) {
 func TestClusterMaxMemory(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
-		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxMemory", 1, 0, 20000, "max", "1"}))},
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockSuccess(mockClusterClientProperties{t, "TestClusterMaxMemory", 1, 0, 20000, "max", "2"}))},
 		Steps: []resource.TestStep{
 			{
 				Config: testUnitClusterMaxMemoryConfig("some_driver", "TestClusterMaxMemory"),

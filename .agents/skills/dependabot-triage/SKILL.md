@@ -94,7 +94,7 @@ Only merge when **all** required checks are `SUCCESS`. Rules:
 These regenerate the provider schema. Workflow:
 
 1. Check out the PR branch locally: `gh pr checkout <number>`
-2. Extract target version from title (e.g. `v1.38.1`)
+2. Extract target version from title (e.g. `v1.38.0`)
 3. Run containerized schema gen: `make schema-container MINIKUBE_VERSION=v<version>`
 4. `git diff minikube/schema_cluster.go`
 5. **If no diff** → schema already current, safe to merge after CI.
@@ -188,7 +188,7 @@ Queued (--auto, monitoring deadline reached):
 
 Flagged (needs review):
   #233 docker/cli 28.4.0→29.2.0+incompatible  [major, +incompatible]
-  #228 k8s.io/minikube 1.37.0→1.38.1  [high-risk, schema diff — see §4]
+  #228 k8s.io/minikube 1.37.0→1.38.0  [high-risk, schema diff — see §4]
 
 Rebased (conflicts/stale sum):
   #232 terraform-plugin-sdk/v2 2.38.2→2.39.0  [commented rebase]

@@ -3,8 +3,8 @@ name: dependabot-triage
 description: >
   Triage and auto-merge Dependabot PRs for terraform-provider-minikube. Lists open
   dependabot PRs, checks CI status via gh, classifies semver bump (patch/minor/major),
-  auto-merges safe updates, and flags the rest with a reason. Special-cases
-  k8s.io/minikube bumps (requires schema regeneration). Use when user says
+  monitors CI and drains safe updates through merge, and flags the rest with a
+  reason. Special-cases k8s.io/minikube bumps (requires schema regeneration). Use when user says
   "triage dependabot", "merge dependabot PRs", "chunk through dependabot",
   "dependabot queue", or invokes /dependabot-triage.
 ---
@@ -74,11 +74,14 @@ Parse the title `Bump <pkg> from X.Y.Z to A.B.C`:
 For each candidate to merge:
 
 ```bash
-gh pr checks <number> --json name,state,conclusion
+gh pr checks <number> --json name,state
 ```
 
-Only proceed if **all** required checks are `SUCCESS`. Rules:
-- `PENDING` / `IN_PROGRESS` → skip this pass, report "waiting on CI"
+(`conclusion` is not available in every `gh` version; `state` contains `SUCCESS`,
+`FAILURE`, `PENDING`, and `IN_PROGRESS`.)
+
+Only merge when **all** required checks are `SUCCESS`. Rules:
+- `PENDING` / `IN_PROGRESS` → keep monitoring it in §5; do not end the run yet
 - `FAILURE` → **do not retry blindly**. Read the failure log:
   ```bash
   gh run view --log-failed --job=<job-id>
@@ -101,17 +104,55 @@ These regenerate the provider schema. Workflow:
    gh workflow run schema-verification.yml -f minikube_version=v<version>
    ```
 
-### 5. Auto-merge safe PRs
+### 5. Monitor and drain safe PRs through merge
 
-For each PR that passes all gates:
+Do not stop after enabling auto-merge. Stay attached, monitor the safe queue, and
+work it through until every safe PR is merged or reaches a state requiring human
+judgment.
 
-```bash
-gh pr merge <number> --squash --auto --delete-branch
-```
+Process safe PRs **one at a time**, oldest first. Related Go module bumps often
+touch the same `go.mod` / `go.sum`; serializing them avoids turning every remaining
+PR stale at once.
 
-Use `--auto` so if CI is still ticking, GitHub merges when it turns green. Use `--squash` to keep history linear (matches repo convention — check `git log --oneline -20` if unsure).
+For the PR in flight:
 
-**Never** use `--admin` to bypass required checks. **Never** use `--rebase` on a dependabot branch unless user asks (dependabot owns the branch and will re-push).
+1. Enable auto-merge:
+   ```bash
+   gh pr merge <number> --squash --auto --delete-branch
+   ```
+2. Poll every 30 seconds:
+   ```bash
+   gh pr view <number> \
+     --json state,mergedAt,mergeable,mergeStateStatus,statusCheckRollup,autoMergeRequest
+   ```
+3. Continue until one of these terminal states:
+   - `state == MERGED` → record it, re-enumerate the full queue, then start the
+     next safe PR.
+   - required check fails → triage via §6; record it as failed or rebased.
+   - schema drift or another special-case gate appears → flag for human.
+4. Handle non-terminal blockers instead of merely reporting them:
+   - `BEHIND` for more than one poll → comment `@dependabot rebase`, then keep
+     polling the refreshed checks.
+   - `DIRTY` / `CONFLICTING` → comment `@dependabot recreate`, then keep polling.
+   - `BLOCKED` with checks in progress → keep waiting.
+   - auto-merge was disabled by a branch refresh → enable it again after the new
+     commit and checks appear.
+5. Before commenting, inspect existing comments. Do not post the same Dependabot
+   command twice for the same head commit. If a command has already been attempted
+   and the PR remains blocked after Dependabot finishes, stop that PR and flag it
+   for human review.
+
+Use a 45-minute overall monitoring deadline unless the user gives another limit.
+At the deadline, leave `--auto` enabled on safe PRs and report them as queued with
+the exact current blocker. A deadline is the only normal reason to return while a
+safe PR is still waiting on CI.
+
+Use `--squash` to keep history linear (matches repo convention — check
+`git log --oneline -20` if unsure).
+
+**Never** use `--admin` to bypass required checks. **Never** locally rebase a
+dependabot branch (dependabot owns the branch and will re-push); request rebases by
+comment instead.
 
 ### 6. CI failure triage
 
@@ -142,8 +183,8 @@ Merged (auto):
   #239 go-getter 1.8.4→1.8.6  [patch, CI green]
   #237 aws-sdk-go-v2/s3 1.95.0→1.97.3  [minor, CI green]
 
-Queued (--auto, waiting on CI):
-  #238 otel/sdk 1.39.0→1.43.0  [minor]
+Queued (--auto, monitoring deadline reached):
+  #238 otel/sdk 1.39.0→1.43.0  [minor, CI in progress]
 
 Flagged (needs review):
   #233 docker/cli 28.4.0→29.2.0+incompatible  [major, +incompatible]
@@ -175,4 +216,6 @@ This skill triages and merges. It does **not**:
 - Bump the provider version (release workflow handles that)
 - Modify `.github/dependabot.yml` groupings without user request
 
-User says "stop" mid-run: finish the PR in flight, report state, halt.
+User says "stop" mid-run: finish the PR in flight, report state, halt. Otherwise,
+do not return merely because checks are pending or a safe branch is behind; follow
+the monitoring loop in §5.

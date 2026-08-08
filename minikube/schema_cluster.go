@@ -133,7 +133,7 @@ var (
 			Optional: true,
 			ForceNew: true,
 
-			Default: "gcr.io/k8s-minikube/kicbase:v0.0.50@sha256:eb4fec00e8ad70adf8e6436f195cc429825ffb85f95afcdb5d8d9deb576f3e93",
+			Default: "gcr.io/k8s-minikube/kicbase:v0.0.49@sha256:e6daddbb1dc09ccd195c5605f65e2d38406c36ef36c5a492ffe805d9d36f4945",
 		},
 
 		"binary_mirror": {
@@ -590,7 +590,7 @@ var (
 
 		"kubernetes_version": {
 			Type:        schema.TypeString,
-			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.35.1, 'latest' for v1.35.1). Defaults to 'stable'.",
+			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.35.0, 'latest' for v1.35.0). Defaults to 'stable'.",
 
 			Optional: true,
 			ForceNew: true,

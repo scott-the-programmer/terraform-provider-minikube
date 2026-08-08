@@ -153,7 +153,7 @@ resource "kubernetes_deployment" "deployment" {
 - `interactive` (Boolean) Allow user prompts for more information
 - `iso_url` (Set of String) Locations to fetch the minikube ISO from.
 - `keep_context` (Boolean) This will keep the existing kubectl context and will create a minikube context.
-- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.34.0, 'latest' for v1.34.0). Defaults to 'stable'.
+- `kubernetes_version` (String) The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.35.0, 'latest' for v1.35.0). Defaults to 'stable'.
 - `kvm_gpu` (Boolean) Enable experimental NVIDIA GPU support in minikube
 - `kvm_hidden` (Boolean) Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
 - `kvm_network` (String) The KVM default network name. (kvm2 driver only)
@@ -183,8 +183,10 @@ resource "kubernetes_deployment" "deployment" {
 - `output` (String) Format to print stdout in. Options include: [text,json]
 - `ports` (Set of String) List of ports that should be exposed (docker and podman driver only)
 - `preload` (Boolean) If set, download tarball of preloaded images if available to improve start time. Defaults to true.
+- `preload_source` (String) Which source to download the preload from (valid options: gcs, github, auto). Defaults to auto (try both).
 - `qemu_firmware_path` (String) Path to the qemu firmware file. Defaults: For Linux, the default firmware location. For macOS, the brew installation location. For Windows, C:\Program Files\qemu\share
 - `registry_mirror` (Set of String) Registry mirrors to pass to the Docker daemon
+- `rosetta` (Boolean) Enable Rosetta to support apps built for Intel processor on a Mac with Apple silicon (vfkit driver only)
 - `service_cluster_ip_range` (String) The CIDR to be used for service cluster IPs.
 - `socket_vmnet_client_path` (String) Path to the socket vmnet client binary (QEMU driver only)
 - `socket_vmnet_path` (String) Path to socket vmnet binary (QEMU driver only)

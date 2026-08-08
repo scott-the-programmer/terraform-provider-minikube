@@ -3,7 +3,7 @@
 FROM golang:1.25-alpine
 
 # Build arguments for version control
-ARG MINIKUBE_VERSION=v1.38.1
+ARG MINIKUBE_VERSION=v1.38.0
 
 # Install dependencies
 RUN apk add --no-cache \

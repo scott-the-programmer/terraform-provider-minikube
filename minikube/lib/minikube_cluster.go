@@ -17,6 +17,7 @@ import (
 	"k8s.io/minikube/pkg/minikube/mustload"
 	"k8s.io/minikube/pkg/minikube/node"
 	"k8s.io/minikube/pkg/minikube/reason"
+	"k8s.io/minikube/pkg/minikube/run"
 )
 
 type Cluster interface {
@@ -30,11 +31,18 @@ type Cluster interface {
 }
 
 type MinikubeCluster struct {
-	nodes int
+	nodes          int
+	commandOptions *run.CommandOptions
 }
 
 func NewMinikubeCluster() *MinikubeCluster {
-	return &MinikubeCluster{nodes: 0}
+	return &MinikubeCluster{
+		nodes: 0,
+		commandOptions: &run.CommandOptions{
+			NonInteractive: true,
+			DownloadOnly:   false,
+		},
+	}
 }
 
 func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, delOnFail bool) (command.Runner, bool, libmachine.API, *host.Host, error) {
@@ -44,7 +52,7 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 		return nil, false, nil, nil, err
 	}
 
-	r, s, l, h, err := node.Provision(cc, n, delOnFail, nil)
+	r, s, l, h, err := node.Provision(cc, n, delOnFail, m.commandOptions)
 	if err != nil {
 		return nil, false, nil, nil, err
 	}
@@ -53,7 +61,7 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 }
 
 func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
-	s, err := node.Start(starter, nil)
+	s, err := node.Start(starter, m.commandOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +78,7 @@ func (m *MinikubeCluster) AddControlPlaneNode(cc *config.ClusterConfig, k8sVersi
 		ContainerRuntime:  containerRuntime,
 	}
 
-	err := node.Add(cc, n, false, nil)
+	err := node.Add(cc, n, false, m.commandOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +99,7 @@ func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, api
 		Port:              apiServerPort,
 		ContainerRuntime:  cr,
 	}
-	return node.Add(cc, n, true, nil)
+	return node.Add(cc, n, true, m.commandOptions)
 }
 
 func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {

@@ -52,14 +52,19 @@ acceptance:
 	go test -c -tags $(BUILD_TAGS) -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5" -o testBinary ./minikube 
 	TF_ACC=true ./testBinary -test.run "TestClusterCreation" -test.v -test.parallel 1 -test.timeout 20m
 
+TEST_STACK_DIR := examples/resources/minikube_cluster
+LOCAL_CLI_CONFIG := $(CURDIR)/bin/terraform-local.tfrc
+
 .PHONY: test-stack-apply
 test-stack-apply: set-local
-	terraform -chdir=examples/resources/minikube_cluster init || true
-	terraform -chdir=examples/resources/minikube_cluster apply --auto-approve
+	# A rebuilt local provider has a new checksum, so regenerate the ignored lock file.
+	rm -f $(TEST_STACK_DIR)/.terraform.lock.hcl
+	TF_CLI_CONFIG_FILE="$(LOCAL_CLI_CONFIG)" terraform -chdir=$(TEST_STACK_DIR) init
+	TF_CLI_CONFIG_FILE="$(LOCAL_CLI_CONFIG)" terraform -chdir=$(TEST_STACK_DIR) apply --auto-approve
 
 .PHONY: test-stack-delete
-test-stack-delete:
-	terraform -chdir=examples/resources/minikube_cluster destroy --auto-approve
+test-stack-delete: local-cli-config
+	TF_CLI_CONFIG_FILE="$(LOCAL_CLI_CONFIG)" terraform -chdir=$(TEST_STACK_DIR) destroy --auto-approve
 
 .PHONY: test-stack
 test-stack: test-stack-apply test-stack-delete
@@ -82,17 +87,33 @@ endif
 OS_NAME := $(shell uname -s | tr A-Z a-z)
 PLUGIN_NAME := terraform-provider-minikube
 VERSION := 99.99.99
-DEST_DIR := $$HOME/.terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/$(VERSION)
+PLUGIN_MIRROR_DIR := $$HOME/.terraform.d/plugins
+DEST_DIR := $(PLUGIN_MIRROR_DIR)/registry.terraform.io/scott-the-programmer/minikube/$(VERSION)
 EXT :=
 
 ifeq ($(OS), Windows_NT)
 	OS_NAME := windows
-	DEST_DIR := $$APPDATA/terraform.d/plugins/registry.terraform.io/scott-the-programmer/minikube/$(VERSION)
+	PLUGIN_MIRROR_DIR := $$APPDATA/terraform.d/plugins
+	DEST_DIR := $(PLUGIN_MIRROR_DIR)/registry.terraform.io/scott-the-programmer/minikube/$(VERSION)
 	EXT := .exe
 endif
 
+.PHONY: local-cli-config
+local-cli-config:
+	mkdir -p bin
+	printf '%s\n' \
+		'provider_installation {' \
+		'  filesystem_mirror {' \
+		"    path = \"$(PLUGIN_MIRROR_DIR)\"" \
+		'    include = ["scott-the-programmer/minikube"]' \
+		'  }' \
+		'  direct {' \
+		'    exclude = ["scott-the-programmer/minikube"]' \
+		'  }' \
+		'}' > "$(LOCAL_CLI_CONFIG)"
+
 .PHONY: set-local
-set-local: build
+set-local: build local-cli-config
 	mkdir -p $(DEST_DIR)/$(OS_NAME)_$(ARCH) && \
 	cp bin/$(PLUGIN_NAME) $(DEST_DIR)/$(OS_NAME)_$(ARCH)/$(PLUGIN_NAME)$(EXT)
 

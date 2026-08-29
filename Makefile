@@ -30,11 +30,11 @@ clean:
 	rm examples/resources/minikube_cluster/terraform.tfstate.backup || true
 	rm examples/resources/minikube_cluster/.terraform.lock.hcl || true
 	rm -rf examples/resources/minikube_cluster/.terraform || true
-	minikube delete -p terraform-provider-minikube --purge
-	minikube delete -p terraform-provider-minikube-acc --purge
-	minikube delete -p terraform-provider-minikube-acc-docker --purge
-	minikube delete -p terraform-provider-minikube-acc-hyperkit --purge
-	minikube delete -p terraform-provider-minikube-acc-hyperv --purge
+	minikube delete -p terraform-provider-minikube
+	minikube delete -p terraform-provider-minikube-acc
+	minikube delete -p terraform-provider-minikube-acc-docker
+	minikube delete -p terraform-provider-minikube-acc-qemu
+	minikube delete -p terraform-provider-minikube-acc-hyperv
 
 .PHONY: nuke
 nuke: clean

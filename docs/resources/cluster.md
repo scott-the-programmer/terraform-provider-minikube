@@ -26,10 +26,10 @@ resource "minikube_cluster" "docker" {
   ]
 }
 
-resource "minikube_cluster" "hyperkit" {
+resource "minikube_cluster" "qemu" {
   vm           = true
-  driver       = "hyperkit"
-  cluster_name = "terraform-provider-minikube-acc-hyperkit"
+  driver       = "qemu2"
+  cluster_name = "terraform-provider-minikube-acc-qemu"
   nodes        = 3
   cni          = "bridge" # Allows pods to communicate with each other via DNS
   addons = [

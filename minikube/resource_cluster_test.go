@@ -269,20 +269,15 @@ func TestClusterCreation_Wait(t *testing.T) {
 	})
 }
 
-func TestClusterCreation_Hyperkit(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("Hyperkit is only supported on macOS")
-		return
-	}
-
+func TestClusterCreation_Qemu(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Providers:    map[string]*schema.Provider{"minikube": Provider()},
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("hyperkit", "TestClusterCreationHyperkit"),
+				Config: testAcceptanceClusterConfig("qemu2", "TestClusterCreationQemu"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationHyperkit"),
+					testPropertyExists("minikube_cluster.new", "TestClusterCreationQemu"),
 				),
 			},
 		},

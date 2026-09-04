@@ -1,6 +1,5 @@
 # terraform-provider-minikube
 
- [![Go Report Card](https://goreportcard.com/badge/github.com/scott-the-programmer/terraform-provider-minikube)](https://goreportcard.com/report/github.com/scott-the-programmer/terraform-provider-minikube)
 [![codecov](https://codecov.io/gh/scott-the-programmer/terraform-provider-minikube/graph/badge.svg?token=MH35FEWVAH)](https://codecov.io/gh/scott-the-programmer/terraform-provider-minikube)
 ![Terraform Provider Downloads](https://img.shields.io/terraform/provider/dt/3266)
 

@@ -129,7 +129,7 @@ func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config
 }
 
 func (m *MinikubeCluster) SetAddon(name string, addon string, value string) error {
-	return minikubeAddons.SetAndSave(name, addon, value, nil)
+	return minikubeAddons.SetAndSave(name, addon, value, m.commandOptions)
 }
 
 func (m *MinikubeCluster) Get(name string) *config.ClusterConfig {

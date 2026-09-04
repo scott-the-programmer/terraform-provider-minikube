@@ -114,8 +114,12 @@ local-cli-config:
 
 .PHONY: set-local
 set-local: build local-cli-config
-	mkdir -p $(DEST_DIR)/$(OS_NAME)_$(ARCH) && \
-	cp bin/$(PLUGIN_NAME) $(DEST_DIR)/$(OS_NAME)_$(ARCH)/$(PLUGIN_NAME)$(EXT)
+	dest="$(DEST_DIR)/$(OS_NAME)_$(ARCH)/$(PLUGIN_NAME)$(EXT)"; \
+	tmp="$$dest.tmp.$$$$"; \
+	trap 'rm -f "$$tmp"' EXIT HUP INT TERM; \
+	mkdir -p "$${dest%/*}" && \
+	cp "bin/$(PLUGIN_NAME)" "$$tmp" && \
+	mv -f "$$tmp" "$$dest"
 
 .PHONY: reset-local
 reset-local:

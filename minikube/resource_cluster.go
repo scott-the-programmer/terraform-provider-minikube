@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"k8s.io/minikube/pkg/minikube/config"
+	minikubeDriver "k8s.io/minikube/pkg/minikube/driver"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
 	pkgutil "k8s.io/minikube/pkg/util"
 )
@@ -22,6 +23,14 @@ import (
 var (
 	defaultIso = lib.GetMinikubeIso()
 )
+
+func resolveNetwork(driver, network string) string {
+	if minikubeDriver.IsQEMU(driver) && network == "" {
+		return "builtin"
+	}
+
+	return network
+}
 
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
@@ -240,6 +249,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	driver := d.Get("driver").(string)
 	containerRuntime := d.Get("container_runtime").(string)
+	network := resolveNetwork(driver, d.Get("network").(string))
 
 	addons, ok := d.GetOk("addons")
 	if !ok {
@@ -387,7 +397,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		EmbedCerts:              d.Get("embed_certs").(bool),
 		MinikubeISO:             state_utils.ReadSliceState(defaultIsos)[0],
 		KicBaseImage:            d.Get("base_image").(string),
-		Network:                 d.Get("network").(string),
+		Network:                 network,
 		Memory:                  memoryMb,
 		CPUs:                    cpus,
 		DiskSize:                diskMb,

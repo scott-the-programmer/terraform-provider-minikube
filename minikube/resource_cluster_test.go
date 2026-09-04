@@ -40,6 +40,27 @@ type mockClusterClientProperties struct {
 	cpu         string
 }
 
+func TestResolveNetwork(t *testing.T) {
+	tests := []struct {
+		name    string
+		driver  string
+		network string
+		want    string
+	}{
+		{name: "QEMU default", driver: "qemu2", want: "builtin"},
+		{name: "QEMU explicit network", driver: "qemu2", network: "socket_vmnet", want: "socket_vmnet"},
+		{name: "Docker default", driver: "docker", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveNetwork(tt.driver, tt.network); got != tt.want {
+				t.Fatalf("resolveNetwork(%q, %q) = %q, want %q", tt.driver, tt.network, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,

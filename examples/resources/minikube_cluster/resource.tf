@@ -55,8 +55,9 @@ resource "kubernetes_deployment_v1" "deployment" {
       }
       spec {
         container {
-          image = "nginx:latest"
-          name  = "example"
+          image             = "nginx:latest"
+          image_pull_policy = "IfNotPresent"
+          name              = "example"
 
           port {
             container_port = 80

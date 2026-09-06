@@ -43,6 +43,22 @@ To spin up actual clusters on your machine
 make acceptance
 ```
 
+### End-to-End Tests
+
+A black-box suite that has no Go in it at all: terraform stands up a cluster per
+driver, `kubectl` connects to it using only the provider's outputs, nginx gets
+deployed and the traffic path is verified, then everything is destroyed.
+
+```console
+make e2e              # every driver this machine can run
+make e2e-docker       # just one
+make e2e FLAVOURS=qemu
+```
+
+Drivers that aren't installed are reported as `SKIP` rather than failing. See
+[test/e2e/README.md](./test/e2e/README.md) for the full list of assertions and
+how to add a driver flavour.
+
 ## Test stack
 
 ```console

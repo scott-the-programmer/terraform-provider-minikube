@@ -35,6 +35,10 @@ clean:
 	minikube delete -p terraform-provider-minikube-acc-docker
 	minikube delete -p terraform-provider-minikube-acc-qemu
 	minikube delete -p terraform-provider-minikube-acc-hyperv
+	rm -rf $(E2E_DIR)/.work || true
+	minikube delete -p tf-minikube-e2e-docker || true
+	minikube delete -p tf-minikube-e2e-qemu || true
+	minikube delete -p tf-minikube-e2e-podman || true
 
 .PHONY: nuke
 nuke: clean
@@ -51,6 +55,26 @@ acceptance:
 	go clean -testcache
 	go test -c -tags $(BUILD_TAGS) -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=v5" -o testBinary ./minikube 
 	TF_ACC=true ./testBinary -test.run "TestClusterCreation" -test.v -test.parallel 1 -test.timeout 20m
+
+# Black-box e2e suite: terraform + kubectl only, no Go. See test/e2e/README.md.
+E2E_DIR := test/e2e
+FLAVOURS ?=
+
+.PHONY: e2e
+e2e:
+	$(E2E_DIR)/run.sh $(FLAVOURS)
+
+.PHONY: e2e-docker
+e2e-docker:
+	$(E2E_DIR)/run.sh docker
+
+.PHONY: e2e-qemu
+e2e-qemu:
+	$(E2E_DIR)/run.sh qemu
+
+.PHONY: e2e-podman
+e2e-podman:
+	$(E2E_DIR)/run.sh podman
 
 TEST_STACK_DIR := examples/resources/minikube_cluster
 LOCAL_CLI_CONFIG := $(CURDIR)/bin/terraform-local.tfrc

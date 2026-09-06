@@ -1,0 +1,58 @@
+name: e2e
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavours:
+        description: "Flavours to run (space separated, blank for all)"
+        required: false
+        default: ""
+  schedule:
+    # Nightly, since standing up real clusters is too slow for every PR.
+    - cron: "0 14 * * *"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # qemu is left out: nested virtualisation is not available on the
+        # standard GitHub runners, so a VM driver cannot boot there.
+        flavour: [docker, podman]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - uses: azure/setup-kubectl@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libvirt-dev conntrack
+          make init
+
+      - name: Install minikube
+        run: |
+          curl -sSLo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube /usr/local/bin/minikube
+
+      - name: Run e2e
+        run: ./test/e2e/run.sh ${{ github.event.inputs.flavours || matrix.flavour }}
+
+      - name: Collect diagnostics
+        if: failure()
+        run: |
+          minikube profile list || true
+          minikube logs -p "tf-minikube-e2e-${{ matrix.flavour }}" --length 200 || true

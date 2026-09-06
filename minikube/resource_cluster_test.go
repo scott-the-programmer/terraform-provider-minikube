@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -398,6 +399,8 @@ func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
 	mockClusterClient := getBaseMockClient(props.t, ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize, props.memory, props.cpu)
+	mockClusterClient.EXPECT().Delete().Return(nil)
+	mockClusterClient.EXPECT().ApplyAddons(gomock.Any()).Return(nil).AnyTimes()
 
 	gomock.InOrder(
 		mockClusterClient.EXPECT().
@@ -435,6 +438,8 @@ func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc 
 	ctrl := gomock.NewController(props.t)
 
 	mockClusterClient := getBaseMockClient(props.t, ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize, props.memory, props.cpu)
+	mockClusterClient.EXPECT().Delete().Return(nil)
+	mockClusterClient.EXPECT().ApplyAddons(gomock.Any()).Return(nil).AnyTimes()
 
 	mockClusterClient.EXPECT().
 		GetAddons().
@@ -594,17 +599,8 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 		AnyTimes()
 
 	mockClusterClient.EXPECT().
-		Delete().
-		Return(nil)
-
-	mockClusterClient.EXPECT().
 		GetK8sVersion().
 		Return("v1.99.9").
-		AnyTimes()
-
-	mockClusterClient.EXPECT().
-		ApplyAddons(gomock.Any()).
-		Return(nil).
 		AnyTimes()
 
 	mockClusterClient.EXPECT().
@@ -965,4 +961,235 @@ func testUnitClusterMaxCPUConfig(driver string, clusterName string) string {
 		cpus = "max"
 	}
 	`, driver, clusterName)
+}
+
+func TestGetClusterOutputs(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name, contents string) string {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(contents), 0644); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	keyPath := write("key", "key contents")
+	certPath := write("certificate", "certificate contents")
+	caPath := write("ca", "ca contents")
+	missing := filepath.Join(dir, "missing")
+
+	t.Run("Reads every credential", func(t *testing.T) {
+		key, certificate, ca, address, err := getClusterOutputs(&kubeconfig.Settings{
+			ClientKey:            keyPath,
+			ClientCertificate:    certPath,
+			CertificateAuthority: caPath,
+			ClusterServerAddress: "https://localhost:8443",
+		})
+
+		if err != nil {
+			t.Fatalf("getClusterOutputs() error = %v", err)
+		}
+		if key != "key contents" || certificate != "certificate contents" || ca != "ca contents" {
+			t.Fatalf("getClusterOutputs() = %q, %q, %q", key, certificate, ca)
+		}
+		if address != "https://localhost:8443" {
+			t.Fatalf("getClusterOutputs() address = %q", address)
+		}
+	})
+
+	unreadable := []struct {
+		name string
+		kc   *kubeconfig.Settings
+	}{
+		{
+			name: "Missing key",
+			kc:   &kubeconfig.Settings{ClientKey: missing, ClientCertificate: certPath, CertificateAuthority: caPath},
+		},
+		{
+			name: "Missing certificate",
+			kc:   &kubeconfig.Settings{ClientKey: keyPath, ClientCertificate: missing, CertificateAuthority: caPath},
+		},
+		{
+			name: "Missing certificate authority",
+			kc:   &kubeconfig.Settings{ClientKey: keyPath, ClientCertificate: certPath, CertificateAuthority: missing},
+		},
+	}
+
+	for _, tt := range unreadable {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, _, _, _, err := getClusterOutputs(tt.kc); err == nil {
+				t.Fatal("getClusterOutputs() error = nil, want an error")
+			}
+		})
+	}
+}
+
+func TestClusterCreation_ClientFactoryFailure(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactoryFailure(errors.New("no minikube for you")))},
+		Steps: []resource.TestStep{
+			{
+				Config:      testUnitClusterConfig("some_driver", "TestClusterFactoryFailure"),
+				ExpectError: regexp.MustCompile("no minikube for you"),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_StartFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockClusterClient := lib.NewMockClusterClient(ctrl)
+	mockClusterClient.EXPECT().GetK8sVersion().Return("v1.99.9").AnyTimes()
+	mockClusterClient.EXPECT().SetConfig(gomock.Any()).AnyTimes()
+	mockClusterClient.EXPECT().SetDependencies(gomock.Any()).AnyTimes()
+	mockClusterClient.EXPECT().Start().Return(nil, errors.New("cluster refused to start"))
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+		Steps: []resource.TestStep{
+			{
+				Config:      testUnitClusterConfig("some_driver", "TestClusterStartFailure"),
+				ExpectError: regexp.MustCompile("cluster refused to start"),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_InvalidConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  string
+		wantErr string
+	}{
+		{
+			name: "Zero nodes",
+			config: `
+			nodes = 0
+			`,
+			wantErr: "at least one node is required",
+		},
+		{
+			name: "HA without enough nodes",
+			config: `
+			ha = true
+			nodes = 2
+			`,
+			wantErr: "at least 3 nodes is required for high availability",
+		},
+		{
+			name: "Unparseable extra config",
+			config: `
+			extra_config = ["not-a-component-key-value"]
+			`,
+			wantErr: "invalid extra option",
+		},
+		{
+			name: "Unknown wait component",
+			config: `
+			wait = ["not_a_component"]
+			`,
+			wantErr: "not_a_component",
+		},
+		{
+			name: "Unparseable disk size",
+			config: `
+			disk_size = "twenty gigabytes"
+			`,
+			wantErr: "twenty gigabytes",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockClusterClient := lib.NewMockClusterClient(ctrl)
+			mockClusterClient.EXPECT().GetK8sVersion().Return("v1.99.9").AnyTimes()
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+				Steps: []resource.TestStep{
+					{
+						Config: fmt.Sprintf(`
+						resource "minikube_cluster" "new" {
+							driver = "some_driver"
+							cluster_name = "%s"
+							%s
+						}
+						`, tt.name, tt.config),
+						ExpectError: regexp.MustCompile(tt.wantErr),
+					},
+				},
+			})
+		})
+	}
+}
+
+func mockClientFactory(client lib.ClusterClient) schema.ConfigureContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var diags diag.Diagnostics
+		factory := func() (lib.ClusterClient, error) {
+			return client, nil
+		}
+		return factory, diags
+	}
+}
+
+func mockClientFactoryFailure(err error) schema.ConfigureContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var diags diag.Diagnostics
+		factory := func() (lib.ClusterClient, error) {
+			return nil, err
+		}
+		return factory, diags
+	}
+}
+
+// A failed delete is deliberately swallowed so a cluster that minikube can no
+// longer see does not wedge terraform destroy.
+func TestClusterDelete_Failure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockClusterClient := getBaseMockClient(t, ctrl, "TestClusterDeleteFailure", 1, 0, 20000, "4096mb", "2")
+	mockClusterClient.EXPECT().Delete().Return(errors.New("cluster could not be deleted"))
+	mockClusterClient.EXPECT().ApplyAddons(gomock.Any()).Return(nil).AnyTimes()
+	mockClusterClient.EXPECT().GetAddons().Return(nil).AnyTimes()
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterConfig("some_driver", "TestClusterDeleteFailure"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterDeleteFailure"),
+				),
+			},
+		},
+	})
+}
+
+func TestClusterUpdate_AddonFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockClusterClient := getBaseMockClient(t, ctrl, "TestClusterUpdateAddonFailure", 1, 0, 20000, "4096mb", "2")
+	mockClusterClient.EXPECT().Delete().Return(nil)
+	mockClusterClient.EXPECT().GetAddons().Return([]string{}).AnyTimes()
+	mockClusterClient.EXPECT().
+		ApplyAddons(gomock.Any()).
+		Return(errors.New("addon could not be applied"))
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterConfig("some_driver", "TestClusterUpdateAddonFailure"),
+			},
+			{
+				Config:      testUnitClusterConfig_Update("some_driver", "TestClusterUpdateAddonFailure"),
+				ExpectError: regexp.MustCompile("addon could not be applied"),
+			},
+		},
+	})
 }

@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -136,9 +137,9 @@ func TestClusterCreation_Docker(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -181,9 +182,9 @@ func TestClusterCreation_Docker_ExtraConfig(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterExtraConfig("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterExtraConfig("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -196,13 +197,13 @@ func TestClusterCreation_Docker_Update(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDockerUpdate"),
+				Config: testAcceptanceClusterConfig("docker", "test-cluster-creation-docker-update"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDockerUpdate"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker-update"),
 				),
 			},
 			{
-				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDockerUpdate"),
+				Config: testAcceptanceClusterConfig_Update("docker", "test-cluster-creation-docker-update"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
 				),
@@ -217,22 +218,22 @@ func TestClusterCreation_Docker_Addons(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_StorageProvisioner("docker", "TestClusterCreationDockerAddons"),
+				Config: testAcceptanceClusterConfig_StorageProvisioner("docker", "test-cluster-creation-docker-addons"),
 				Check: resource.ComposeTestCheckFunc(
 					func(s *terraform.State) error {
-						err := assertAddonEnabled("TestClusterCreationDockerAddons", "storage-provisioner")
+						err := assertAddonEnabled("test-cluster-creation-docker-addons", "storage-provisioner")
 						if err != nil {
 							return err
 						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "dashboard")
+						err = assertAddonEnabled("test-cluster-creation-docker-addons", "dashboard")
 						if err != nil {
 							return err
 						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "ingress")
+						err = assertAddonEnabled("test-cluster-creation-docker-addons", "ingress")
 						if err != nil {
 							return err
 						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "default-storageclass")
+						err = assertAddonEnabled("test-cluster-creation-docker-addons", "default-storageclass")
 						if err != nil {
 							return err
 						}
@@ -251,9 +252,9 @@ func TestClusterCreation_OutOfOrderAddons(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_OutOfOrderAddons("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_OutOfOrderAddons("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -266,9 +267,9 @@ func TestClusterCreation_HAControlPlane(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -281,9 +282,9 @@ func TestClusterCreation_Wait(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_Wait("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_Wait("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -296,9 +297,9 @@ func TestClusterCreation_Qemu(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("qemu2", "TestClusterCreationQemu"),
+				Config: testAcceptanceClusterConfig("qemu2", "test-cluster-creation-qemu"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationQemu"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-qemu"),
 				),
 			},
 		},
@@ -316,9 +317,9 @@ func TestClusterCreation_QemuSocketVmNet(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfigQemuSocketVmNet("qemu2", "TestClusterCreationQemu"),
+				Config: testAcceptanceClusterConfigQemuSocketVmNet("qemu2", "test-cluster-creation-qemu"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationQemu"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-qemu"),
 				),
 			},
 		},
@@ -336,9 +337,9 @@ func TestClusterCreation_HyperV(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("hyperv", "TestClusterCreationHyperV"),
+				Config: testAcceptanceClusterConfig("hyperv", "test-cluster-creation-hyperv"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationHyperV"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-hyperv"),
 				),
 			},
 		},
@@ -793,7 +794,7 @@ func testAcceptanceClusterConfig_StorageProvisioner(driver string, clusterName s
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000GiB"
+		memory = "6GiB"
 
 		addons = [
 			"dashboard",
@@ -811,7 +812,7 @@ func testAcceptanceClusterConfig_OutOfOrderAddons(driver string, clusterName str
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000GiB"
+		memory = "6GiB"
 
 		addons = [
 			"storage-provisioner",
@@ -829,7 +830,8 @@ func testAcceptanceClusterConfig_HAControlPlane(driver string, clusterName strin
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2
-		memory = "6000GiB"
+		memory = "6GiB"
+		nodes = 3
 		ha = true
 	}
 	`, driver, clusterName)
@@ -841,7 +843,7 @@ func testAcceptanceClusterConfig_Wait(driver string, clusterName string) string 
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2
-		memory = "6000GiB"
+		memory = "6GiB"
 
 		wait = [
 			"apps_running"
@@ -868,6 +870,26 @@ func verifyDelete(s *terraform.State) error {
 		_, err = os.Stat(profilesDir)
 		if err == nil {
 			return errors.New("profiles dir should not exist")
+		}
+
+		if rs.Primary.Attributes["driver"] == "docker" {
+			nodes, err := strconv.Atoi(rs.Primary.Attributes["nodes"])
+			if err != nil {
+				return err
+			}
+			for i := 1; i <= nodes; i++ {
+				name := clusterName
+				if i > 1 {
+					name = fmt.Sprintf("%s-m%02d", clusterName, i)
+				}
+				output, err := exec.Command("docker", "volume", "ls", "--filter", "label=name.minikube.sigs.k8s.io="+name, "--format", "{{.Name}}").CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("check volumes for %s: %w: %s", name, err, output)
+				}
+				if strings.TrimSpace(string(output)) != "" {
+					return fmt.Errorf("node %s still has Docker volumes: %s", name, output)
+				}
+			}
 		}
 	}
 

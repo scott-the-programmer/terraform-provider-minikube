@@ -117,12 +117,15 @@ func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config
 	} else if !config.IsNotExist(err) {
 		return nil, fmt.Errorf("load cluster for deletion: %w", err)
 	}
+	// The options must be passed through: minikube hands them to the driver's
+	// Init, and the qemu2 driver dereferences them, so a nil segfaults on
+	// delete. The KIC drivers ignore them, which is why only VM drivers crash.
 	errs := delete.DeleteProfiles([]*config.Profile{
 		{
 			Name:   name,
 			Config: cc,
 		},
-	}, nil)
+	}, m.commandOptions)
 	if len(errs) > 0 {
 		return nil, errs[0]
 	}

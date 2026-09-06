@@ -181,3 +181,31 @@ func TestCPUValidatorImpl(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUConverter(t *testing.T) {
+	converter := CPUConverter()
+
+	assert.Equal(t, "2", converter("2"))
+	assert.Equal(t, strconv.Itoa(runtime.NumCPU()), converter(lib.Max))
+	assert.Equal(t, "0", converter(lib.NoLimit))
+
+	assert.Panics(t, func() {
+		converter(42) // non-string input should panic
+	})
+	assert.Panics(t, func() {
+		converter("invalid") // unparseable input should panic
+	})
+}
+
+func TestCPUValidator(t *testing.T) {
+	validator := CPUValidator()
+
+	assert.Nil(t, validator("2", nil))
+	assert.Nil(t, validator(lib.Max, nil))
+	assert.Nil(t, validator(lib.NoLimit, nil))
+
+	assert.NotNil(t, validator(42, nil))        // non-string input
+	assert.NotNil(t, validator("invalid", nil)) // unparseable input
+	assert.NotNil(t, validator("0", nil))       // zero is not positive
+	assert.NotNil(t, validator("", nil))        // empty string
+}

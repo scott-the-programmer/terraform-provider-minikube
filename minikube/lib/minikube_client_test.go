@@ -12,6 +12,24 @@ import (
 	_ "k8s.io/minikube/pkg/minikube/registry/drvs"
 )
 
+func TestMinikubeClientStartReportsAddonFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	runner := NewMockCluster(ctrl)
+	runner.EXPECT().Provision(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, false, nil, nil, nil)
+	runner.EXPECT().Start(gomock.Any()).Return(nil, nil)
+	wantErr := errors.New("addon installation failed")
+	runner.EXPECT().SetAddon("cluster", "dashboard", "true").Return(wantErr)
+	client := NewMinikubeClient(MinikubeClientConfig{
+		ClusterConfig: &config.ClusterConfig{Nodes: []config.Node{{}}},
+		ClusterName:   "cluster",
+		Addons:        []string{"dashboard"},
+		Nodes:         1,
+	}, MinikubeClientDeps{Node: runner, Downloader: getDownloadSuccess(ctrl)})
+	if _, err := client.Start(); !errors.Is(err, wantErr) {
+		t.Fatalf("Start() error = %v, want %v", err, wantErr)
+	}
+}
+
 func TestMinikubeClient_Start(t *testing.T) {
 	type fields struct {
 		clusterConfig   config.ClusterConfig

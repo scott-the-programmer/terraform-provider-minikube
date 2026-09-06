@@ -63,6 +63,28 @@ func TestResolveNetwork(t *testing.T) {
 	}
 }
 
+func TestResolveAPIServerPort(t *testing.T) {
+	tests := []struct {
+		name string
+		port int
+		want int
+	}{
+		// apiserver_port is Optional+Computed, so an unset attribute arrives
+		// here as zero rather than as the old schema default.
+		{name: "unset falls back to the minikube default", port: 0, want: 8443},
+		{name: "explicit port is honoured", port: 9443, want: 9443},
+		{name: "driver assigned port is honoured", port: 33665, want: 33665},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveAPIServerPort(tt.port); got != tt.want {
+				t.Fatalf("resolveAPIServerPort(%d) = %d, want %d", tt.port, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestClusterCreation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest: true,
@@ -507,13 +529,15 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 	}
 
 	cc := config.ClusterConfig{
-		Name:                    "terraform-provider-minikube-acc",
-		APIServerPort:           clusterSchema["apiserver_port"].Default.(int),
+		Name: "terraform-provider-minikube-acc",
+		// apiserver_port and network are Optional+Computed, so they carry no
+		// schema default; the provider resolves them from an unset value.
+		APIServerPort:           resolveAPIServerPort(0),
 		KeepContext:             clusterSchema["keep_context"].Default.(bool),
 		EmbedCerts:              clusterSchema["embed_certs"].Default.(bool),
 		MinikubeISO:             defaultIso,
 		KicBaseImage:            clusterSchema["base_image"].Default.(string),
-		Network:                 clusterSchema["network"].Default.(string),
+		Network:                 resolveNetwork("some_driver", ""),
 		Memory:                  mem,
 		CPUs:                    c,
 		DiskSize:                diskSize,

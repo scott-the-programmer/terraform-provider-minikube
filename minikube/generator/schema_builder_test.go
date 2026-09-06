@@ -315,6 +315,9 @@ func GetClusterSchema() map[string]*schema.Schema {
 	`, schema)
 }
 
+// A computed field must not carry a Default. The SDK rejects a schema with
+// both, and the point of marking a field computed is that minikube's own value
+// is authoritative when the practitioner does not request one.
 func TestComputedProperty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockMinikube := NewMockMinikubeBinary(ctrl)
@@ -337,7 +340,6 @@ func TestComputedProperty(t *testing.T) {
 			Optional:			true,
 			ForceNew:			true,
 
-			Default:	123,
 		},
 
 	}

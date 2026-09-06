@@ -1,6 +1,7 @@
 package state_utils
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
@@ -203,4 +204,26 @@ func TestMemoryValidator(t *testing.T) {
 	assert.NotNil(t, validator(123, nil))       // non-string input
 	assert.NotNil(t, validator("invalid", nil)) // invalid memory size
 	assert.NotNil(t, validator("", nil))        // empty string
+}
+
+func TestGetMemoryMax(t *testing.T) {
+	limit, err := lib.GetMemoryLimit()
+	if err != nil {
+		t.Skipf("host memory could not be probed: %v", err)
+	}
+
+	result, err := GetMemory(lib.Max)
+	assert.NoError(t, err)
+	assert.Equal(t, limit.SystemMemory, result)
+}
+
+func TestMemoryConverterMax(t *testing.T) {
+	limit, err := lib.GetMemoryLimit()
+	if err != nil {
+		t.Skipf("host memory could not be probed: %v", err)
+	}
+
+	result, err := MemoryConverterImpl(lib.Max)
+	assert.NoError(t, err)
+	assert.Equal(t, strconv.Itoa(limit.SystemMemory)+"mb", result)
 }

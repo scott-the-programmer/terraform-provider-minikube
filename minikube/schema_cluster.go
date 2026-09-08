@@ -100,10 +100,10 @@ var (
 			Type:        schema.TypeInt,
 			Description: "The apiserver listening port",
 
+			Computed: true,
+
 			Optional: true,
 			ForceNew: true,
-
-			Default: 8443,
 		},
 
 		"auto_pause_interval": {
@@ -817,10 +817,10 @@ var (
 			Type:        schema.TypeString,
 			Description: "network to run minikube with. Used by docker/podman, qemu, kvm, and vfkit drivers. If left empty, minikube will create a new network.",
 
+			Computed: true,
+
 			Optional: true,
 			ForceNew: true,
-
-			Default: "",
 		},
 
 		"nfs_share": {

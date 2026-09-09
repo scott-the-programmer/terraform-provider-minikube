@@ -1,7 +1,11 @@
 package generator
 
 import (
+	"context"
 	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
@@ -311,6 +315,9 @@ func GetClusterSchema() map[string]*schema.Schema {
 	`, schema)
 }
 
+// A computed field must not carry a Default. The SDK rejects a schema with
+// both, and the point of marking a field computed is that minikube's own value
+// is authoritative when the practitioner does not request one.
 func TestComputedProperty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockMinikube := NewMockMinikubeBinary(ctrl)
@@ -333,7 +340,6 @@ func TestComputedProperty(t *testing.T) {
 			Optional:			true,
 			ForceNew:			true,
 
-			Default:	123,
 		},
 
 	}
@@ -473,4 +479,48 @@ func TestMinikubeHelpTextFailure(t *testing.T) {
 	builder := NewSchemaBuilder("fake.go", mockMinikube)
 	_, err := builder.Build()
 	assert.Error(t, err)
+}
+
+func TestWrite(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockMinikube := NewMockMinikubeBinary(ctrl)
+	mockMinikube.EXPECT().GetVersion(gomock.Any()).Return("Version 999", nil)
+	mockMinikube.EXPECT().GetStartHelpText(gomock.Any()).Return(`
+--test='test-value':
+	I am a great test description
+	`, nil)
+
+	target := filepath.Join(t.TempDir(), "schema_cluster.go")
+	builder := NewSchemaBuilder(target, mockMinikube)
+
+	schema, err := builder.Build()
+	assert.NoError(t, err)
+	assert.NoError(t, builder.Write(schema))
+
+	written, err := os.ReadFile(target)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, string(written))
+}
+
+func TestWriteToUnwritableTarget(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	builder := NewSchemaBuilder(filepath.Join(t.TempDir(), "missing-dir", "schema.go"), NewMockMinikubeBinary(ctrl))
+
+	assert.Error(t, builder.Write("package minikube"))
+}
+
+func TestMinikubeHostBinary(t *testing.T) {
+	if _, err := exec.LookPath("minikube"); err != nil {
+		t.Skipf("minikube binary is not installed: %v", err)
+	}
+
+	m := &MinikubeHostBinary{}
+
+	version, err := m.GetVersion(context.Background())
+	assert.NoError(t, err)
+	assert.Contains(t, version, "minikube version")
+
+	help, err := m.GetStartHelpText(context.Background())
+	assert.NoError(t, err)
+	assert.Contains(t, help, "--driver")
 }

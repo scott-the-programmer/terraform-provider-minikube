@@ -2,6 +2,8 @@
 package lib
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -9,6 +11,7 @@ import (
 	minikubeAddons "k8s.io/minikube/pkg/addons"
 	"k8s.io/minikube/pkg/libmachine"
 	"k8s.io/minikube/pkg/libmachine/host"
+	"k8s.io/minikube/pkg/minikube/assets"
 	"k8s.io/minikube/pkg/minikube/command"
 	"k8s.io/minikube/pkg/minikube/config"
 	"k8s.io/minikube/pkg/minikube/exit"
@@ -61,6 +64,9 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 }
 
 func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
+	if err := resetAddonAssets(); err != nil {
+		return nil, err
+	}
 	s, err := node.Start(starter, m.commandOptions)
 	if err != nil {
 		return nil, err
@@ -103,19 +109,30 @@ func (m *MinikubeCluster) AddWorkerNode(cc *config.ClusterConfig, kv string, api
 }
 
 func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config.Node, error) {
+	// Terraform's reconstructed config only contains the primary node. Use the
+	// saved node inventory so Minikube also removes secondary nodes' volumes.
+	saved, err := config.Load(name)
+	if err == nil {
+		cc = saved
+	} else if !config.IsNotExist(err) {
+		return nil, fmt.Errorf("load cluster for deletion: %w", err)
+	}
+	// The options must be passed through: minikube hands them to the driver's
+	// Init, and the qemu2 driver dereferences them, so a nil segfaults on
+	// delete. The KIC drivers ignore them, which is why only VM drivers crash.
 	errs := delete.DeleteProfiles([]*config.Profile{
 		{
 			Name:   name,
 			Config: cc,
 		},
-	}, nil)
+	}, m.commandOptions)
 	if len(errs) > 0 {
 		return nil, errs[0]
 	}
 
 	machineDir := filepath.Join(localpath.MiniPath(), "machines", name)
 	profilesDir := filepath.Join(localpath.MiniPath(), "profiles", name)
-	err := rmdir(machineDir)
+	err = rmdir(machineDir)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +146,23 @@ func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config
 }
 
 func (m *MinikubeCluster) SetAddon(name string, addon string, value string) error {
-	return minikubeAddons.SetAndSave(name, addon, value, nil)
+	if err := resetAddonAssets(); err != nil {
+		return err
+	}
+	return minikubeAddons.SetAndSave(name, addon, value, m.commandOptions)
+}
+
+// Minikube keeps bundled addon readers globally. Unlike the CLI, a provider
+// process can install them repeatedly, so rewind them under the creation lock.
+func resetAddonAssets() error {
+	for _, addon := range assets.Addons {
+		for _, asset := range addon.Assets {
+			if _, err := asset.Seek(0, io.SeekStart); err != nil {
+				return fmt.Errorf("rewind addon asset %s: %w", asset.GetSourcePath(), err)
+			}
+		}
+	}
+	return nil
 }
 
 func (m *MinikubeCluster) Get(name string) *config.ClusterConfig {

@@ -9,7 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -38,6 +40,49 @@ type mockClusterClientProperties struct {
 	diskSize    int
 	memory      string
 	cpu         string
+}
+
+func TestResolveNetwork(t *testing.T) {
+	tests := []struct {
+		name    string
+		driver  string
+		network string
+		want    string
+	}{
+		{name: "QEMU default", driver: "qemu2", want: "builtin"},
+		{name: "QEMU explicit network", driver: "qemu2", network: "socket_vmnet", want: "socket_vmnet"},
+		{name: "Docker default", driver: "docker", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveNetwork(tt.driver, tt.network); got != tt.want {
+				t.Fatalf("resolveNetwork(%q, %q) = %q, want %q", tt.driver, tt.network, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestResolveAPIServerPort(t *testing.T) {
+	tests := []struct {
+		name string
+		port int
+		want int
+	}{
+		// apiserver_port is Optional+Computed, so an unset attribute arrives
+		// here as zero rather than as the old schema default.
+		{name: "unset falls back to the minikube default", port: 0, want: 8443},
+		{name: "explicit port is honoured", port: 9443, want: 9443},
+		{name: "driver assigned port is honoured", port: 33665, want: 33665},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveAPIServerPort(tt.port); got != tt.want {
+				t.Fatalf("resolveAPIServerPort(%d) = %d, want %d", tt.port, got, tt.want)
+			}
+		})
+	}
 }
 
 func TestClusterCreation(t *testing.T) {
@@ -115,9 +160,9 @@ func TestClusterCreation_Docker(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -160,9 +205,9 @@ func TestClusterCreation_Docker_ExtraConfig(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterExtraConfig("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterExtraConfig("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -175,13 +220,13 @@ func TestClusterCreation_Docker_Update(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("docker", "TestClusterCreationDockerUpdate"),
+				Config: testAcceptanceClusterConfig("docker", "test-cluster-creation-docker-update"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDockerUpdate"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker-update"),
 				),
 			},
 			{
-				Config: testAcceptanceClusterConfig_Update("docker", "TestClusterCreationDockerUpdate"),
+				Config: testAcceptanceClusterConfig_Update("docker", "test-cluster-creation-docker-update"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("minikube_cluster.new", "addons.2", "ingress"),
 				),
@@ -196,22 +241,22 @@ func TestClusterCreation_Docker_Addons(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_StorageProvisioner("docker", "TestClusterCreationDockerAddons"),
+				Config: testAcceptanceClusterConfig_StorageProvisioner("docker", "test-cluster-creation-docker-addons"),
 				Check: resource.ComposeTestCheckFunc(
 					func(s *terraform.State) error {
-						err := assertAddonEnabled("TestClusterCreationDockerAddons", "storage-provisioner")
+						err := assertAddonEnabled("test-cluster-creation-docker-addons", "storage-provisioner")
 						if err != nil {
 							return err
 						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "dashboard")
+						err = assertAddonEnabled("test-cluster-creation-docker-addons", "dashboard")
 						if err != nil {
 							return err
 						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "ingress")
+						err = assertAddonEnabled("test-cluster-creation-docker-addons", "ingress")
 						if err != nil {
 							return err
 						}
-						err = assertAddonEnabled("TestClusterCreationDockerAddons", "default-storageclass")
+						err = assertAddonEnabled("test-cluster-creation-docker-addons", "default-storageclass")
 						if err != nil {
 							return err
 						}
@@ -230,9 +275,9 @@ func TestClusterCreation_OutOfOrderAddons(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_OutOfOrderAddons("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_OutOfOrderAddons("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -245,9 +290,9 @@ func TestClusterCreation_HAControlPlane(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_HAControlPlane("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -260,9 +305,9 @@ func TestClusterCreation_Wait(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig_Wait("docker", "TestClusterCreationDocker"),
+				Config: testAcceptanceClusterConfig_Wait("docker", "test-cluster-creation-docker"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationDocker"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-docker"),
 				),
 			},
 		},
@@ -275,9 +320,9 @@ func TestClusterCreation_Qemu(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("qemu2", "TestClusterCreationQemu"),
+				Config: testAcceptanceClusterConfig("qemu2", "test-cluster-creation-qemu"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationQemu"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-qemu"),
 				),
 			},
 		},
@@ -295,9 +340,9 @@ func TestClusterCreation_QemuSocketVmNet(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfigQemuSocketVmNet("qemu2", "TestClusterCreationQemu"),
+				Config: testAcceptanceClusterConfigQemuSocketVmNet("qemu2", "test-cluster-creation-qemu"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationQemu"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-qemu"),
 				),
 			},
 		},
@@ -315,9 +360,9 @@ func TestClusterCreation_HyperV(t *testing.T) {
 		CheckDestroy: verifyDelete,
 		Steps: []resource.TestStep{
 			{
-				Config: testAcceptanceClusterConfig("hyperv", "TestClusterCreationHyperV"),
+				Config: testAcceptanceClusterConfig("hyperv", "test-cluster-creation-hyperv"),
 				Check: resource.ComposeTestCheckFunc(
-					testPropertyExists("minikube_cluster.new", "TestClusterCreationHyperV"),
+					testPropertyExists("minikube_cluster.new", "test-cluster-creation-hyperv"),
 				),
 			},
 		},
@@ -376,6 +421,8 @@ func mockUpdate(props mockClusterClientProperties) schema.ConfigureContextFunc {
 	ctrl := gomock.NewController(props.t)
 
 	mockClusterClient := getBaseMockClient(props.t, ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize, props.memory, props.cpu)
+	mockClusterClient.EXPECT().Delete().Return(nil)
+	mockClusterClient.EXPECT().ApplyAddons(gomock.Any()).Return(nil).AnyTimes()
 
 	gomock.InOrder(
 		mockClusterClient.EXPECT().
@@ -413,6 +460,8 @@ func mockSuccess(props mockClusterClientProperties) schema.ConfigureContextFunc 
 	ctrl := gomock.NewController(props.t)
 
 	mockClusterClient := getBaseMockClient(props.t, ctrl, props.name, props.haNodes, props.workerNodes, props.diskSize, props.memory, props.cpu)
+	mockClusterClient.EXPECT().Delete().Return(nil)
+	mockClusterClient.EXPECT().ApplyAddons(gomock.Any()).Return(nil).AnyTimes()
 
 	mockClusterClient.EXPECT().
 		GetAddons().
@@ -480,13 +529,15 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 	}
 
 	cc := config.ClusterConfig{
-		Name:                    "terraform-provider-minikube-acc",
-		APIServerPort:           clusterSchema["apiserver_port"].Default.(int),
+		Name: "terraform-provider-minikube-acc",
+		// apiserver_port and network are Optional+Computed, so they carry no
+		// schema default; the provider resolves them from an unset value.
+		APIServerPort:           resolveAPIServerPort(0),
 		KeepContext:             clusterSchema["keep_context"].Default.(bool),
 		EmbedCerts:              clusterSchema["embed_certs"].Default.(bool),
 		MinikubeISO:             defaultIso,
 		KicBaseImage:            clusterSchema["base_image"].Default.(string),
-		Network:                 clusterSchema["network"].Default.(string),
+		Network:                 resolveNetwork("some_driver", ""),
 		Memory:                  mem,
 		CPUs:                    c,
 		DiskSize:                diskSize,
@@ -572,17 +623,8 @@ func getBaseMockClient(t *testing.T, ctrl *gomock.Controller, clusterName string
 		AnyTimes()
 
 	mockClusterClient.EXPECT().
-		Delete().
-		Return(nil)
-
-	mockClusterClient.EXPECT().
 		GetK8sVersion().
 		Return("v1.99.9").
-		AnyTimes()
-
-	mockClusterClient.EXPECT().
-		ApplyAddons(gomock.Any()).
-		Return(nil).
 		AnyTimes()
 
 	mockClusterClient.EXPECT().
@@ -772,7 +814,7 @@ func testAcceptanceClusterConfig_StorageProvisioner(driver string, clusterName s
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000GiB"
+		memory = "6GiB"
 
 		addons = [
 			"dashboard",
@@ -790,7 +832,7 @@ func testAcceptanceClusterConfig_OutOfOrderAddons(driver string, clusterName str
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2 
-		memory = "6000GiB"
+		memory = "6GiB"
 
 		addons = [
 			"storage-provisioner",
@@ -808,7 +850,8 @@ func testAcceptanceClusterConfig_HAControlPlane(driver string, clusterName strin
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2
-		memory = "6000GiB"
+		memory = "6GiB"
+		nodes = 3
 		ha = true
 	}
 	`, driver, clusterName)
@@ -820,7 +863,7 @@ func testAcceptanceClusterConfig_Wait(driver string, clusterName string) string 
 		driver = "%s"
 		cluster_name = "%s"
 		cpus = 2
-		memory = "6000GiB"
+		memory = "6GiB"
 
 		wait = [
 			"apps_running"
@@ -847,6 +890,26 @@ func verifyDelete(s *terraform.State) error {
 		_, err = os.Stat(profilesDir)
 		if err == nil {
 			return errors.New("profiles dir should not exist")
+		}
+
+		if rs.Primary.Attributes["driver"] == "docker" {
+			nodes, err := strconv.Atoi(rs.Primary.Attributes["nodes"])
+			if err != nil {
+				return err
+			}
+			for i := 1; i <= nodes; i++ {
+				name := clusterName
+				if i > 1 {
+					name = fmt.Sprintf("%s-m%02d", clusterName, i)
+				}
+				output, err := exec.Command("docker", "volume", "ls", "--filter", "label=name.minikube.sigs.k8s.io="+name, "--format", "{{.Name}}").CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("check volumes for %s: %w: %s", name, err, output)
+				}
+				if strings.TrimSpace(string(output)) != "" {
+					return fmt.Errorf("node %s still has Docker volumes: %s", name, output)
+				}
+			}
 		}
 	}
 
@@ -922,4 +985,235 @@ func testUnitClusterMaxCPUConfig(driver string, clusterName string) string {
 		cpus = "max"
 	}
 	`, driver, clusterName)
+}
+
+func TestGetClusterOutputs(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name, contents string) string {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(contents), 0644); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	keyPath := write("key", "key contents")
+	certPath := write("certificate", "certificate contents")
+	caPath := write("ca", "ca contents")
+	missing := filepath.Join(dir, "missing")
+
+	t.Run("Reads every credential", func(t *testing.T) {
+		key, certificate, ca, address, err := getClusterOutputs(&kubeconfig.Settings{
+			ClientKey:            keyPath,
+			ClientCertificate:    certPath,
+			CertificateAuthority: caPath,
+			ClusterServerAddress: "https://localhost:8443",
+		})
+
+		if err != nil {
+			t.Fatalf("getClusterOutputs() error = %v", err)
+		}
+		if key != "key contents" || certificate != "certificate contents" || ca != "ca contents" {
+			t.Fatalf("getClusterOutputs() = %q, %q, %q", key, certificate, ca)
+		}
+		if address != "https://localhost:8443" {
+			t.Fatalf("getClusterOutputs() address = %q", address)
+		}
+	})
+
+	unreadable := []struct {
+		name string
+		kc   *kubeconfig.Settings
+	}{
+		{
+			name: "Missing key",
+			kc:   &kubeconfig.Settings{ClientKey: missing, ClientCertificate: certPath, CertificateAuthority: caPath},
+		},
+		{
+			name: "Missing certificate",
+			kc:   &kubeconfig.Settings{ClientKey: keyPath, ClientCertificate: missing, CertificateAuthority: caPath},
+		},
+		{
+			name: "Missing certificate authority",
+			kc:   &kubeconfig.Settings{ClientKey: keyPath, ClientCertificate: certPath, CertificateAuthority: missing},
+		},
+	}
+
+	for _, tt := range unreadable {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, _, _, _, err := getClusterOutputs(tt.kc); err == nil {
+				t.Fatal("getClusterOutputs() error = nil, want an error")
+			}
+		})
+	}
+}
+
+func TestClusterCreation_ClientFactoryFailure(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactoryFailure(errors.New("no minikube for you")))},
+		Steps: []resource.TestStep{
+			{
+				Config:      testUnitClusterConfig("some_driver", "TestClusterFactoryFailure"),
+				ExpectError: regexp.MustCompile("no minikube for you"),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_StartFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockClusterClient := lib.NewMockClusterClient(ctrl)
+	mockClusterClient.EXPECT().GetK8sVersion().Return("v1.99.9").AnyTimes()
+	mockClusterClient.EXPECT().SetConfig(gomock.Any()).AnyTimes()
+	mockClusterClient.EXPECT().SetDependencies(gomock.Any()).AnyTimes()
+	mockClusterClient.EXPECT().Start().Return(nil, errors.New("cluster refused to start"))
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+		Steps: []resource.TestStep{
+			{
+				Config:      testUnitClusterConfig("some_driver", "TestClusterStartFailure"),
+				ExpectError: regexp.MustCompile("cluster refused to start"),
+			},
+		},
+	})
+}
+
+func TestClusterCreation_InvalidConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  string
+		wantErr string
+	}{
+		{
+			name: "Zero nodes",
+			config: `
+			nodes = 0
+			`,
+			wantErr: "at least one node is required",
+		},
+		{
+			name: "HA without enough nodes",
+			config: `
+			ha = true
+			nodes = 2
+			`,
+			wantErr: "at least 3 nodes is required for high availability",
+		},
+		{
+			name: "Unparseable extra config",
+			config: `
+			extra_config = ["not-a-component-key-value"]
+			`,
+			wantErr: "invalid extra option",
+		},
+		{
+			name: "Unknown wait component",
+			config: `
+			wait = ["not_a_component"]
+			`,
+			wantErr: "not_a_component",
+		},
+		{
+			name: "Unparseable disk size",
+			config: `
+			disk_size = "twenty gigabytes"
+			`,
+			wantErr: "twenty gigabytes",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockClusterClient := lib.NewMockClusterClient(ctrl)
+			mockClusterClient.EXPECT().GetK8sVersion().Return("v1.99.9").AnyTimes()
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+				Steps: []resource.TestStep{
+					{
+						Config: fmt.Sprintf(`
+						resource "minikube_cluster" "new" {
+							driver = "some_driver"
+							cluster_name = "%s"
+							%s
+						}
+						`, tt.name, tt.config),
+						ExpectError: regexp.MustCompile(tt.wantErr),
+					},
+				},
+			})
+		})
+	}
+}
+
+func mockClientFactory(client lib.ClusterClient) schema.ConfigureContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var diags diag.Diagnostics
+		factory := func() (lib.ClusterClient, error) {
+			return client, nil
+		}
+		return factory, diags
+	}
+}
+
+func mockClientFactoryFailure(err error) schema.ConfigureContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var diags diag.Diagnostics
+		factory := func() (lib.ClusterClient, error) {
+			return nil, err
+		}
+		return factory, diags
+	}
+}
+
+// A failed delete is deliberately swallowed so a cluster that minikube can no
+// longer see does not wedge terraform destroy.
+func TestClusterDelete_Failure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockClusterClient := getBaseMockClient(t, ctrl, "TestClusterDeleteFailure", 1, 0, 20000, "4096mb", "2")
+	mockClusterClient.EXPECT().Delete().Return(errors.New("cluster could not be deleted"))
+	mockClusterClient.EXPECT().ApplyAddons(gomock.Any()).Return(nil).AnyTimes()
+	mockClusterClient.EXPECT().GetAddons().Return(nil).AnyTimes()
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterConfig("some_driver", "TestClusterDeleteFailure"),
+				Check: resource.ComposeTestCheckFunc(
+					testPropertyExists("minikube_cluster.new", "TestClusterDeleteFailure"),
+				),
+			},
+		},
+	})
+}
+
+func TestClusterUpdate_AddonFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockClusterClient := getBaseMockClient(t, ctrl, "TestClusterUpdateAddonFailure", 1, 0, 20000, "4096mb", "2")
+	mockClusterClient.EXPECT().Delete().Return(nil)
+	mockClusterClient.EXPECT().GetAddons().Return([]string{}).AnyTimes()
+	mockClusterClient.EXPECT().
+		ApplyAddons(gomock.Any()).
+		Return(errors.New("addon could not be applied"))
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  map[string]*schema.Provider{"minikube": NewProvider(mockClientFactory(mockClusterClient))},
+		Steps: []resource.TestStep{
+			{
+				Config: testUnitClusterConfig("some_driver", "TestClusterUpdateAddonFailure"),
+			},
+			{
+				Config:      testUnitClusterConfig_Update("some_driver", "TestClusterUpdateAddonFailure"),
+				ExpectError: regexp.MustCompile("addon could not be applied"),
+			},
+		},
+	})
 }

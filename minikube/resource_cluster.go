@@ -15,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"k8s.io/minikube/pkg/minikube/config"
+	"k8s.io/minikube/pkg/minikube/constants"
+	minikubeDriver "k8s.io/minikube/pkg/minikube/driver"
 	"k8s.io/minikube/pkg/minikube/kubeconfig"
 	pkgutil "k8s.io/minikube/pkg/util"
 )
@@ -22,6 +24,26 @@ import (
 var (
 	defaultIso = lib.GetMinikubeIso()
 )
+
+func resolveNetwork(driver, network string) string {
+	if minikubeDriver.IsQEMU(driver) && network == "" {
+		return "builtin"
+	}
+
+	return network
+}
+
+// resolveAPIServerPort supplies minikube's own default when the practitioner
+// has not asked for a specific port. apiserver_port is Optional+Computed rather
+// than defaulted in the schema, because minikube picks a random free host port
+// for the QEMU builtin network, so an unset attribute reads back as zero here.
+func resolveAPIServerPort(port int) int {
+	if port == 0 {
+		return constants.APIServerPort
+	}
+
+	return port
+}
 
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
@@ -240,6 +262,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 
 	driver := d.Get("driver").(string)
 	containerRuntime := d.Get("container_runtime").(string)
+	network := resolveNetwork(driver, d.Get("network").(string))
 
 	addons, ok := d.GetOk("addons")
 	if !ok {
@@ -298,7 +321,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		}
 	}
 
-	apiserverPort := d.Get("apiserver_port").(int)
+	apiserverPort := resolveAPIServerPort(d.Get("apiserver_port").(int))
 
 	ecSlice := []string{}
 	if d.Get("extra_config") != nil && d.Get("extra_config").(*schema.Set).Len() > 0 {
@@ -387,7 +410,7 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		EmbedCerts:              d.Get("embed_certs").(bool),
 		MinikubeISO:             state_utils.ReadSliceState(defaultIsos)[0],
 		KicBaseImage:            d.Get("base_image").(string),
-		Network:                 d.Get("network").(string),
+		Network:                 network,
 		Memory:                  memoryMb,
 		CPUs:                    cpus,
 		DiskSize:                diskMb,

@@ -12,6 +12,24 @@ import (
 	_ "k8s.io/minikube/pkg/minikube/registry/drvs"
 )
 
+func TestMinikubeClientStartReportsAddonFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	runner := NewMockCluster(ctrl)
+	runner.EXPECT().Provision(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, false, nil, nil, nil)
+	runner.EXPECT().Start(gomock.Any()).Return(nil, nil)
+	wantErr := errors.New("addon installation failed")
+	runner.EXPECT().SetAddon("cluster", "dashboard", "true").Return(wantErr)
+	client := NewMinikubeClient(MinikubeClientConfig{
+		ClusterConfig: &config.ClusterConfig{Nodes: []config.Node{{}}},
+		ClusterName:   "cluster",
+		Addons:        []string{"dashboard"},
+		Nodes:         1,
+	}, MinikubeClientDeps{Node: runner, Downloader: getDownloadSuccess(ctrl)})
+	if _, err := client.Start(); !errors.Is(err, wantErr) {
+		t.Fatalf("Start() error = %v, want %v", err, wantErr)
+	}
+}
+
 func TestMinikubeClient_Start(t *testing.T) {
 	type fields struct {
 		clusterConfig   config.ClusterConfig
@@ -932,4 +950,120 @@ func getDeleteFailure(ctrl *gomock.Controller) Cluster {
 		Return(nil, errors.New("delete error"))
 
 	return nRunnerSuccess
+}
+
+func TestMinikubeClient_GetK8sVersion(t *testing.T) {
+	e := &MinikubeClient{K8sVersion: "v1.29.0"}
+	if got := e.GetK8sVersion(); got != "v1.29.0" {
+		t.Errorf("MinikubeClient.GetK8sVersion() = %v, want %v", got, "v1.29.0")
+	}
+}
+
+func TestMinikubeClient_StartHoldsCreationLock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	lock := &sync.Mutex{}
+
+	e := &MinikubeClient{
+		clusterConfig:  &config.ClusterConfig{Nodes: []config.Node{{}}},
+		clusterName:    "cluster",
+		addons:         []string{},
+		isoUrls:        []string{},
+		nodes:          1,
+		nRunner:        getNodeSuccess(ctrl),
+		dLoader:        getDownloadSuccess(ctrl),
+		TfCreationLock: lock,
+	}
+
+	if _, err := e.Start(); err != nil {
+		t.Fatalf("MinikubeClient.Start() error = %v", err)
+	}
+
+	// The lock is taken for the duration of Start() and released on return, so a
+	// subsequent caller must be able to acquire it.
+	if !lock.TryLock() {
+		t.Fatal("MinikubeClient.Start() did not release TfCreationLock")
+	}
+	lock.Unlock()
+}
+
+func TestMinikubeClient_StartSelectsSSHClient(t *testing.T) {
+	tests := []struct {
+		name      string
+		nativeSsh bool
+	}{
+		{name: "Native ssh", nativeSsh: true},
+		{name: "External ssh", nativeSsh: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			e := &MinikubeClient{
+				clusterConfig: &config.ClusterConfig{Nodes: []config.Node{{}}},
+				clusterName:   "cluster",
+				addons:        []string{},
+				isoUrls:       []string{},
+				nodes:         1,
+				nativeSsh:     tt.nativeSsh,
+				nRunner:       getNodeSuccess(ctrl),
+				dLoader:       getDownloadSuccess(ctrl),
+			}
+
+			if _, err := e.Start(); err != nil {
+				t.Fatalf("MinikubeClient.Start() error = %v", err)
+			}
+		})
+	}
+}
+
+func TestMinikubeClient_StartReportsControlPlaneFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	runner := NewMockCluster(ctrl)
+	runner.EXPECT().Provision(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, false, nil, nil, nil)
+	runner.EXPECT().Start(gomock.Any()).Return(nil, nil)
+
+	wantErr := errors.New("control plane node failed")
+	runner.EXPECT().
+		AddControlPlaneNode(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, wantErr)
+
+	e := &MinikubeClient{
+		clusterConfig: &config.ClusterConfig{Nodes: []config.Node{{}}},
+		clusterName:   "cluster",
+		addons:        []string{},
+		isoUrls:       []string{},
+		nodes:         3,
+		ha:            true,
+		nRunner:       runner,
+		dLoader:       getDownloadSuccess(ctrl),
+	}
+
+	if _, err := e.Start(); !errors.Is(err, wantErr) {
+		t.Fatalf("MinikubeClient.Start() error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestMinikubeClient_ApplyAddonsReportsAddFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	runner := NewMockCluster(ctrl)
+
+	wantErr := errors.New("cannot enable addon")
+	runner.EXPECT().SetAddon("cluster", "feature1", "false").Return(nil)
+	runner.EXPECT().SetAddon("cluster", "feature2", "true").Return(wantErr)
+
+	e := &MinikubeClient{
+		clusterConfig: &config.ClusterConfig{},
+		clusterName:   "cluster",
+		addons:        []string{"feature1"},
+		nRunner:       runner,
+	}
+
+	if err := e.ApplyAddons([]string{"feature2"}); !errors.Is(err, wantErr) {
+		t.Fatalf("MinikubeClient.ApplyAddons() error = %v, want %v", err, wantErr)
+	}
+
+	// A failed apply must not overwrite the addons the client believes are installed.
+	if !reflect.DeepEqual(e.addons, []string{"feature1"}) {
+		t.Fatalf("addons = %v, want %v", e.addons, []string{"feature1"})
+	}
 }

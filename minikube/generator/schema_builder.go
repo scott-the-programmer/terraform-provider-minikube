@@ -31,11 +31,21 @@ func (m *MinikubeHostBinary) GetStartHelpText(ctx context.Context) (string, erro
 	return run(ctx, "start", "--help")
 }
 
+// Fields whose effective value is chosen by minikube rather than by the
+// practitioner. They are Optional so a value can still be requested, and
+// Computed so that leaving them out accepts whatever the cluster reports
+// instead of producing a permanent diff against a schema default.
 var computedFields []string = []string{
 	"apiserver_names",
+	// minikube allocates a random free host port for the QEMU builtin
+	// network, and picks a different one on every start.
+	"apiserver_port",
 	"hyperkit_vsock_ports",
 	"insecure_registry",
 	"iso_url",
+	// minikube resolves an unset network per driver, e.g. "builtin" or
+	// "socket_vmnet" for QEMU.
+	"network",
 	"nfs_share",
 	"ports",
 	"registry_mirror",
@@ -383,7 +393,8 @@ var (
 	body := ""
 	for _, entry := range entries {
 		extraParams := ""
-		if contains(computedFields, entry.Parameter) {
+		computed := contains(computedFields, entry.Parameter)
+		if computed {
 			extraParams = `
 			Computed:			true,
 `
@@ -409,7 +420,9 @@ var (
 		} else if entry.DefaultFunc != "" {
 			extraParams += fmt.Sprintf(`
 			DefaultFunc:	%s,`, entry.DefaultFunc)
-		} else {
+		} else if !computed {
+			// The SDK rejects a schema that carries both Default and Computed;
+			// for a computed field the cluster's own value is the default.
 			extraParams += fmt.Sprintf(`
 			Default:	%s,`, entry.Default)
 		}

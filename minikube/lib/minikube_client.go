@@ -200,7 +200,9 @@ func (e *MinikubeClient) Start() (*kubeconfig.Settings, error) {
 
 	klog.Flush()
 
-	e.setAddons(e.addons, true)
+	if err := e.setAddons(e.addons, true); err != nil {
+		return nil, fmt.Errorf("apply addons: %w", err)
+	}
 
 	return kc, nil
 }

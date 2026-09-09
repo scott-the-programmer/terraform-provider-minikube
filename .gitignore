@@ -21,6 +21,9 @@ bin
 terraform.tfsta*
 .terraform.lock.hcl
 
+# Scratch space for the e2e suite (per-flavour terraform dirs, kubeconfigs)
+test/e2e/.work/
+
 crash.log
 .terraform
 test_output

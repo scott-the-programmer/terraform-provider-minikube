@@ -15,8 +15,6 @@ resource "minikube_cluster" "qemu" {
   vm           = true
   driver       = "qemu2"
   cluster_name = "terraform-provider-minikube-acc-qemu"
-  nodes        = 3
-  cni          = "bridge" # Allows pods to communicate with each other via DNS
   addons = [
     "dashboard",
     "default-storageclass",
@@ -34,7 +32,7 @@ provider "kubernetes" {
 }
 
 
-resource "kubernetes_deployment" "deployment" {
+resource "kubernetes_deployment_v1" "deployment" {
   metadata {
     name = "nginx-example"
     labels = {
@@ -57,8 +55,9 @@ resource "kubernetes_deployment" "deployment" {
       }
       spec {
         container {
-          image = "nginx:latest"
-          name  = "example"
+          image             = "nginx:latest"
+          image_pull_policy = "IfNotPresent"
+          name              = "example"
 
           port {
             container_port = 80

@@ -14,7 +14,7 @@ schema:
 # Containerized schema generation with version control
 # Usage: make schema-container
 #        make schema-container MINIKUBE_VERSION=v1.36.0
-MINIKUBE_VERSION ?= v1.38.0
+MINIKUBE_VERSION ?= v1.38.1
 .PHONY: schema-container
 schema-container:
 	./scripts/schema-container.sh $(MINIKUBE_VERSION)
@@ -160,5 +160,5 @@ ifeq ($(UNAME_S),Darwin)
 endif
 .PHONY: set-version
 set-version:
-	$(eval VERSION := $(shell cat minikube/version/version.go | grep Version | tr -d "[:space:]" | sed 's/Version\="//g' | sed 's/"\/\/.*//g'))
+	$(eval VERSION := $(shell cat minikube/version/version.go | grep '^[[:space:]]*Version[[:space:]]*=' | tr -d "[:space:]" | sed 's/Version\="//g' | sed 's/"\/\/.*//g'))
 	sed $(SED_FLAGS) 's/VERSION=".*"/VERSION="$(VERSION)"/g' bootstrap/install-driver.sh

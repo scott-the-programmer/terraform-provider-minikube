@@ -6,7 +6,7 @@ on:
       minikube_version:
         description: 'Minikube version to test schema generation'
         required: false
-        default: 'v1.38.1'
+        default: 'v1.39.0'
         type: string
 
 jobs:

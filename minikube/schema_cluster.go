@@ -133,7 +133,7 @@ var (
 			Optional: true,
 			ForceNew: true,
 
-			Default: "gcr.io/k8s-minikube/kicbase:v0.0.50@sha256:eb4fec00e8ad70adf8e6436f195cc429825ffb85f95afcdb5d8d9deb576f3e93",
+			Default: "gcr.io/k8s-minikube/kicbase:v0.0.51@sha256:4a1c825b61479e6c898851ea66f13c620aaeab6002746e95067fc2c4b38a0b24",
 		},
 
 		"binary_mirror": {
@@ -288,6 +288,18 @@ var (
 			ForceNew: true,
 
 			Default: false,
+		},
+
+		"dns_servers": {
+			Type:        schema.TypeSet,
+			Description: "Static DNS server IP addresses for the VM (VM drivers only)",
+
+			Optional: true,
+			ForceNew: true,
+
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
 		},
 
 		"docker_env": {
@@ -590,7 +602,7 @@ var (
 
 		"kubernetes_version": {
 			Type:        schema.TypeString,
-			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.35.1, 'latest' for v1.35.1). Defaults to 'stable'.",
+			Description: "The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.37.0, 'latest' for v1.37.0). Defaults to 'stable'.",
 
 			Optional: true,
 			ForceNew: true,
@@ -656,6 +668,16 @@ var (
 			ForceNew: true,
 
 			Default: "",
+		},
+
+		"mdns": {
+			Type:        schema.TypeBool,
+			Description: "Enable mDNS (.local address resolution) by configuring systemd-resolved inside the node (VM drivers only)",
+
+			Optional: true,
+			ForceNew: true,
+
+			Default: false,
 		},
 
 		"memory": {
@@ -913,7 +935,7 @@ var (
 
 		"preload_source": {
 			Type:        schema.TypeString,
-			Description: "Which source to download the preload from (valid options: gcs, github, auto). Defaults to auto (try both).",
+			Description: "Which source to download the preload from (valid options: gcs, github, auto). Defaults to auto (try github first, then gcs as failover).",
 
 			Optional: true,
 			ForceNew: true,
@@ -1084,6 +1106,16 @@ var (
 		"vm": {
 			Type:        schema.TypeBool,
 			Description: "Filter to use only VM Drivers",
+
+			Optional: true,
+			ForceNew: true,
+
+			Default: false,
+		},
+
+		"vmnet_offloading": {
+			Type:        schema.TypeBool,
+			Description: "Enable vmnet checksum and TSO offloading. See krunkit driver documentation for known limitations (krunkit driver only)",
 
 			Optional: true,
 			ForceNew: true,

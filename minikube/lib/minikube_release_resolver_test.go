@@ -12,8 +12,8 @@ func TestGetMinikubeIso(t *testing.T) {
 		want string
 	}{
 		{
-			name: "Patch release reuses the v1.38.0 ISO",
-			want: fmt.Sprintf("https://github.com/kubernetes/minikube/releases/download/v1.38.0/minikube-v1.38.0-%s.iso", runtime.GOARCH),
+			name: "Release uses the v1.39.0 ISO",
+			want: fmt.Sprintf("https://github.com/kubernetes/minikube/releases/download/v1.39.0/minikube-v1.39.0-%s.iso", runtime.GOARCH),
 		},
 	}
 	for _, tt := range tests {

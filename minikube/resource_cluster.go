@@ -231,6 +231,14 @@ func setClusterState(d *schema.ResourceData, cc *config.ClusterConfig, tfc lib.M
 	d.Set("driver", cc.Driver)
 	d.Set("disable_coredns_log", cc.DisableCoreDNSLog)
 	d.Set("disable_metrics", cc.DisableMetrics)
+	d.Set("mdns", cc.MDNS)
+	d.Set("vmnet_offloading", cc.VmnetOffloading)
+
+	dnsServers := make([]string, 0, len(cc.DNSServers))
+	for _, s := range cc.DNSServers {
+		dnsServers = append(dnsServers, s.String())
+	}
+	d.Set("dns_servers", state_utils.SliceOrNil(dnsServers))
 }
 
 // getClusterOutputs return the cluster key, certificate and certificate authority from the provided kubeconfig
@@ -333,6 +341,18 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 	if v, ok := d.GetOk("insecure_registry"); ok {
 		ir = state_utils.ReadSliceState(v)
 	}
+
+	var dnsServers []netip.Addr
+	if v, ok := d.GetOk("dns_servers"); ok {
+		for _, s := range state_utils.ReadSliceState(v) {
+			addr, err := netip.ParseAddr(s)
+			if err != nil {
+				return nil, fmt.Errorf("dns_servers: '%s' is not a valid IP address: %v", s, err)
+			}
+			dnsServers = append(dnsServers, addr)
+		}
+	}
+
 	var extraConfigs config.ExtraOptionSlice
 	for _, e := range ecSlice {
 		if err := extraConfigs.Set(e); err != nil {
@@ -471,6 +491,9 @@ func initialiseMinikubeClient(d *schema.ResourceData, m interface{}) (lib.Cluste
 		VerifyComponents:      vc,
 		DisableCoreDNSLog:     d.Get("disable_coredns_log").(bool),
 		DisableMetrics:        d.Get("disable_metrics").(bool),
+		DNSServers:            dnsServers,
+		MDNS:                  d.Get("mdns").(bool),
+		VmnetOffloading:       d.Get("vmnet_offloading").(bool),
 	}
 
 	clusterClient.SetConfig(lib.MinikubeClientConfig{

@@ -29,6 +29,21 @@ tf::init() {
   terraform -chdir="$dir" init -no-color -upgrade
 }
 
+# Initialise from the public registry even when the caller has configured the
+# local filesystem mirror used for the development build.
+tf::init_from_registry() {
+  local dir=$1
+  env -u TF_CLI_CONFIG_FILE terraform -chdir="$dir" init -no-color -upgrade
+}
+
+tf::set_provider_version() {
+  local dir=$1 version=$2
+  sed -i.bak \
+    "s/^\([[:space:]]*\)version = \"[^\"]*\"/\1version = \"$version\"/" \
+    "$dir/versions.tf"
+  rm -f "$dir/versions.tf.bak"
+}
+
 # Run a command with a deadline without relying on GNU timeout, which is not
 # available on macOS. Returns 124 on timeout, matching GNU timeout.
 tf::_with_timeout() {
@@ -42,19 +57,25 @@ tf::_with_timeout() {
   "$@" &
   command_pid=$!
   (
-    sleep "$timeout_s"
-    if kill -0 "$command_pid" 2>/dev/null; then
-      : >"$marker"
-      kill -TERM "$command_pid" 2>/dev/null || true
-      # Poll during the grace period so a command that handles TERM does not
-      # make its caller wait for the full five seconds.
-      local attempt
-      for attempt in 1 2 3 4 5; do
-        kill -0 "$command_pid" 2>/dev/null || exit 0
-        sleep 1
-      done
-      kill -KILL "$command_pid" 2>/dev/null || true
-    fi
+    # Poll rather than using one long sleep. On macOS, terminating a shell that
+    # is waiting on sleep can leave the caller blocked until that sleep ends.
+    local elapsed=0
+    while ((elapsed < timeout_s)); do
+      sleep 1
+      kill -0 "$command_pid" 2>/dev/null || exit 0
+      elapsed=$((elapsed + 1))
+    done
+
+    : >"$marker"
+    kill -TERM "$command_pid" 2>/dev/null || true
+    # Poll during the grace period so a command that handles TERM does not
+    # make its caller wait for the full five seconds.
+    local attempt
+    for attempt in 1 2 3 4 5; do
+      kill -0 "$command_pid" 2>/dev/null || exit 0
+      sleep 1
+    done
+    kill -KILL "$command_pid" 2>/dev/null || true
   ) &
   watchdog_pid=$!
 

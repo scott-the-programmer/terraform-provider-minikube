@@ -53,6 +53,7 @@ deployed and the traffic path is verified, then everything is destroyed.
 make e2e              # every driver this machine can run
 make e2e-docker       # just one
 make e2e FLAVOURS=qemu
+./test/e2e/run.sh --upgrade-from latest docker # released-to-local no-op plan
 ```
 
 Drivers that aren't installed are reported as `SKIP` rather than failing. See

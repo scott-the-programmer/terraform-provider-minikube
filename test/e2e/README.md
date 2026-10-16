@@ -48,6 +48,7 @@ the suite is useful on a machine that only has one of them.
 ./test/e2e/run.sh --keep docker        # leave the cluster up to poke at
 ./test/e2e/run.sh --skip-build docker  # reuse the provider already installed
 ./test/e2e/run.sh --preload-image ...  # side-load nginx instead of pulling it
+./test/e2e/run.sh --upgrade-from latest docker # released-to-local no-op test
 ./test/e2e/run.sh --list               # what's available
 ```
 
@@ -66,6 +67,13 @@ terraform at that mirror. To test a published build instead:
 ```sh
 E2E_PROVIDER_VERSION=1.2.3 ./test/e2e/run.sh docker
 ```
+
+Upgrade tests create the cluster with a released provider, verify that release
+has a clean baseline plan, switch only the provider requirement to the local
+`99.99.99` build, and require the next plan to remain a no-op. `latest` is
+resolved from the Terraform Registry at run time; a specific version such as
+`0.8.0` can be supplied for reproducibility. The cluster is then destroyed with
+the local provider. These tests run nightly for Docker and Podman.
 
 The workload image is pulled by the cluster itself, which is part of what the
 suite proves. Where that is not possible — offline, behind a Docker Hub rate

@@ -1,42 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildE2EArgs, buildFailureContext, discoverFlavours, E2EOutputParser } from "./e2e-core.ts";
-
-test("buildE2EArgs maps the selected flavours and options to run.sh arguments", () => {
-  assert.deepEqual(
-    buildE2EArgs({
-      flavours: ["docker", "qemu"],
-      keep: true,
-      skipBuild: true,
-      preloadImage: true,
-    }),
-    ["--keep", "--skip-build", "--preload-image", "docker", "qemu"],
-  );
-});
-
-test("E2EOutputParser tracks results across streamed chunks", () => {
-  const parser = new E2EOutputParser();
-
-  parser.push("12:00:00 [32mPASS[0m terraform init\nFLAVOUR: dock");
-  parser.push("er - docker driver\n12:00:01 FAIL deployment rolls out\n12:00:02 SKIP node port - not routable\n");
-
-  assert.deepEqual(parser.snapshot(), {
-    passed: 1,
-    failed: 1,
-    skipped: 1,
-    flavour: "docker",
-    latest: { status: "SKIP", name: "node port - not routable" },
-  });
-});
-
-test("E2EOutputParser finishes a final line without a newline", () => {
-  const parser = new E2EOutputParser();
-  parser.push("12:00:00 PASS final check");
-  parser.finish();
-
-  assert.equal(parser.snapshot().passed, 1);
-});
+import { buildFailureContext, discoverFlavours } from "./e2e-core.ts";
 
 test("buildFailureContext returns bounded recent output for the Pi session", () => {
   const log = [

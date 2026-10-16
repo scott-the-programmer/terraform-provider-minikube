@@ -8,14 +8,6 @@ export interface E2ESelection {
   preloadImage: boolean;
 }
 
-export function buildE2EArgs(selection: E2ESelection): string[] {
-  const args: string[] = [];
-  if (selection.keep) args.push("--keep");
-  if (selection.skipBuild) args.push("--skip-build");
-  if (selection.preloadImage) args.push("--preload-image");
-  return [...args, ...selection.flavours];
-}
-
 export type E2EStatus = "PASS" | "FAIL" | "SKIP";
 
 export interface E2EProgress {
@@ -24,45 +16,6 @@ export interface E2EProgress {
   skipped: number;
   flavour?: string;
   latest?: { status: E2EStatus; name: string };
-}
-
-export class E2EOutputParser {
-  private buffered = "";
-  private progress: E2EProgress = { passed: 0, failed: 0, skipped: 0 };
-
-  push(chunk: string): void {
-    this.buffered += chunk;
-    const lines = this.buffered.split("\n");
-    this.buffered = lines.pop() ?? "";
-    for (const line of lines) this.consume(line);
-  }
-
-  finish(): void {
-    if (this.buffered) this.consume(this.buffered);
-    this.buffered = "";
-  }
-
-  snapshot(): E2EProgress {
-    return {
-      ...this.progress,
-      latest: this.progress.latest ? { ...this.progress.latest } : undefined,
-    };
-  }
-
-  private consume(rawLine: string): void {
-    const line = rawLine.replace(/\x1b\[[0-9;]*m/g, "");
-    const flavour = line.match(/^FLAVOUR:\s+(\S+)/);
-    if (flavour) this.progress.flavour = flavour[1];
-
-    const result = line.match(/^\d{2}:\d{2}:\d{2}\s+(PASS|FAIL|SKIP)\s+(.+)$/);
-    if (!result) return;
-
-    const status = result[1] as E2EStatus;
-    if (status === "PASS") this.progress.passed++;
-    if (status === "FAIL") this.progress.failed++;
-    if (status === "SKIP") this.progress.skipped++;
-    this.progress.latest = { status, name: result[2] };
-  }
 }
 
 export function buildFailureContext(log: string, logPath: string, progress: E2EProgress): string {

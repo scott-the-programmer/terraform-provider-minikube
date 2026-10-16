@@ -120,7 +120,7 @@ parse_args() {
 
 require_host_tools() {
   local missing=() tool
-  for tool in terraform kubectl curl base64 timeout; do
+  for tool in terraform kubectl curl base64; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
   done
   if [[ ${#missing[@]} -gt 0 ]]; then

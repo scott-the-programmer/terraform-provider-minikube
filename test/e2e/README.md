@@ -25,8 +25,8 @@ plugin cache and lock files never collide between drivers run back to back.
 
 ## Requirements
 
-On the host: `terraform`, `kubectl`, `curl`, `base64`, `timeout`, plus `make`
-and the Go toolchain if you want `run.sh` to build the provider for you.
+On the host: `terraform`, `kubectl`, `curl`, and `base64`, plus `make` and
+the Go toolchain if you want `run.sh` to build the provider for you.
 
 Per flavour, whatever that driver needs:
 

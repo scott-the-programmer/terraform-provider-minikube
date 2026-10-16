@@ -29,15 +29,61 @@ tf::init() {
   terraform -chdir="$dir" init -no-color -upgrade
 }
 
+# Run a command with a deadline without relying on GNU timeout, which is not
+# available on macOS. Returns 124 on timeout, matching GNU timeout.
+tf::_with_timeout() {
+  local timeout_s=$1
+  shift
+
+  local marker="${TMPDIR:-/tmp}/tf-minikube-e2e-timeout.$$.$RANDOM"
+  local command_pid watchdog_pid rc
+  rm -f "$marker"
+
+  "$@" &
+  command_pid=$!
+  (
+    sleep "$timeout_s"
+    if kill -0 "$command_pid" 2>/dev/null; then
+      : >"$marker"
+      kill -TERM "$command_pid" 2>/dev/null || true
+      # Poll during the grace period so a command that handles TERM does not
+      # make its caller wait for the full five seconds.
+      local attempt
+      for attempt in 1 2 3 4 5; do
+        kill -0 "$command_pid" 2>/dev/null || exit 0
+        sleep 1
+      done
+      kill -KILL "$command_pid" 2>/dev/null || true
+    fi
+  ) &
+  watchdog_pid=$!
+
+  if wait "$command_pid"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  kill "$watchdog_pid" 2>/dev/null || true
+  wait "$watchdog_pid" 2>/dev/null || true
+
+  if [[ -f "$marker" ]]; then
+    rm -f "$marker"
+    printf 'timed out after %ss waiting for: %s\n' "$timeout_s" "$*" >&2
+    return 124
+  fi
+  rm -f "$marker"
+  return "$rc"
+}
+
 tf::apply() {
   local dir=$1 timeout_s=$2
-  timeout --foreground "$timeout_s" \
+  tf::_with_timeout "$timeout_s" \
     terraform -chdir="$dir" apply -no-color -auto-approve
 }
 
 tf::destroy() {
   local dir=$1 timeout_s=${2:-900}
-  timeout --foreground "$timeout_s" \
+  tf::_with_timeout "$timeout_s" \
     terraform -chdir="$dir" destroy -no-color -auto-approve
 }
 

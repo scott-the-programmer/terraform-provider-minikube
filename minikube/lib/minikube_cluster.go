@@ -153,7 +153,9 @@ func (m *MinikubeCluster) SetAddon(name string, addon string, value string) erro
 }
 
 // Minikube keeps bundled addon readers globally. Unlike the CLI, a provider
-// process can install them repeatedly, so rewind them under the creation lock.
+// process can install them repeatedly, so rewind them before reinstalling.
+// Isolated worker processes call this once per fresh operation, so no
+// coordination is needed inside the process.
 func resetAddonAssets() error {
 	for _, addon := range assets.Addons {
 		for _, asset := range addon.Assets {
@@ -163,6 +165,13 @@ func resetAddonAssets() error {
 		}
 	}
 	return nil
+}
+
+// ResetAddonAssets exposes the addon reader rewind for isolated workers, which
+// cannot reach the unexported in-process helper. Each worker process runs one
+// operation, so rewinding requires no coordination.
+func ResetAddonAssets() error {
+	return resetAddonAssets()
 }
 
 func (m *MinikubeCluster) Get(name string) *config.ClusterConfig {

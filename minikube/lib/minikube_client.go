@@ -128,6 +128,7 @@ func (e *MinikubeClient) GetConfig() MinikubeClientConfig {
 		DeleteOnFailure: e.deleteOnFailure,
 		Nodes:           e.nodes,
 		HA:              e.ha,
+		NativeSsh:       e.nativeSsh,
 	}
 }
 
@@ -297,6 +298,14 @@ func diff(addonsA, addonsB []string) []string {
 		}
 	}
 	return diff
+}
+
+// DiffAddons returns the addons present in "before" but missing from "after",
+// exposed for callers that need to express addon transitions themselves —
+// for example, a worker request must carry enable/disable lists explicitly
+// because each fresh worker only ever sees one request.
+func DiffAddons(before, after []string) []string {
+	return diff(before, after)
 }
 
 func (e *MinikubeClient) setAddons(addons []string, val bool) error {

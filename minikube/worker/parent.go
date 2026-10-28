@@ -15,23 +15,13 @@ import (
 	"k8s.io/minikube/pkg/minikube/localpath"
 )
 
-// Client launches one isolated worker process per operation. Create one with
-// NewClient.
 type Client struct {
-	// ExecPath is the executable to re-execute. It defaults to
-	// os.Executable(), so workers always run the real provider binary, which
-	// reports "unknown resource and state behaviour" for nothing else.
-	ExecPath string
-	// ExtraEnv appends to the child environment (os.Environ() plus these).
-	// The default client sets EnvWorkerChild so main dispatches worker mode
-	// before plugin serving.
-	ExtraEnv []string
-	// StderrTail caps how much worker stderr is attached to diagnostics.
+	// ExecPath defaults to os.Executable() when empty.
+	ExecPath   string
+	ExtraEnv   []string
 	StderrTail int
 }
 
-// NewClient returns a parent client that re-executes this provider binary in
-// worker child mode.
 func NewClient() (*Client, error) {
 	exe, err := os.Executable()
 	if err != nil {
@@ -44,11 +34,6 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// IsolationEnabled reports whether lifecycle operations should run in isolated
-// worker processes. Practitioners disable isolation by setting EnvInProcess,
-// and the setting also reverts safety to the broad creation mutex, which
-// serializes every cluster operation in-process. Worker processes never nest
-// further workers.
 func IsolationEnabled() bool {
 	if IsWorkerChild() {
 		return false
@@ -56,16 +41,7 @@ func IsolationEnabled() bool {
 	return os.Getenv(EnvInProcess) == ""
 }
 
-// Run executes one operation in a fresh worker process and returns its typed
-// response. The child is always reaped before Run returns, so failed workers
-// never linger.
-//
-// Operations on the same canonical Minikube home/profile serialize on a keyed
-// lock, while distinct profiles may overlap. This is the replacement for the
-// former broad creation mutex: coordination is scoped to each profile, and
-// fresh per-worker processes stop Minikube's process-global Viper settings
-// from crossing operations. Minikube's own file locks remain responsible for
-// shared on-disk resources (kubeconfig, certificates, download caches).
+// Run reaps one worker and serializes calls per home/profile.
 func (c *Client) Run(ctx context.Context, req *Request) (*Response, error) {
 	if req == nil {
 		return nil, errors.New("nil worker request")
@@ -76,9 +52,6 @@ func (c *Client) Run(ctx context.Context, req *Request) (*Response, error) {
 	}
 	defer release()
 
-	// Propagate deadlines: the finer of the request's own cutoff and the
-	// caller's context applies both here (process-group kill) and in the
-	// child (own deadline, absorbed into the request).
 	deadline := req.Deadline
 	if d, ok := ctx.Deadline(); ok && (deadline.IsZero() || d.Before(deadline)) {
 		deadline = d
@@ -109,9 +82,6 @@ func (c *Client) Run(ctx context.Context, req *Request) (*Response, error) {
 	cmd.Stderr = &stderr
 	cmd.WaitDelay = 5 * time.Second
 	cmd.Cancel = func() error {
-		// Terraform cancelled or the deadline passed: take the entire worker
-		// process group down so driver-spawned descendants do not outlive the
-		// operation.
 		if err := killProcessGroup(cmd); err != nil {
 			if cmdErr := cmd.Process.Kill(); cmdErr != nil {
 				klog.Errorf("worker: terminate process group: %v (fallback kill: %v)", err, cmdErr)
@@ -132,9 +102,7 @@ func (c *Client) Run(ctx context.Context, req *Request) (*Response, error) {
 			return nil, fmt.Errorf("worker did not survive operation %s on profile %q (cancelled or timed out: %v): %s",
 				req.Op, req.Profile, ctx.Err(), tailString(stderr, c.StderrTail))
 		}
-		// The worker may have terminated upstream-style (exit.Error kills the
-		// process without a diagnostic channel) after writing a valid frame;
-		// parse before treating the exit status as fatal.
+		// Prefer a framed response over the exit status.
 		if resp, perr := decodeFrame(stdout.Bytes()); perr == nil {
 			return resp, nil
 		}
@@ -154,7 +122,6 @@ func (c *Client) Run(ctx context.Context, req *Request) (*Response, error) {
 	return resp, nil
 }
 
-// tailString renders stderr as a bounded diagnostic tail.
 func tailString(b capBuffer, n int) string {
 	raw := b.buf.Bytes()
 	if n <= 0 || len(raw) <= n {
@@ -163,8 +130,6 @@ func tailString(b capBuffer, n int) string {
 	return strings.TrimSpace(string(raw[len(raw)-n:]))
 }
 
-// capBuffer keeps only the most recent bytes so a chatty worker's logs stay
-// bounded in memory while still providing a useful tail on failure.
 type capBuffer struct {
 	buf bytes.Buffer
 	max int
@@ -183,27 +148,17 @@ func (b *capBuffer) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// minikubeProfileKey identifies one Minikube profile inside one canonical
-// Minikube home, so overlapping Terraform processes or provider
-// configurations coordinate consistently.
 func minikubeProfileKey(home, profile string) string {
 	return fmt.Sprintf("%s\x00%s", home, profile)
 }
 
-// profileLock serializes operations that act on the same canonical Minikube
-// home/profile within the provider process, while leaving different profiles
-// free to overlap.
 type profileLock struct {
 	mu sync.Mutex
 }
 
-//nolint:gochecknoglobals // process-wide registry of per-profile coordination locks
-var profileLockRegistry sync.Map // key string -> *profileLock
+//nolint:gochecknoglobals // per-profile locks must be process-wide
+var profileLockRegistry sync.Map // string -> *profileLock
 
-// lockProfile acquires the per-profile lock and returns its release func.
-// Diagnostic operations that carry no profile (probe-isolation) deliberately
-// skip coordination so they can overlap: every operation that mutates or reads
-// a profile carries its name, and those serialize.
 func lockProfile(profile string) (func(), error) {
 	if strings.TrimSpace(profile) == "" {
 		return func() {}, nil

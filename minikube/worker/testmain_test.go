@@ -10,26 +10,18 @@ import (
 	"k8s.io/minikube/pkg/minikube/config"
 )
 
-// testStderrSentinel appears in stderr written by test helper modes so tests
-// can assert that parents attach stderr tails to failures.
 const testStderrSentinel = "TFMK-TEST-STDERR-SENTINEL"
 
 const defaultTestKubernetesVersion = "v1.30.0"
 
-// TestMain re-executes the test binary as a stand-in worker process. The real
-// provider binary dispatches via EnvWorkerChild in main(); the equivalent
-// dispatch inside tests has to happen in TestMain, before tests run.
 func TestMain(m *testing.M) {
 	if os.Getenv(EnvTestHelper) != "" {
 		switch {
 		case os.Getenv(EnvTestGarbage) != "":
-			// Simulate a worker whose stdout is not a valid protocol frame.
 			os.Stderr.WriteString(testStderrSentinel + " garbage mode\n")
 			os.Stdout.WriteString("not a response ~~~ stray output <<<\n")
 			os.Exit(0)
 		case os.Getenv(EnvTestExit) != "":
-			// Simulate upstream termination such as exit.Error, which kills
-			// the process before any protocol write.
 			os.Stderr.WriteString(testStderrSentinel + " exit mode\n")
 			code, _ := jsonNumber(os.Getenv(EnvTestExit))
 			os.Exit(code)
@@ -48,8 +40,6 @@ func jsonNumber(raw string) (int, error) {
 	return code, nil
 }
 
-// testClient returns a parent client for a real cross-process worker backed by
-// the re-executed test binary.
 func testClient(t *testing.T, extraEnv ...string) *Client {
 	t.Helper()
 	exe, err := os.Executable()
@@ -60,14 +50,10 @@ func testClient(t *testing.T, extraEnv ...string) *Client {
 	return &Client{ExecPath: exe, ExtraEnv: env, StderrTail: 8192}
 }
 
-// getProfileRequest builds a get request for a profile written by
-// writeProfileFixture.
 func getProfileRequest(profile string) *Request {
 	return &Request{Op: OpGet, Profile: profile}
 }
 
-// writeProfileFixture lays out a minikube home containing one saved profile so
-// worker processes can load it without any cluster running.
 func writeProfileFixture(t *testing.T, home, name string, addons map[string]bool) *config.ClusterConfig {
 	t.Helper()
 
@@ -109,9 +95,7 @@ func writeProfileFixture(t *testing.T, home, name string, addons map[string]bool
 	return cc
 }
 
-// isolatedMinikubeHome gives a test its own minikube home and inherits it into
-// any child process. MINIKUBE_HOME behaves like $HOME, so the minikube root is
-// a ".minikube" directory under it.
+// Minikube appends .minikube to MINIKUBE_HOME.
 func isolatedMinikubeHome(t *testing.T) string {
 	t.Helper()
 	base := t.TempDir()
@@ -120,7 +104,6 @@ func isolatedMinikubeHome(t *testing.T) string {
 	return home
 }
 
-// runServe executes Serve in-process over byte buffers.
 func runServe(t *testing.T, req *Request) *Response {
 	t.Helper()
 
@@ -142,7 +125,6 @@ func runServe(t *testing.T, req *Request) *Response {
 	return resp
 }
 
-// runServeRaw executes Serve and returns the raw output, for framing tests.
 func runServeRaw(t *testing.T, req *Request) int {
 	t.Helper()
 	payload, err := encode(req)

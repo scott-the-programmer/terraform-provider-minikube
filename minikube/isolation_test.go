@@ -10,8 +10,6 @@ import (
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/worker"
 )
 
-// TestMain dispatches worker protocol fixtures before running tests, and keeps
-// the existing mock-based suites on the in-process fallback.
 func TestMain(m *testing.M) {
 	if expected := os.Getenv("TF_MINIKUBE_PROVIDER_TEST_REQUEST"); expected != "" {
 		var want, got worker.Request

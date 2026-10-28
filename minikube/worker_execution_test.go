@@ -14,7 +14,6 @@ import (
 	"k8s.io/minikube/pkg/minikube/config"
 )
 
-// The child checks the whole request before returning the supplied response.
 func expectWorkerRequest(t *testing.T, req worker.Request, resp worker.Response) {
 	t.Helper()
 	client, err := workerClientInstance()

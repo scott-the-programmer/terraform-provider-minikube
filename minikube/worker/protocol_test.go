@@ -49,7 +49,6 @@ func TestDecodeFrame(t *testing.T) {
 	var buf bytes.Buffer
 	require.NoError(t, writeFrame(&buf, resp))
 
-	// Stray output before the marker must not corrupt framing.
 	stray := []byte("some stray framework output\n" + buf.String() + "\n")
 	got, err := decodeFrame(stray)
 	require.NoError(t, err)

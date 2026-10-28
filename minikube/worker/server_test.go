@@ -49,8 +49,6 @@ func TestServeProbeOpReportsOwnProfile(t *testing.T) {
 	require.Equal(t, "probe-in-process", resp.Probe)
 
 	t.Cleanup(func() {
-		// The probe mutates the process-global Viper profile; don't let it
-		// leak into sibling tests of this process.
 		resetTestViperProfile()
 	})
 }
@@ -78,9 +76,7 @@ func TestServeAddonsOpRewritesProfile(t *testing.T) {
 	home := isolatedMinikubeHome(t)
 	writeProfileFixture(t, home, "hotel", map[string]bool{"default-storageclass": true, "storage-provisioner": true})
 
-	// These storage-class addons take a fast "cluster not running" path in
-	// upstream's callbacks, so the test is hermetic; addons like ingress would
-	// try to reach a real node.
+	// These addons work without a running cluster; others may contact a node.
 	resp := runServe(t, &Request{
 		Op:      OpAddons,
 		Profile: "hotel",
@@ -95,7 +91,6 @@ func TestServeAddonsOpRewritesProfile(t *testing.T) {
 	})
 	require.True(t, resp.OK, "addons should apply: %s", resp.Error)
 
-	// Verify the saved profile actually changed in the disposable home.
 	reloaded, err := config.Load("hotel")
 	require.NoError(t, err)
 	require.False(t, reloaded.Addons["default-storageclass"], "default-storageclass should be saved disabled")

@@ -15,8 +15,6 @@ import (
 	"k8s.io/minikube/pkg/minikube/config"
 )
 
-// TestParentClientGetCrossProcess loads a profile fixture through a genuinely
-// separate worker process: the test binary re-executed via TestMain.
 func TestParentClientGetCrossProcess(t *testing.T) {
 	home := isolatedMinikubeHome(t)
 	writeProfileFixture(t, home, "india", nil)
@@ -29,11 +27,6 @@ func TestParentClientGetCrossProcess(t *testing.T) {
 	require.Equal(t, defaultTestKubernetesVersion, resp.ClusterConfig.KubernetesConfig.KubernetesVersion)
 }
 
-// TestParentClientProbeIsolationConcurrent is the process-boundary proof: many
-// concurrent workers each set the process-global profile value the same way a
-// start does, and each must observe its own value. In a single shared process,
-// racing probes observe whichever writer ran last — the exact contamination
-// that motivated worker isolation.
 func TestParentClientProbeIsolationConcurrent(t *testing.T) {
 	const workers = 4
 
@@ -70,9 +63,6 @@ func TestParentClientProbeIsolationConcurrent(t *testing.T) {
 	}
 }
 
-// TestParentClientConcurrentGetsDistinctHomes runs get ops against different
-// disposable minikube homes concurrently; each worker resolves its own home,
-// which also documents that workers inherit the parent environment.
 func TestParentClientConcurrentGetsDistinctHomes(t *testing.T) {
 	const workers = 2
 
@@ -116,7 +106,6 @@ func TestParentClientConcurrentGetsDistinctHomes(t *testing.T) {
 	for i := range workers {
 		require.NoError(t, errs[i], "worker %d failed", i)
 
-		// The saved fixture's version distinguishes the homes.
 		want := fixtureKubernetesVersion(t, mkHomes[i])
 		require.NotNil(t, responses[i])
 		require.Equal(t, want, responses[i].ClusterConfig.KubernetesConfig.KubernetesVersion)
@@ -132,9 +121,6 @@ func fixtureKubernetesVersion(t *testing.T, mkHome string) string {
 	return cc.KubernetesConfig.KubernetesVersion
 }
 
-// TestParentClientCancellationTimeout verifies Terraform cancellation
-// propagation: a stuck worker is terminated (with its process group) and the
-// parent surfaces an actionable diagnostic instead of hanging.
 func TestParentClientCancellationTimeout(t *testing.T) {
 	isolatedMinikubeHome(t)
 
@@ -151,8 +137,6 @@ func TestParentClientCancellationTimeout(t *testing.T) {
 	require.Less(t, elapsed, 5*time.Second, "the stuck worker should have been killed, not awaited")
 }
 
-// TestParentClientMalformedResponse classifies a worker that fails protocol
-// framing, and proves the stderr tail is attached to the parent's diagnostics.
 func TestParentClientMalformedResponse(t *testing.T) {
 	isolatedMinikubeHome(t)
 
@@ -164,8 +148,6 @@ func TestParentClientMalformedResponse(t *testing.T) {
 	require.Contains(t, err.Error(), testStderrSentinel, "diagnostics should include the worker stderr tail")
 }
 
-// TestParentClientAbnormalExit classifies upstream process termination (the
-// exit.Error path) as an abnormal worker exit with the stderr tail attached.
 func TestParentClientAbnormalExit(t *testing.T) {
 	isolatedMinikubeHome(t)
 
@@ -178,8 +160,6 @@ func TestParentClientAbnormalExit(t *testing.T) {
 	require.Contains(t, err.Error(), testStderrSentinel)
 }
 
-// TestParentClientUnknownOperation proves op errors travel the protocol as a
-// typed non-OK response rather than a process failure.
 func TestParentClientUnknownOperation(t *testing.T) {
 	isolatedMinikubeHome(t)
 
@@ -190,8 +170,6 @@ func TestParentClientUnknownOperation(t *testing.T) {
 	require.Contains(t, resp.Error, "unknown operation")
 }
 
-// TestProfileLockSerializesSameProfile exercises the keyed lock directly: a
-// same-profile operation waits, a distinct profile does not.
 func TestProfileLockSerializesSameProfile(t *testing.T) {
 	release, err := lockProfile("november")
 	require.NoError(t, err)
@@ -211,7 +189,6 @@ func TestProfileLockSerializesSameProfile(t *testing.T) {
 	case <-reacquired:
 		t.Fatal("same profile lock was acquired while held")
 	case <-time.After(100 * time.Millisecond):
-		// still held, as expected
 	}
 
 	release()
@@ -224,8 +201,6 @@ func TestProfileLockSerializesSameProfile(t *testing.T) {
 		}
 	}, 2*time.Second, 10*time.Millisecond, "same profile lock should become available after release")
 
-	// Distinct profile: acquisition succeeds immediately even while the other
-	// goroutine's "november" lock exists.
 	other, err := lockProfile("oscar")
 	require.NoError(t, err)
 	other()

@@ -172,10 +172,6 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 		addons []string
 	)
 	if worker.IsolationEnabled() {
-		// Refresh runs in a worker because reading the profile touches the
-		// same Minikube loaders that terminate their process on a missing
-		// profile (mustload.Partial); through a worker this becomes a
-		// contained, actionable error instead of taking down the plugin.
 		tfc = client.GetConfig()
 		cc, addons, err = readClusterInWorker(ctx, tfc.ClusterName)
 	} else {

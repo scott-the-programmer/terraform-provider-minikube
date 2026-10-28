@@ -79,8 +79,7 @@ provider "kubernetes" {
 Each lifecycle operation runs in an isolated worker process, so multiple cluster resources
 can be created concurrently while Minikube's process-global configuration is scoped
 per-operation. Operations on the same profile still serialize; set
-`TF_MINIKUBE_IN_PROCESS=1` to revert to the previous single-process behavior. See
-[docs/guides/parallel-cluster-creation.md](./docs/guides/parallel-cluster-creation.md).
+`TF_MINIKUBE_IN_PROCESS=1` to revert to the previous single-process behavior.
 
 ## Want to help out?
 

@@ -125,6 +125,34 @@ only pass by reaching *that* nginx — not something else answering on port 80.
 The image is `nginx:1.27-alpine` because busybox `wget` and `nslookup` ship in
 it, which keeps the in-cluster checks from needing a second image pull.
 
+## Released-provider upgrade regression
+
+```sh
+make e2e-upgrade
+# Reproduce a specific release instead of the latest registry version:
+UPGRADE_FROM_VERSION=0.8.0 make e2e-upgrade
+```
+
+`TestAccClusterUpgrade` in `minikube/resource_cluster_upgrade_test.go` uses the
+existing Terraform SDK acceptance-test harness, with three steps sharing the
+same configuration and state:
+
+1. Create a Docker cluster using the latest **published provider** via
+   `ExternalProviders`. The harness also verifies its post-apply plan is clean.
+2. Switch to the branch provider via `ProviderFactories` and require an empty
+   `PlanOnly` step. A diff fails before the branch can apply any changes.
+3. Reapply the unchanged configuration with the branch provider and verify its
+   post-apply plan is still empty.
+
+The harness manages provider installation, temporary state, and teardown;
+`verifyDelete` checks that the cluster was removed. Each run uses a unique
+profile. Kubernetes is pinned to `v1.34.0` so changes to the embedded minikube
+default do not change the requested stack.
+
+Requires Go, Terraform and a working Docker daemon. The test is opt-in through
+`TF_ACC=1` (set by the make target), and also runs in a separate Docker job in
+the nightly/manual E2E workflow. No shell runner or Python tests are needed.
+
 ## Adding a flavour
 
 Drop a `flavours/<name>.tfvars` with the variables from `stack/variables.tf`,

@@ -64,6 +64,11 @@ FLAVOURS ?=
 e2e:
 	$(E2E_DIR)/run.sh $(FLAVOURS)
 
+# Released provider -> current checkout, sharing the same configuration and state.
+.PHONY: e2e-upgrade
+e2e-upgrade:
+	TF_ACC=1 go test -tags $(BUILD_TAGS) -ldflags="-X k8s.io/minikube/pkg/version.storageProvisionerVersion=$(STORAGE_PROVISIONER_TAG)" ./minikube -run '^TestAccClusterUpgrade$$' -v -count=1 -timeout=40m
+
 .PHONY: e2e-docker
 e2e-docker:
 	$(E2E_DIR)/run.sh docker

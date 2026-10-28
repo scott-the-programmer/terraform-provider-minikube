@@ -12,6 +12,24 @@ on:
     - cron: "0 14 * * *"
 
 jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Verify released provider to branch is a no-op
+        run: make e2e-upgrade
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 60

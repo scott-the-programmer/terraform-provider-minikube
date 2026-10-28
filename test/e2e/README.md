@@ -121,43 +121,29 @@ it, which keeps the in-cluster checks from needing a second image pull.
 
 ```sh
 make e2e-upgrade
-# Reproduce a specific release, or reuse an already built branch binary:
-UPGRADE_FROM_VERSION=0.8.0 ./test/e2e/upgrade.sh
-UPGRADE_PROVIDER_BINARY="$PWD/bin/terraform-provider-minikube" ./test/e2e/upgrade.sh
+# Reproduce a specific release instead of the latest registry version:
+UPGRADE_FROM_VERSION=0.8.0 make e2e-upgrade
 ```
 
-`upgrade.sh` resolves the latest version from the Terraform registry by default.
-It creates the Docker stack with that **published binary**, requires a clean
-baseline plan, then switches only the provider version/installation source to a
-binary built from the current checkout. The resource configuration, variables,
-profile and Terraform state stay in place. Kubernetes is pinned to `v1.34.0` so
-changes to the embedded minikube default do not change the requested stack.
+`TestAccClusterUpgrade` in `minikube/resource_cluster_upgrade_test.go` uses the
+existing Terraform SDK acceptance-test harness, with three steps sharing the
+same configuration and state:
 
-The branch must produce a **zero-diff plan** (`-detailed-exitcode` must return 0).
-Only then is that saved plan applied, followed by another zero-diff check. A
-replacement, update, output change or Terraform error fails the test; a diff is
-never silently applied to make the test pass.
+1. Create a Docker cluster using the latest **published provider** via
+   `ExternalProviders`. The harness also verifies its post-apply plan is clean.
+2. Switch to the branch provider via `ProviderFactories` and require an empty
+   `PlanOnly` step. A diff fails before the branch can apply any changes.
+3. Reapply the unchanged configuration with the branch provider and verify its
+   post-apply plan is still empty.
 
-Each invocation uses a unique profile and directory under `.work/upgrade.*`.
-Explicit, test-local CLI configs ensure the baseline comes directly from the
-registry and the branch comes only from an isolated filesystem mirror, without
-modifying your global provider installation. User CLI flags and plugin caches
-are excluded. Go/make are needed unless `UPGRADE_PROVIDER_BINARY` is supplied;
-otherwise requirements are `terraform`, `curl`, `jq`, `timeout` and a working
-Docker daemon. `UPGRADE_TIMEOUT` sets the per-operation timeout (default 1200s).
+The harness manages provider installation, temporary state, and teardown;
+`verifyDelete` checks that the cluster was removed. Each run uses a unique
+profile. Kubernetes is pinned to `v1.34.0` so changes to the embedded minikube
+default do not change the requested stack.
 
-An exit/signal trap attempts `terraform destroy` even after a failed apply or
-upgrade. Logs, the baseline lock file/state and the saved plan remain in the
-printed work directory for diagnosis. **These artifacts contain credentials;
-do not publish them as CI artifacts.** Cleanup failures fail the test and leave
-`destroy.log` for manual recovery. The nightly/manual E2E workflow also runs
-this regression in a separate Docker job.
-
-The runner's failure handling can be tested without a cluster or provider build:
-
-```sh
-python3 -m unittest discover -s test/e2e -p 'test_upgrade.py' -v
-```
+Requires Go, Terraform and a working Docker daemon. The test is opt-in through
+`TF_ACC=1` (set by the make target), and also runs in a separate Docker job in
+the nightly/manual E2E workflow. No shell runner or Python tests are needed.
 
 ## Adding a flavour
 

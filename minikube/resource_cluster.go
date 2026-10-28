@@ -12,6 +12,7 @@ import (
 
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/lib"
 	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/state_utils"
+	"github.com/scott-the-programmer/terraform-provider-minikube/minikube/worker"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -67,7 +68,13 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	kc, err := client.Start()
+
+	var kc *kubeconfig.Settings
+	if worker.IsolationEnabled() {
+		kc, err = createClusterInWorker(ctx, client)
+	} else {
+		kc, err = client.Start()
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,21 +104,26 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	if d.HasChange("addons") {
-		config := client.GetConfig()
+		savedConfig := client.GetConfig()
 		oldAddons, newAddons := d.GetChange("addons")
 		oldAddonStrings := state_utils.SetToSlice(oldAddons.(*schema.Set))
 		newAddonStrings := state_utils.SetToSlice(newAddons.(*schema.Set))
 
 		client.SetConfig(lib.MinikubeClientConfig{
-			ClusterConfig:   config.ClusterConfig,
-			IsoUrls:         config.IsoUrls,
-			ClusterName:     config.ClusterName,
+			ClusterConfig:   savedConfig.ClusterConfig,
+			IsoUrls:         savedConfig.IsoUrls,
+			ClusterName:     savedConfig.ClusterName,
 			Addons:          oldAddonStrings,
-			DeleteOnFailure: config.DeleteOnFailure,
-			Nodes:           config.Nodes,
+			DeleteOnFailure: savedConfig.DeleteOnFailure,
+			Nodes:           savedConfig.Nodes,
 		})
 
-		err = client.ApplyAddons(newAddonStrings)
+		if worker.IsolationEnabled() {
+			enable, disable := addonTransitions(oldAddonStrings, newAddonStrings)
+			err = applyAddonsInWorker(ctx, savedConfig.ClusterName, enable, disable)
+		} else {
+			err = client.ApplyAddons(newAddonStrings)
+		}
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -131,7 +143,12 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = client.Delete()
+
+	if worker.IsolationEnabled() {
+		err = deleteClusterInWorker(ctx, client)
+	} else {
+		err = client.Delete()
+	}
 	if err != nil {
 		fmt.Printf("Failed to delete cluster - you might want to consider running `minikube delete -p %s`", d.Get("cluster_name").(string))
 	}
@@ -148,9 +165,23 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	cc := client.GetClusterConfig()
-	tfc := client.GetConfig()
-	addons := client.GetAddons()
+
+	var (
+		cc     *config.ClusterConfig
+		tfc    lib.MinikubeClientConfig
+		addons []string
+	)
+	if worker.IsolationEnabled() {
+		tfc = client.GetConfig()
+		cc, addons, err = readClusterInWorker(ctx, tfc.ClusterName)
+	} else {
+		cc = client.GetClusterConfig()
+		tfc = client.GetConfig()
+		addons = client.GetAddons()
+	}
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	sort.Strings(addons) //to ensure consistency with TF state
 
 	stringPorts := cc.ExposedPorts

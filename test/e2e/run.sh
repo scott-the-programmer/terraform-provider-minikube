@@ -35,6 +35,7 @@ PROVIDER_VERSION=${E2E_PROVIDER_VERSION:-99.99.99}
 BUILD_PROVIDER=1
 KEEP_CLUSTERS=0
 PRELOAD_IMAGE=${E2E_PRELOAD_IMAGE:-0}
+UPGRADE_FROM=''
 REQUESTED_FLAVOURS=()
 
 E2E_PORT_FORWARD_PID=''
@@ -60,6 +61,10 @@ Options:
                       cluster has no DNS out. Needs the minikube CLI.
   -w, --work-dir DIR  Where to materialise per-flavour terraform dirs.
                       (default: $WORK_DIR)
+  -u, --upgrade-from VERSION
+                      Create with a released provider, upgrade to the local
+                      99.99.99 build, and require the resulting plan to be a
+                      no-op. VERSION may be "latest".
   -l, --list          List the available flavours and exit.
   -h, --help          Show this help.
 
@@ -74,9 +79,10 @@ Environment:
   E2E_WORK_DIR          Same as --work-dir.
 
 Examples:
-  ./run.sh                     # everything that can run on this machine
-  ./run.sh docker              # just the docker driver
-  ./run.sh --keep docker qemu  # leave both clusters up for inspection
+  ./run.sh                              # everything that can run
+  ./run.sh docker                       # just the docker driver
+  ./run.sh --keep docker qemu           # leave clusters up for inspection
+  ./run.sh --upgrade-from latest docker # released-to-local no-op test
 EOF
 }
 
@@ -97,6 +103,10 @@ parse_args() {
       -p | --preload-image) PRELOAD_IMAGE=1 ;;
       -w | --work-dir)
         WORK_DIR=$2
+        shift
+        ;;
+      -u | --upgrade-from)
+        UPGRADE_FROM=$2
         shift
         ;;
       -l | --list)
@@ -120,7 +130,7 @@ parse_args() {
 
 require_host_tools() {
   local missing=() tool
-  for tool in terraform kubectl curl base64 timeout; do
+  for tool in terraform kubectl curl base64; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
   done
   if [[ ${#missing[@]} -gt 0 ]]; then
@@ -160,6 +170,26 @@ flavour_is_runnable() {
 build_local_provider() {
   log::info "building and installing the local provider (version $PROVIDER_VERSION)"
   log::run make -C "$REPO_ROOT" set-local
+}
+
+resolve_upgrade_version() {
+  if [[ "$UPGRADE_FROM" != "latest" ]]; then
+    UPGRADE_FROM=${UPGRADE_FROM#v}
+    return 0
+  fi
+
+  local response version
+  response=$(curl -fsSL https://registry.terraform.io/v1/providers/scott-the-programmer/minikube) || {
+    log::error "could not resolve the latest released provider version"
+    return 1
+  }
+  version=$(printf '%s' "$response" | grep -o '"version":"[^"]*"' | head -1 | cut -d '"' -f4)
+  if [[ -z "$version" ]]; then
+    log::error "Terraform Registry response did not contain a provider version"
+    return 1
+  fi
+  UPGRADE_FROM=$version
+  log::info "latest released provider is $UPGRADE_FROM"
 }
 
 configure_provider_source() {
@@ -271,8 +301,11 @@ run_flavour() {
     return 0
   fi
 
+  local initial_version=$PROVIDER_VERSION
+  [[ -n "$UPGRADE_FROM" ]] && initial_version=$UPGRADE_FROM
+
   local tf_dir
-  tf_dir=$(tf::prepare "$flavour" "$WORK_DIR" "$STACK_DIR" "$tfvars" "$PROVIDER_VERSION")
+  tf_dir=$(tf::prepare "$flavour" "$WORK_DIR" "$STACK_DIR" "$tfvars" "$initial_version")
   CLEANUP_DIRS+=("$tf_dir")
 
   E2E_KUBECONFIG="$tf_dir/kubeconfig"
@@ -282,7 +315,12 @@ run_flavour() {
   expected_nodes=$(sed -n 's/^nodes *= *\([0-9]\+\).*/\1/p' "$tfvars")
   expected_nodes=${expected_nodes:-1}
 
-  if ! check::stream "terraform init" tf::init "$tf_dir"; then
+  if [[ -n "$UPGRADE_FROM" ]]; then
+    if ! check::stream "terraform init installs released provider $UPGRADE_FROM" \
+      tf::init_from_registry "$tf_dir"; then
+      return 1
+    fi
+  elif ! check::stream "terraform init" tf::init "$tf_dir"; then
     return 1
   fi
 
@@ -295,7 +333,22 @@ run_flavour() {
   check "provider outputs expose a usable apiserver endpoint and credentials" \
     checks::outputs_usable "$tf_dir" || true
 
-  check "terraform plan is clean after apply" tf::plan_is_clean "$tf_dir" || true
+  if [[ -n "$UPGRADE_FROM" ]]; then
+    check "released provider $UPGRADE_FROM has a clean baseline plan" \
+      tf::plan_is_clean "$tf_dir" || true
+    tf::set_provider_version "$tf_dir" "$PROVIDER_VERSION"
+    if ! check::stream "terraform init upgrades to local provider $PROVIDER_VERSION" \
+      tf::init "$tf_dir"; then
+      teardown_flavour "$tf_dir" || true
+      return 1
+    fi
+    check "upgrading from $UPGRADE_FROM to $PROVIDER_VERSION is a no-op" \
+      tf::plan_is_clean "$tf_dir" || true
+    teardown_flavour "$tf_dir"
+    return
+  else
+    check "terraform plan is clean after apply" tf::plan_is_clean "$tf_dir" || true
+  fi
 
   if ! check "kubeconfig can be built from the provider outputs" \
     kube::write_kubeconfig "$tf_dir" "$E2E_KUBECONFIG" "$cluster_name"; then
@@ -369,6 +422,14 @@ main() {
     for f in "$FLAVOUR_DIR"/*.tfvars; do
       REQUESTED_FLAVOURS+=("$(basename "$f" .tfvars)")
     done
+  fi
+
+  if [[ -n "$UPGRADE_FROM" ]]; then
+    resolve_upgrade_version
+    if [[ "$PROVIDER_VERSION" != "99.99.99" ]]; then
+      log::error "--upgrade-from requires the local provider version 99.99.99"
+      exit 2
+    fi
   fi
 
   mkdir -p "$WORK_DIR"

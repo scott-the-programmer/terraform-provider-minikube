@@ -64,6 +64,11 @@ FLAVOURS ?=
 e2e:
 	$(E2E_DIR)/run.sh $(FLAVOURS)
 
+# Released provider -> current checkout, sharing the same configuration and state.
+.PHONY: e2e-upgrade
+e2e-upgrade:
+	$(E2E_DIR)/upgrade.sh
+
 .PHONY: e2e-docker
 e2e-docker:
 	$(E2E_DIR)/run.sh docker

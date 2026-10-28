@@ -117,6 +117,48 @@ only pass by reaching *that* nginx — not something else answering on port 80.
 The image is `nginx:1.27-alpine` because busybox `wget` and `nslookup` ship in
 it, which keeps the in-cluster checks from needing a second image pull.
 
+## Released-provider upgrade regression
+
+```sh
+make e2e-upgrade
+# Reproduce a specific release, or reuse an already built branch binary:
+UPGRADE_FROM_VERSION=0.8.0 ./test/e2e/upgrade.sh
+UPGRADE_PROVIDER_BINARY="$PWD/bin/terraform-provider-minikube" ./test/e2e/upgrade.sh
+```
+
+`upgrade.sh` resolves the latest version from the Terraform registry by default.
+It creates the Docker stack with that **published binary**, requires a clean
+baseline plan, then switches only the provider version/installation source to a
+binary built from the current checkout. The resource configuration, variables,
+profile and Terraform state stay in place. Kubernetes is pinned to `v1.34.0` so
+changes to the embedded minikube default do not change the requested stack.
+
+The branch must produce a **zero-diff plan** (`-detailed-exitcode` must return 0).
+Only then is that saved plan applied, followed by another zero-diff check. A
+replacement, update, output change or Terraform error fails the test; a diff is
+never silently applied to make the test pass.
+
+Each invocation uses a unique profile and directory under `.work/upgrade.*`.
+Explicit, test-local CLI configs ensure the baseline comes directly from the
+registry and the branch comes only from an isolated filesystem mirror, without
+modifying your global provider installation. User CLI flags and plugin caches
+are excluded. Go/make are needed unless `UPGRADE_PROVIDER_BINARY` is supplied;
+otherwise requirements are `terraform`, `curl`, `jq`, `timeout` and a working
+Docker daemon. `UPGRADE_TIMEOUT` sets the per-operation timeout (default 1200s).
+
+An exit/signal trap attempts `terraform destroy` even after a failed apply or
+upgrade. Logs, the baseline lock file/state and the saved plan remain in the
+printed work directory for diagnosis. **These artifacts contain credentials;
+do not publish them as CI artifacts.** Cleanup failures fail the test and leave
+`destroy.log` for manual recovery. The nightly/manual E2E workflow also runs
+this regression in a separate Docker job.
+
+The runner's failure handling can be tested without a cluster or provider build:
+
+```sh
+python3 -m unittest discover -s test/e2e -p 'test_upgrade.py' -v
+```
+
 ## Adding a flavour
 
 Drop a `flavours/<name>.tfvars` with the variables from `stack/variables.tf`,

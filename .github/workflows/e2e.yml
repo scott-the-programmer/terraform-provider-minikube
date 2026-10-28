@@ -12,6 +12,41 @@ on:
     - cron: "0 14 * * *"
 
 jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Test upgrade runner failure handling
+        run: python3 -m unittest discover -s test/e2e -p 'test_upgrade.py' -v
+
+      - name: Verify released provider to branch is a no-op
+        run: make e2e-upgrade
+
+      # Do not upload state/plans: provider outputs contain client credentials.
+      - name: Print upgrade diagnostics
+        if: failure()
+        run: |
+          for dir in test/e2e/.work/upgrade.*; do
+            [ -d "$dir" ] || continue
+            for log in "$dir"/*.log; do
+              [ -f "$log" ] || continue
+              echo "::group::$log"
+              tail -n 200 "$log"
+              echo "::endgroup::"
+            done
+          done
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 60

@@ -23,6 +23,7 @@ terraform.tfsta*
 
 # Scratch space for the e2e suite (per-flavour terraform dirs, kubeconfigs)
 test/e2e/.work/
+test/e2e/__pycache__/
 
 crash.log
 .terraform

@@ -45,8 +45,8 @@ jobs:
 
       - name: Install minikube
         run: |
-          curl -sSLo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          sudo install minikube /usr/local/bin/minikube
+          curl -sSLo "$RUNNER_TEMP/minikube" https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install "$RUNNER_TEMP/minikube" /usr/local/bin/minikube
 
       - name: Run e2e
         run: ./test/e2e/run.sh ${{ github.event.inputs.flavours || matrix.flavour }}
@@ -88,8 +88,8 @@ jobs:
 
       - name: Install minikube
         run: |
-          curl -sSLo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          sudo install minikube /usr/local/bin/minikube
+          curl -sSLo "$RUNNER_TEMP/minikube" https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install "$RUNNER_TEMP/minikube" /usr/local/bin/minikube
 
       - name: Verify latest-release upgrade is a no-op
         run: ./test/e2e/run.sh --upgrade-from latest ${{ matrix.flavour }}

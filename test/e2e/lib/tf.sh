@@ -30,10 +30,16 @@ tf::init() {
 }
 
 # Initialise from the public registry even when the caller has configured the
-# local filesystem mirror used for the development build.
+# local filesystem mirror used for the development build. Unsetting
+# TF_CLI_CONFIG_FILE is not enough: 'make set-local' puts 99.99.99 under
+# ~/.terraform.d/plugins, which terraform treats as an implicit mirror, and then
+# it never asks the registry for this provider. An explicit direct-only config
+# turns the implicit mirrors off.
 tf::init_from_registry() {
   local dir=$1
-  env -u TF_CLI_CONFIG_FILE terraform -chdir="$dir" init -no-color -upgrade
+  local cli_config="$dir/registry-only.tfrc"
+  printf 'provider_installation {\n  direct {}\n}\n' >"$cli_config"
+  TF_CLI_CONFIG_FILE="$cli_config" terraform -chdir="$dir" init -no-color -upgrade
 }
 
 tf::set_provider_version() {

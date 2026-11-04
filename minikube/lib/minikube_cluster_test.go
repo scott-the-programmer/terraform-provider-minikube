@@ -21,7 +21,7 @@ func TestResetAddonAssets(t *testing.T) {
 		if _, err := io.Copy(io.Discard, asset); err != nil {
 			t.Fatal(err)
 		}
-		if err := resetAddonAssets(); err != nil {
+		if err := ResetAddonAssets(); err != nil {
 			t.Fatal(err)
 		}
 		got, err := io.ReadAll(asset)
@@ -33,7 +33,7 @@ func TestResetAddonAssets(t *testing.T) {
 		}
 	}
 	t.Cleanup(func() {
-		if err := resetAddonAssets(); err != nil {
+		if err := ResetAddonAssets(); err != nil {
 			t.Error(err)
 		}
 	})

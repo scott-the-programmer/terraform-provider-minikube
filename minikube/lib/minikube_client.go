@@ -128,6 +128,7 @@ func (e *MinikubeClient) GetConfig() MinikubeClientConfig {
 		DeleteOnFailure: e.deleteOnFailure,
 		Nodes:           e.nodes,
 		HA:              e.ha,
+		NativeSsh:       e.nativeSsh,
 	}
 }
 
@@ -297,6 +298,11 @@ func diff(addonsA, addonsB []string) []string {
 		}
 	}
 	return diff
+}
+
+// DiffAddons returns addons in before that are missing from after.
+func DiffAddons(before, after []string) []string {
+	return diff(before, after)
 }
 
 func (e *MinikubeClient) setAddons(addons []string, val bool) error {

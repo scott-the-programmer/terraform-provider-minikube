@@ -64,7 +64,7 @@ func (m *MinikubeCluster) Provision(cc *config.ClusterConfig, n *config.Node, de
 }
 
 func (m *MinikubeCluster) Start(starter node.Starter) (*kubeconfig.Settings, error) {
-	if err := resetAddonAssets(); err != nil {
+	if err := ResetAddonAssets(); err != nil {
 		return nil, err
 	}
 	s, err := node.Start(starter, m.commandOptions)
@@ -146,15 +146,14 @@ func (m *MinikubeCluster) Delete(cc *config.ClusterConfig, name string) (*config
 }
 
 func (m *MinikubeCluster) SetAddon(name string, addon string, value string) error {
-	if err := resetAddonAssets(); err != nil {
+	if err := ResetAddonAssets(); err != nil {
 		return err
 	}
 	return minikubeAddons.SetAndSave(name, addon, value, m.commandOptions)
 }
 
-// Minikube keeps bundled addon readers globally. Unlike the CLI, a provider
-// process can install them repeatedly, so rewind them under the creation lock.
-func resetAddonAssets() error {
+// ResetAddonAssets rewinds shared addon readers for reuse.
+func ResetAddonAssets() error {
 	for _, addon := range assets.Addons {
 		for _, asset := range addon.Assets {
 			if _, err := asset.Seek(0, io.SeekStart); err != nil {

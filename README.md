@@ -74,6 +74,13 @@ provider "kubernetes" {
 }
 ```
 
+## Parallel cluster creation
+
+Each lifecycle operation runs in an isolated worker process, so multiple cluster resources
+can be created concurrently while Minikube's process-global configuration is scoped
+per-operation. Operations on the same profile still serialize; set
+`TF_MINIKUBE_IN_PROCESS=1` to revert to the previous single-process behavior.
+
 ## Want to help out?
 
 See [the contributing doc](./contributing.md) if you wish to get into the details of this terraform minikube provider!
